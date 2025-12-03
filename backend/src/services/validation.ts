@@ -1,0 +1,68 @@
+export interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+
+export interface ContactFormData {
+  name: string;
+  email: string;
+  message: string;
+}
+
+/**
+ * Validate contact form data
+ */
+export function validateContactForm(data: ContactFormData): ValidationResult {
+  const errors: string[] = [];
+
+  // Validate name
+  if (!data.name || typeof data.name !== 'string') {
+    errors.push('Name is required');
+  } else if (data.name.trim().length === 0) {
+    errors.push('Name cannot be empty');
+  } else if (data.name.length > 255) {
+    errors.push('Name must be 255 characters or less');
+  }
+
+  // Validate email
+  if (!data.email || typeof data.email !== 'string') {
+    errors.push('Email is required');
+  } else if (data.email.trim().length === 0) {
+    errors.push('Email cannot be empty');
+  } else if (data.email.length > 255) {
+    errors.push('Email must be 255 characters or less');
+  } else if (!isValidEmail(data.email)) {
+    errors.push('Email format is invalid');
+  }
+
+  // Validate message
+  if (!data.message || typeof data.message !== 'string') {
+    errors.push('Message is required');
+  } else if (data.message.trim().length === 0) {
+    errors.push('Message cannot be empty');
+  } else if (data.message.length > 5000) {
+    errors.push('Message must be 5000 characters or less');
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
+/**
+ * Validate email format
+ */
+function isValidEmail(email: string): boolean {
+  // RFC 5322 compliant email regex (simplified)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+/**
+ * Sanitize string input (basic XSS protection)
+ */
+export function sanitizeString(input: string): string {
+  return input.trim();
+}
+

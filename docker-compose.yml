@@ -1,0 +1,44 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:9000/api}
+        - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    container_name: personal-page-frontend
+    ports:
+      - "8888:80"
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: personal-page-backend
+    ports:
+      - "9000:9000"
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+    volumes:
+      - backend_data:/app/data
+    networks:
+      - app-network
+
+volumes:
+  backend_data:
+
+networks:
+  app-network:
+    driver: bridge

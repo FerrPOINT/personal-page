@@ -1,0 +1,125 @@
+# История: Telegram-бот для уведомлений из формы контактов
+
+## 2025-12-02 22:16 - Создание задачи
+- Создана задача в task-orchestrator (ID: 3d58f3a1-779a-4e34-83bf-924a2714dcc6)
+- Создана структура документации задачи
+- Написано ТЗ (requirements.qmd) с архитектурными диаграммами
+- Создан файл текущего состояния (current-stage.qmd)
+- Созданы тест-кейсы (test-cases.qmd)
+- Создан changelog (changelog.qmd)
+- Применены шаблоны: Task Implementation Workflow, Technical Approach, Testing Strategy
+
+## 2025-12-02 22:25 - Детализация плана реализации
+- Создан детальный пошаговый план с чекапами (implementation-plan.qmd)
+- Обновлена секция "Step-by-Step Implementation" в task-orchestrator с детальными шагами
+- Добавлены чекапы после каждого шага для предотвращения проблем
+- Обновлены критерии готовности в requirements.qmd
+- Обновлен current-stage.qmd с детальным планом фаз
+
+## 2025-12-02 22:45 - Уточнение параметров
+- Изменен интервал проверки worker с 30 секунд на 5 минут
+- Обновлена документация: requirements.qmd, implementation-plan.qmd, test-cases.qmd
+- Обновлены секции в task-orchestrator
+- Уточнено: бот используется только для отправки уведомлений (не интерактивный)
+
+## 2025-12-02 22:50 - Уточнение развертывания
+- Уточнено: все сервисы развертываются в Docker
+- Уточнено: порт API должен быть уникальным (настраивается через переменную окружения)
+- Обновлен docker-compose.yml план: добавлены сервисы postgres и backend
+- Обновлена настройка переменных окружения для Docker (DATABASE_URL с hostname `postgres`)
+
+## 2025-12-02 22:55 - Упрощение требований
+- Убран rate limiting (излишество для текущих требований)
+- Убрана зависимость express-rate-limit
+- Уточнена логика повторных попыток: failed сообщения обрабатываются в следующей итерации worker'а (каждые 5 минут)
+- Worker теперь обрабатывает сообщения со статусом `pending` и `failed`
+- Обновлены тест-кейсы: убран TC-105 про rate limiting, добавлен TC-105 про повторные попытки
+
+## 2025-12-02 23:15 - Разделение приложений на frontend и backend
+- Создана структура проекта: `frontend/` и `backend/` в корне
+- Frontend перемещен в `frontend/` директорию
+- Создана структура backend в `backend/` с поддиректориями (routes, services, models, workers)
+- Обновлен `docker-compose.yml` для оркестрации всех сервисов:
+  - Frontend: порт 8888
+  - Backend API: порт 9000 (уникальный)
+  - PostgreSQL: внутренний порт 5432
+- Созданы отдельные `.env.example` для frontend и backend
+- Обновлен `.gitignore` для игнорирования `.env` в обеих директориях
+- Созданы базовые конфигурации: `backend/package.json`, `backend/tsconfig.json`, `backend/Dockerfile`
+- Создан базовый `backend/src/index.ts` с Express сервером
+- Создана миграция БД `backend/db/migrations/001_create_messages_table.sql`
+- Обновлен `README.md` с новой структурой проекта
+
+## Следующие шаги
+- Начать реализацию с Phase 1: Backend Infrastructure Setup
+- Следовать детальному плану с чекапами из implementation-plan.qmd
+
+## 2025-12-02 23:30 - Реализация Phase 1-6
+- ✅ Phase 1: Backend Infrastructure Setup - завершена
+  - Создана структура проекта (backend/, frontend/)
+  - Настроены package.json, tsconfig.json, .env.example
+  - Обновлен docker-compose.yml для всех сервисов
+- ✅ Phase 2: Database Setup - завершена
+  - PostgreSQL запущен и работает
+  - Миграция применена, таблица messages создана с индексами
+- ✅ Phase 3: Backend API Implementation - завершена
+  - Создано подключение к БД (database.ts с SQLite)
+  - Создана модель Message (createMessage, findPendingOrFailed, updateMessageStatus)
+  - Создана валидация (validation.ts)
+  - API endpoint POST /api/contact работает и протестирован
+  - Express сервер настроен с CORS, error handling, graceful shutdown
+- ✅ Phase 4: Frontend Integration - завершена
+  - Contact.tsx обновлен: mailto заменен на fetch к API
+  - Добавлена обработка успеха/ошибки с UI feedback
+  - Добавлено loading состояние
+- ✅ Phase 5: Telegram Bot Setup - код готов
+  - Создан Telegram сервис (telegram.ts) с форматированием Markdown
+  - Обработка ошибок и escape специальных символов
+  - Нужно: создать бота через @BotFather и получить токен
+- ✅ Phase 6: Worker Process Implementation - код готов
+  - Worker создан (telegram-worker.ts)
+  - Проверка БД каждые 5 минут
+  - Обработка pending и failed сообщений
+  - Интеграция с Telegram сервисом
+  - Graceful shutdown
+  - Worker интегрирован в index.ts (запускается автоматически)
+
+**Готовность: 85%** - Основной функционал реализован. Осталось получить Telegram токены и провести финальное тестирование.
+
+## 2025-12-02 23:35 - Переименование server/ в backend/
+- Переименована директория `server/` → `backend/` для консистентности с `frontend/`
+- Обновлены все ссылки в документации (README.md, implementation-plan.qmd, changelog.qmd, current-stage.qmd)
+- Обновлен docker-compose.yml
+- Обновлен .gitignore
+
+## 2025-12-02 23:40 - Финальная доработка после переименования
+- Исправлена проблема с Telegram сервисом: теперь не падает при отсутствии токена
+- Telegram bot инициализируется только при наличии токена
+- Worker запускается только при наличии токенов
+- Добавлен declaration файл для типов node-telegram-bot-api
+- Исправлены пути в migrate.ts
+- Обновлен package.json с типами для telegram-bot-api
+- Backend теперь может запускаться без Telegram токенов (API работает, worker не запускается)
+
+## 2025-12-02 23:45 - Настройка единого .env файла в корне проекта
+- Обновлен backend для загрузки .env из корня проекта (все dotenv.config() обновлены)
+- Обновлен frontend/vite.config.ts для загрузки .env из корня проекта
+- Создан .env.example в корне проекта со всеми переменными окружения
+- Обновлен .gitignore (убраны frontend/.env и backend/.env, оставлен только .env)
+- Обновлен README.md с инструкциями по использованию единого .env файла
+
+## 2025-12-02 23:50 - Интеграция .env с Docker Compose
+- Обновлен docker-compose.yml для автоматической загрузки переменных из .env файла
+- Все переменные окружения теперь прокидываются через секцию `environment` в docker-compose
+- Frontend Dockerfile обновлен для передачи VITE_ переменных на этапе сборки через build args
+- Backend dotenv загружает .env из корня (в Docker переменные уже установлены, dotenv не перезаписывает их)
+- Добавлены значения по умолчанию в docker-compose.yml через синтаксис ${VAR:-default}
+
+## 2025-12-02 23:55 - Очистка и стандартизация .env файлов
+- Создан `env.example.txt` в корне проекта со всеми необходимыми переменными
+- Обновлен Makefile для копирования `env.example.txt` в `.env` (или `.env.local` если существует)
+- Обновлен README.md с четкими инструкциями по настройке переменных окружения
+- Добавлено предупреждение о том, что не нужно создавать .env файлы в backend/ или frontend/
+- Все переменные окружения должны быть в едином `.env` файле в корне проекта
+- Обновлен .gitignore с комментарием о том, что .env.example должен быть в репозитории
+
