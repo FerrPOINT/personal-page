@@ -71,14 +71,17 @@ Backend API will be available at `http://localhost:9000`
 #### Using Docker Compose (Recommended)
 
 ```bash
+# Настройка окружения (копирует env.local в .env)
+make local
+
 # Build and start all services
-docker-compose up -d
+docker compose up -d --build
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Stop all services
-docker-compose down
+docker compose down
 ```
 
 Services:
@@ -136,7 +139,9 @@ API_PORT=9000
 NODE_ENV=development
 
 # Frontend API Configuration
-VITE_API_URL=http://localhost:9000/api
+# VITE_API_URL не нужен для продакшн - используется относительный путь /api
+# Для локальной разработки можно указать: VITE_API_URL=http://localhost:9000/api
+# VITE_API_URL=http://localhost:9000/api
 
 # Gemini API (if needed)
 GEMINI_API_KEY=your_gemini_api_key_here
@@ -148,6 +153,7 @@ GEMINI_API_KEY=your_gemini_api_key_here
 - Docker Compose автоматически подхватывает переменные из `.env` файла в корне проекта
 - Для локальной разработки переменные загружаются через `dotenv` в backend и `vite.config.ts` в frontend
 - В Docker переменные прокидываются через секцию `environment` в `docker-compose.yml`
+- **Для продакшн**: `VITE_API_URL` не нужен - приложение использует относительный путь `/api`
 - **Не создавайте** `.env` файлы в `backend/` или `frontend/` - используйте единый `.env` в корне проекта
 
 ### Как зарегистрировать ваш User ID (автоматически)
@@ -190,10 +196,21 @@ GEMINI_API_KEY=your_gemini_api_key_here
 ## 🏭 Production Deployment
 
 The Docker setup uses multi-stage builds:
-1. **Frontend**: Builds React app and serves with Nginx
-2. **Backend**: Builds TypeScript and runs Node.js server with SQLite database
+1. **Frontend**: Builds React app and serves with Nginx (port 8888)
+2. **Backend**: Builds TypeScript and runs Node.js server with SQLite database (port 9000)
 
 All services are orchestrated via Docker Compose.
+
+### Production Setup
+
+**Важно для продакшн:**
+- Приложение использует **относительный путь `/api`** для API запросов
+- `VITE_API_URL` **НЕ НУЖЕН** в `.env` для продакшн - приложение автоматически использует тот же протокол и домен
+- Для работы необходимо настроить **Nginx** как reverse proxy:
+  - `/` → frontend (localhost:8888)
+  - `/api` → backend (localhost:9000)
+
+Подробная инструкция по развертыванию: см. `info/deployment-guide.qmd`
 
 ## 📄 License
 
