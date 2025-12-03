@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip, Cell, YAxis, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, Cell, YAxis, CartesianGrid } from 'recharts';
 import { SKILLS } from '../constants';
 
 const TechStack: React.FC = () => {
@@ -57,10 +57,6 @@ const TechStack: React.FC = () => {
                     tick={{ fill: '#f0f0f0', fontSize: 12, fontWeight: 600 }}
                     axisLine={false}
                     tickLine={false}
-                  />
-                  <Tooltip 
-                    cursor={{fill: 'transparent'}}
-                    contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', color: '#fff' }}
                   />
                   <Bar dataKey="level" barSize={20} radius={[0, 4, 4, 0]}>
                     {SKILLS.map((entry, index) => (
