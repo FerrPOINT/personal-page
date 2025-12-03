@@ -4,7 +4,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=${VITE_API_URL:-http://localhost:9000/api}
+        - VITE_API_URL=${VITE_API_URL:-}
         - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     container_name: personal-page-frontend
     ports:
