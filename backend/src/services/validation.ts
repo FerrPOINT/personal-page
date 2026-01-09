@@ -61,8 +61,23 @@ function isValidEmail(email: string): boolean {
 
 /**
  * Sanitize string input (basic XSS protection)
+ * Removes HTML tags and dangerous characters
  */
 export function sanitizeString(input: string): string {
-  return input.trim();
+  if (typeof input !== 'string') {
+    return '';
+  }
+  
+  // Trim whitespace
+  let sanitized = input.trim();
+  
+  // Remove HTML tags (basic protection)
+  sanitized = sanitized.replace(/<[^>]*>/g, '');
+  
+  // Remove potentially dangerous characters for SQL/script injection
+  // But keep normal punctuation for messages
+  sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, ''); // Remove control characters
+  
+  return sanitized;
 }
 
