@@ -11,6 +11,19 @@ alwaysApply: false
 Проект использует Jenkins для автоматического деплоя при каждом push в main ветку.
 Pipeline выполняет: checkout → validate → deploy на удаленный сервер через SSH.
 
+### 📋 Текущие настройки проекта
+
+**Jenkins Server:**
+- URL: `http://192.168.1.49:32768/`
+- API Token: `1191a9f019fc3989d7a5ff30d456fb9cf3`
+- Job Name: `personal-page-deploy`
+
+**Deployment Server:**
+- SSH команда: `ssh -i ~/.ssh/id_rsa root@azhukov-dev`
+- Host: `azhukov-dev` (или `7eb10d5af2ad.vps.myjino.ru:49233`)
+- User: `root`
+- Path: `/opt/personal-page`
+
 ## 📋 Архитектура
 
 ```
