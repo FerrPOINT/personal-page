@@ -67,8 +67,6 @@ async function processMessages(): Promise<void> {
   isRunning = true;
 
   try {
-    console.log(`🔍 Checking for pending/failed messages at ${new Date().toISOString()}`);
-
     // Find messages to process (limit to 10 at a time to avoid overload)
     const messages = await findPendingOrFailed(10);
 

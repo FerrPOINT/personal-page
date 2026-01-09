@@ -1,15 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, Layers, Server, Cpu, Globe, CheckCircle } from 'lucide-react';
-import { PROJECTS } from '../constants';
 import { Project } from '../types';
 import Modal from './Modal';
 import { useLanguage } from '../i18n/hooks/useLanguage';
+import { translations } from '../i18n/translations';
 
 const Projects: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [filter, setFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  const projects = useMemo<Project[]>(() => {
+    const items = translations[language].projects?.items || [];
+    return items.map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      fullDescription: item.fullDescription,
+      role: item.role,
+      challenges: item.challenges || [],
+      results: item.results || [],
+      categories: item.categories || [],
+      metrics: item.metrics || [],
+      stack: item.stack || [],
+      imageUrl: item.imageUrl
+    }));
+  }, [language]);
 
   const categories = [
     { key: 'All', label: t('projects.categories.all') },
@@ -18,7 +35,7 @@ const Projects: React.FC = () => {
     { key: 'FullStack', label: t('projects.categories.fullstack') }
   ];
 
-  const filteredProjects = PROJECTS.filter(
+  const filteredProjects = projects.filter(
     (p) => filter === 'All' || p.categories.includes(filter)
   );
 

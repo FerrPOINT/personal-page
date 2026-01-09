@@ -1,11 +1,25 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Briefcase, Calendar, ChevronRight } from 'lucide-react';
-import { EXPERIENCE } from '../constants';
 import { useLanguage } from '../i18n/hooks/useLanguage';
+import { translations } from '../i18n/translations';
+import { ExperienceItem } from '../types';
 
 const Experience: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  
+  const experienceItems = useMemo<ExperienceItem[]>(() => {
+    const items = translations[language].experience?.items || [];
+    return items.map((item: any) => ({
+      id: item.id,
+      role: item.role,
+      company: item.company,
+      period: item.period,
+      description: item.description,
+      achievements: item.achievements || [],
+      tech: item.tech || []
+    }));
+  }, [language]);
   
   return (
     <section id="experience" className="py-24 bg-surface relative overflow-hidden scroll-mt-24">
@@ -21,7 +35,7 @@ const Experience: React.FC = () => {
         </motion.div>
 
         <div className="relative border-l border-white/10 ml-3 md:ml-6 space-y-12">
-          {EXPERIENCE.map((job, index) => (
+          {experienceItems.map((job, index) => (
             <motion.div
               key={job.id}
               initial={{ opacity: 0, x: -20 }}

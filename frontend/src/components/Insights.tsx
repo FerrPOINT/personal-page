@@ -1,14 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, ArrowUpRight } from 'lucide-react';
-import { BLOG_POSTS } from '../constants';
 import { BlogPost } from '../types';
 import Modal from './Modal';
 import { useLanguage } from '../i18n/hooks/useLanguage';
+import { translations } from '../i18n/translations';
 
 const Insights: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+
+  const blogPosts = useMemo<BlogPost[]>(() => {
+    const posts = translations[language].insights?.posts || [];
+    return posts.map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      date: item.date,
+      readTime: item.readTime,
+      excerpt: item.excerpt,
+      content: item.content,
+      category: item.category
+    }));
+  }, [language]);
 
   return (
     <section id="insights" className="py-24 bg-background scroll-mt-24">
@@ -19,7 +32,7 @@ const Insights: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {BLOG_POSTS.map((post, index) => (
+          {blogPosts.map((post, index) => (
             <motion.article
               key={post.id}
               initial={{ opacity: 0, y: 20 }}
