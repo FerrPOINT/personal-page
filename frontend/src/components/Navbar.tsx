@@ -48,8 +48,8 @@ const Navbar: React.FC = () => {
               <Terminal className="w-6 h-6 text-white" />
             </div>
             <div className="hidden sm:block">
-              <span className="block text-lg font-bold tracking-wider text-white group-hover:text-accent-cyan transition-colors">A. ZHUKOV</span>
-              <span className="block text-xs text-accent-cyan font-mono tracking-widest">ARCHITECT</span>
+              <span className="block text-lg font-bold tracking-wider text-white group-hover:text-accent-cyan transition-colors">{t('navbar.logo.name')}</span>
+              <span className="block text-xs text-accent-cyan font-mono tracking-widest">{t('navbar.logo.title')}</span>
             </div>
           </a>
 

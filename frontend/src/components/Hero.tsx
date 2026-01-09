@@ -199,19 +199,19 @@ const SolarSystemScene = () => {
       {/* Planets - Distances optimized to avoid overlap */}
       
       {/* 1. React - Close orbit */}
-      <Planet distance={6} speed={0.3} size={0.5} color="#00d9ff" label="REACT / TS" />
+      <Planet distance={6} speed={0.3} size={0.5} color="#00d9ff" label={t('hero.planets.reactTS')} />
       
       {/* 2. Java - Mid orbit */}
-      <Planet distance={9} speed={0.25} size={0.7} color="#ff00ff" label="JAVA / SPRING" />
+      <Planet distance={9} speed={0.25} size={0.7} color="#ff00ff" label={t('hero.planets.javaSpring')} />
       
       {/* 3. NEW: Python / AI - The "Green" Intelligence layer */}
-      <Planet distance={12} speed={0.2} size={0.65} color="#10b981" label="PYTHON / AI" />
+      <Planet distance={12} speed={0.2} size={0.65} color="#10b981" label={t('hero.planets.pythonAI')} />
       
       {/* 4. Kubernetes - Infrastructure layer */}
-      <Planet distance={15} speed={0.15} size={0.8} color="#3b82f6" label="KUBERNETES" />
+      <Planet distance={15} speed={0.15} size={0.8} color="#3b82f6" label={t('hero.planets.kubernetes')} />
 
       {/* 5. NEW: Cloud - Outer layer */}
-      <Planet distance={19} speed={0.1} size={0.9} color="#f97316" label="CLOUD / AWS" />
+      <Planet distance={19} speed={0.1} size={0.9} color="#f97316" label={t('hero.planets.cloudAWS')} />
 
 
       {/* Spaceships / Data Packets - More complex paths */}

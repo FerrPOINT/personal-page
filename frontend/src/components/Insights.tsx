@@ -4,24 +4,14 @@ import { Clock, ArrowUpRight } from 'lucide-react';
 import { BlogPost } from '../types';
 import Modal from './Modal';
 import { useLanguage } from '../i18n/hooks/useLanguage';
-import { translations } from '../i18n/translations';
+import { getTranslatedBlogPosts, getCategoryMap } from '../i18n/utils/getTranslatedData';
 
 const Insights: React.FC = () => {
   const { t, language } = useLanguage();
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
 
-  const blogPosts = useMemo<BlogPost[]>(() => {
-    const posts = translations[language].insights?.posts || [];
-    return posts.map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      date: item.date,
-      readTime: item.readTime,
-      excerpt: item.excerpt,
-      content: item.content,
-      category: item.category
-    }));
-  }, [language]);
+  const blogPosts = useMemo(() => getTranslatedBlogPosts(language), [language]);
+  const categoryMap = useMemo(() => getCategoryMap(language, t), [language, t]);
 
   return (
     <section id="insights" className="py-24 bg-background scroll-mt-24">
@@ -43,7 +33,7 @@ const Insights: React.FC = () => {
               className="flex flex-col h-full bg-surface border border-white/5 rounded-2xl p-6 hover:border-accent-magenta/30 transition-colors group cursor-pointer"
             >
               <div className="flex justify-between items-center mb-4 text-xs font-mono text-secondary uppercase tracking-wider">
-                <span>{post.category}</span>
+                <span>{categoryMap[post.category] || post.category}</span>
                 <span>{post.date}</span>
               </div>
               
@@ -78,7 +68,7 @@ const Insights: React.FC = () => {
         {selectedPost && (
             <article className="prose prose-invert max-w-none">
                 <div className="mb-6 pb-6 border-b border-white/10">
-                    <span className="text-accent-magenta font-mono text-sm uppercase tracking-wider">{selectedPost.category}</span>
+                    <span className="text-accent-magenta font-mono text-sm uppercase tracking-wider">{categoryMap[selectedPost.category] || selectedPost.category}</span>
                     <h1 className="text-3xl font-bold text-white mt-2 mb-4">{selectedPost.title}</h1>
                     <div className="flex items-center text-secondary text-sm">
                         <span>{selectedPost.date}</span>
