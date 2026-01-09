@@ -1,6 +1,12 @@
 pipeline {
     agent any
     
+    // Автоматический запуск при изменениях в main ветке
+    triggers {
+        // Проверка изменений каждые 2 минуты (можно настроить webhook для мгновенного запуска)
+        pollSCM('H/2 * * * *')
+    }
+    
     environment {
         // SSH connection settings
         // Реальный хост сервера (azhukov-dev - алиас, который может не резолвиться на Jenkins)
