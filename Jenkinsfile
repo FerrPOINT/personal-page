@@ -88,6 +88,9 @@ pipeline {
                         } catch (Exception e) {
                             echo "⚠️  gemini-api-key credentials не найдены, используем .env на сервере"
                         }
+                        // BEST PRACTICE 2026: Используем экранирование для предотвращения интерполяции секретов
+                        // \$SSH_KEY - shell переменная (не интерполируется Groovy)
+                        // Это предотвращает логирование секретов в Jenkins
                         sh """
                             # Подключение к серверу и запуск деплоя
                             SSH_PORT_FLAG=""
@@ -95,16 +98,16 @@ pipeline {
                                 SSH_PORT_FLAG="-p ${DEPLOY_PORT}"
                             fi
                             
-                            # BEST PRACTICE: Передаем секреты через переменные окружения
-                            # withCredentials защищает их от логирования в Jenkins
-                            ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} \${SSH_PORT_FLAG} ${DEPLOY_USER}@${DEPLOY_HOST} \
+                            # BEST PRACTICE: Используем экранированные переменные для секретов
+                            # \$SSH_KEY - shell переменная, не интерполируется Groovy (безопасно)
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" \${SSH_PORT_FLAG} ${DEPLOY_USER}@${DEPLOY_HOST} \
                                 "cd ${DEPLOY_PATH} && \
                                  git fetch origin && \
                                  git checkout -f origin/main || git checkout -f origin/master && \
                                  chmod +x scripts/deploy.sh && \
-                                 TELEGRAM_BOT_TOKEN='${telegramBotToken}' \
-                                 TELEGRAM_USER_ID='${telegramUserId}' \
-                                 GEMINI_API_KEY='${geminiApiKey}' \
+                                 TELEGRAM_BOT_TOKEN='${telegramBotToken ?: ''}' \
+                                 TELEGRAM_USER_ID='${telegramUserId ?: ''}' \
+                                 GEMINI_API_KEY='${geminiApiKey ?: ''}' \
                                  bash scripts/deploy.sh"
                         """
                     }
