@@ -5,7 +5,23 @@
     "readArticle": "Read Article",
     "close": "Close",
     "closeArticle": "Close Article",
-    "writtenBy": "Written by Aleksandr Zhukov"
+    "writtenBy": "Written by Aleksandr Zhukov",
+    "switchLanguage": "Switch to {lang}",
+    "english": "English",
+    "russian": "Russian"
+  },
+  "navbar": {
+    "logo": {
+      "name": "A. ZHUKOV",
+      "title": "ARCHITECT"
+    },
+    "about": "About",
+    "experience": "Experience",
+    "projects": "Projects",
+    "skills": "Skills",
+    "insights": "Insights",
+    "contact": "Contact",
+    "letsTalk": "Let's Talk"
   },
   "hero": {
     "badge": "Open for New Opportunities",
@@ -22,20 +38,19 @@
       "yearsExp": "Years Exp",
       "rpsScaled": "RPS Scaled",
       "fullStackCycle": "Stack Cycle"
+    },
+    "planets": {
+      "reactTS": "REACT / TS",
+      "javaSpring": "JAVA / SPRING",
+      "pythonAI": "PYTHON / AI",
+      "kubernetes": "KUBERNETES",
+      "cloudAWS": "CLOUD / AWS"
     }
-  },
-  "navbar": {
-    "about": "About",
-    "experience": "Experience",
-    "projects": "Projects",
-    "skills": "Skills",
-    "insights": "Insights",
-    "contact": "Contact",
-    "letsTalk": "Let's Talk"
   },
   "projects": {
     "title": "Featured Projects",
     "description": "Full-Stack development and DevOps solutions delivered at scale. From high-load systems to complete CI/CD pipelines.",
+    "viewCaseStudy": "View Detailed Case Study",
     "categories": {
       "all": "All",
       "ai": "AI",
@@ -202,11 +217,48 @@
     "aiMl": {
       "title": "AI/ML",
       "description": "LangChain, RAG, PyTorch, Model Serving"
-    }
+    },
+    "skills": [
+      { "name": "Java / Spring", "level": 98, "category": "Languages" },
+      { "name": "System Design", "level": 95, "category": "Infrastructure" },
+      { "name": "DevOps (K8s/Docker)", "level": 92, "category": "Infrastructure" },
+      { "name": "Python / AI", "level": 85, "category": "AI" },
+      { "name": "React / TS", "level": 80, "category": "Frameworks" },
+      { "name": "High-Load / AWS", "level": 90, "category": "Infrastructure" }
+    ]
   },
   "insights": {
     "title": "Architecture Insights",
-    "modalTitle": "Architecture Insights"
+    "modalTitle": "Architecture Insights",
+    "posts": [
+      {
+        "id": "b1",
+        "title": "Production-Ready Multi-Agent AI: Lessons from Orchestrating 10+ LangGraph Agents",
+        "date": "Dec 2025",
+        "readTime": "~5 min",
+        "category": "AI Architecture",
+        "excerpt": "Real-world insights from building a production multi-agent system with LangGraph, RAG integration, and state management at scale.",
+        "content": "Building production-grade multi-agent AI systems requires moving beyond proof-of-concept implementations to architectures that handle real-world complexity. In this article, I share practical lessons from architecting a system orchestrating 10+ specialized agents using LangGraph and LangChain.\n\n**The Challenge: Beyond Sequential Chains**\n\nTraditional LangChain sequential chains fall short when dealing with complex workflows requiring parallel execution, conditional routing, and persistent state. Our system needed agents that could collaborate, share context, and make dynamic decisions based on intermediate results.\n\n**Graph-Based Orchestration with LangGraph**\n\nLangGraph's directed acyclic graph (DAG) architecture provided the foundation for sophisticated agent coordination. Unlike sequential chaining, we implemented:\n\n- **Centralized state management**: Agents communicate through immutable state objects rather than direct peer-to-peer messaging, eliminating complex routing logic\n- **Conditional edges**: Dynamic workflow routing based on agent confidence scores and external system statuses\n- **Parallel execution**: Specialized agents (document processing, analysis, synthesis) operate concurrently while maintaining coordination\n- **Subgraph composition**: Reusable agent groups for common patterns like document analysis pipelines\n\n**State Management at Scale**\n\nOne critical insight: LangGraph's immutable state updates prevent race conditions but increase memory usage as workflows grow. We implemented:\n\n- Typed state schemas ensuring agent outputs align with expectations\n- Persistent checkpointing for long-running conversations\n- State versioning for debugging and rollback capabilities\n\n**RAG Integration with ChromaDB**\n\nIntegrating Retrieval-Augmented Generation reduced hallucination rates by 40% compared to base models. Key implementation details:\n\n- Vector database optimization for sub-100ms retrieval latency\n- Context window management to balance relevance and token limits\n- Multi-stage retrieval: coarse-grained filtering followed by semantic ranking\n\n**Production Deployment Considerations**\n\nDebugging multi-agent systems requires specialized observability. We implemented:\n\n- Full production tracing for diagnosing non-deterministic agent failures\n- Moderation loops with human-in-the-loop verification at critical decision points\n- Durable execution with checkpoint recovery for long-running workflows\n\n**Key Metrics**\n\n- System handles thousands of concurrent sessions\n- Average agent coordination latency: <200ms\n- State consistency: 99.9% across distributed nodes\n- RAG retrieval accuracy improvement: 40% reduction in hallucinations\n\nThe architecture now powers a production system processing complex multi-step reasoning tasks with reliability and scalability."
+      },
+      {
+        "id": "b2",
+        "title": "Achieving 1M+ RPS: Architecture Patterns for Extreme-Scale AdTech Systems",
+        "date": "Dec 2025",
+        "readTime": "~5 min",
+        "category": "High-Load",
+        "excerpt": "Deep dive into building a real-time OpenRTB bidder processing 1 million requests per second: Aerospike optimization, gRPC performance, and JVM tuning.",
+        "content": "Processing 1 million requests per second within strict 100ms OpenRTB timeouts requires fundamental architectural shifts. This article details the patterns and optimizations that enabled our AdTech bidder to achieve 99.99% availability at extreme scale.\n\n**The OpenRTB Challenge**\n\nReal-time bidding auctions have non-negotiable constraints: 100ms total timeout, including network latency, database lookups, and bid calculation. Standard architectures fail catastrophically at this scale.\n\n**Database Layer: The Aerospike Migration**\n\nRelational databases became the primary bottleneck. We migrated hot data (campaign configs, user segments, bid floors) to Aerospike, achieving:\n\n- Sub-millisecond read latency (0.3-0.8ms p99)\n- Horizontal scaling across 12-node cluster\n- In-memory data structures with SSD persistence\n- Automatic data distribution and rebalancing\n\n**Key Optimizations:**\n\n- **Namespace design**: Separated hot vs. warm data into different namespaces with distinct retention policies\n- **Record sizing**: Optimized record structure to fit within single-node memory limits\n- **Write policy tuning**: Configured write-through persistence with async replication\n- **Query patterns**: Eliminated secondary indexes, using primary key lookups exclusively\n\n**Network Layer: gRPC vs REST**\n\nMoving from REST/JSON to gRPC provided significant performance gains:\n\n- **Payload reduction**: Protocol Buffers reduced message size by 60-70% vs JSON\n- **Serialization overhead**: Binary encoding eliminated JSON parsing bottlenecks\n- **HTTP/2 multiplexing**: Single connection handling multiple concurrent requests\n- **Streaming support**: Bidirectional streams for real-time campaign updates\n\n**Performance Impact:**\n\n- Network latency reduction: 15-20ms → 3-5ms per request\n- CPU usage: 40% reduction in serialization overhead\n- Throughput: 3x improvement in requests per CPU core\n\n**JVM Tuning for Extreme Throughput**\n\nJava GC pauses were unacceptable at this scale. We implemented:\n\n- **G1GC tuning**: MaxGCPauseMillis=10ms, InitiatingHeapOccupancyPercent=45\n- **Off-heap memory**: Direct memory allocation for network buffers\n- **Thread pool optimization**: Custom executor with work-stealing queues\n- **NUMA awareness**: CPU affinity for critical threads\n\n**System-Level Optimizations**\n\n- **Kernel parameters**: Increased socket buffer sizes, TCP tuning for high throughput\n- **Load balancing**: NGINX with consistent hashing for session affinity\n- **Circuit breakers**: Fast-fail mechanisms preventing cascade failures\n- **Rate limiting**: Token bucket algorithm with distributed coordination\n\n**Architecture Patterns**\n\n- **Horizontal partitioning**: Sharded data by campaign ID and user segment\n- **Caching strategy**: Multi-layer cache (L1: local, L2: distributed Redis)\n- **Async processing**: Non-blocking I/O throughout the stack\n- **Predictive modeling**: Pre-computed bid values cached for common scenarios\n\n**Results**\n\n- **Throughput**: Stable 1M+ RPS with 99.99% availability\n- **Latency**: p99 response time: 85ms (15ms headroom under 100ms limit)\n- **Resource efficiency**: 40% reduction in infrastructure costs vs. initial design\n- **Scalability**: Linear scaling to 2M+ RPS with additional nodes\n\n**Lessons Learned**\n\n- Database choice is critical: NoSQL in-memory stores are essential for sub-millisecond access\n- Protocol matters: gRPC provides measurable performance advantages at scale\n- JVM tuning requires deep understanding: GC behavior directly impacts tail latency\n- Observability is non-negotiable: Without comprehensive metrics, optimization is guesswork"
+      },
+      {
+        "id": "b3",
+        "title": "GOST Cryptography in Modern FinTech: Event-Driven Architecture for High-Load Digital Signatures",
+        "date": "Dec 2025",
+        "readTime": "~5 min",
+        "category": "Security",
+        "excerpt": "Implementing GOST algorithms in cloud-native microservices: Kubernetes deployment, Kafka event streaming, and handling 500% load spikes.",
+        "content": "Integrating GOST cryptographic standards into modern Java microservices presents unique challenges: legacy library compatibility, performance under load, and compliance with strict banking security standards. This article details our approach to building a production-grade cryptographic service handling millions of digital signatures.\n\n**The GOST Challenge**\n\nGOST-256 and GOST-3411 algorithms are mandatory for Russian FinTech compliance, but integrating legacy Bouncy Castle libraries into cloud-native architectures requires careful design.\n\n**Microservice Architecture**\n\nWe encapsulated cryptographic operations into a dedicated microservice with clear boundaries:\n\n- **Isolated scaling**: Crypto service scales independently based on signing request volume\n- **Resource isolation**: Heavy cryptographic operations don't impact user-facing APIs\n- **Security hardening**: Reduced attack surface through minimal dependencies\n- **Compliance boundary**: All GOST operations contained within auditable service\n\n**Event-Driven Design with Kafka**\n\nSynchronous cryptographic operations create unacceptable latency spikes. We implemented an event-driven architecture:\n\n- **Request decoupling**: User-facing APIs publish signing requests to Kafka topics\n- **Async processing**: Dedicated consumer groups process signatures asynchronously\n- **Result streaming**: Completed signatures published back through Kafka for API consumption\n- **Dead letter queues**: Failed operations routed to DLQ for manual review\n\n**Benefits:**\n\n- **Latency isolation**: API response times unaffected by cryptographic processing\n- **Backpressure handling**: Kafka buffers handle traffic spikes gracefully\n- **Retry logic**: Automatic retries for transient failures\n- **Observability**: Full request tracing through Kafka message headers\n\n**Kubernetes Deployment Strategy**\n\nContainerized cryptographic services require special considerations:\n\n- **Resource limits**: CPU-intensive operations need guaranteed CPU allocation\n- **Horizontal Pod Autoscaling**: Scale based on Kafka consumer lag metrics\n- **Pod Disruption Budgets**: Ensure minimum availability during cluster maintenance\n- **Network policies**: Restrict inter-service communication to required paths only\n\n**Handling Load Spikes**\n\nEnd-of-quarter reporting periods generate 500% traffic spikes. Our architecture handles this through:\n\n- **Kafka partitioning**: 32 partitions allow parallel processing across consumer instances\n- **Consumer group scaling**: Auto-scaling from 4 to 20 pods during peak periods\n- **Batch processing**: Configurable batch sizes for optimal throughput\n- **Circuit breakers**: Prevent cascade failures when downstream services are overwhelmed\n\n**Performance Optimizations**\n\n- **Connection pooling**: Reused Kafka producer/consumer connections\n- **Batching**: Grouped multiple signing requests into single Kafka messages\n- **Caching**: Cached frequently-used certificate chains and public keys\n- **Hardware acceleration**: Evaluated HSM integration for future performance gains\n\n**Security Considerations**\n\n- **Key management**: Integration with HashiCorp Vault for secure key storage\n- **Audit logging**: Comprehensive logging of all cryptographic operations\n- **Access control**: RBAC policies restricting service-to-service communication\n- **Compliance**: External security audits passed with zero critical vulnerabilities\n\n**Results**\n\n- **Throughput**: Handles 500% load spikes without degradation\n- **Latency**: 95th percentile signing time: 120ms (async processing)\n- **Availability**: 99.95% uptime with Kubernetes self-healing\n- **Compliance**: Passed external security audits with zero critical findings\n- **Scalability**: Linear scaling to 10x baseline load with additional pods\n\n**Key Takeaways**\n\n- Event-driven architecture is essential for CPU-intensive operations\n- Kafka provides natural backpressure and retry mechanisms\n- Kubernetes enables dynamic scaling for variable workloads\n- Microservice isolation simplifies security and compliance boundaries\n- Async processing transforms latency from blocking to non-blocking concern"
+      }
+    ]
   },
   "contact": {
     "title": "Let's Build Something",
@@ -246,9 +298,14 @@
       "errorStatus": "Request failed with status {status}. Please try again."
     },
     "resume": {
+      "title": "Resume - Aleksandr Zhukov",
       "viewResume": "View Resume",
       "downloadResume": "Download Resume",
-      "printResume": "Print Resume"
+      "printResume": "Print / Save PDF",
+      "professionalSummary": "Professional Summary",
+      "summaryText": "Software Engineer with over 10 years of experience in designing and implementing complex IT solutions. Specializing in high-load distributed systems, microservices architectures, and AI-powered applications. Expert in Java (Spring Boot) and Python (AI/ML), with deep knowledge of DevOps practices (Docker, K8s).",
+      "experience": "Experience",
+      "technicalSkills": "Technical Skills"
     }
   },
   "footer": {

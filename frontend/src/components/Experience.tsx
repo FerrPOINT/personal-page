@@ -2,24 +2,12 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Briefcase, Calendar, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../i18n/hooks/useLanguage';
-import { translations } from '../i18n/translations';
-import { ExperienceItem } from '../types';
+import { getTranslatedExperience } from '../i18n/utils/getTranslatedData';
 
 const Experience: React.FC = () => {
   const { t, language } = useLanguage();
   
-  const experienceItems = useMemo<ExperienceItem[]>(() => {
-    const items = translations[language].experience?.items || [];
-    return items.map((item: any) => ({
-      id: item.id,
-      role: item.role,
-      company: item.company,
-      period: item.period,
-      description: item.description,
-      achievements: item.achievements || [],
-      tech: item.tech || []
-    }));
-  }, [language]);
+  const experienceItems = useMemo(() => getTranslatedExperience(language), [language]);
   
   return (
     <section id="experience" className="py-24 bg-surface relative overflow-hidden scroll-mt-24">

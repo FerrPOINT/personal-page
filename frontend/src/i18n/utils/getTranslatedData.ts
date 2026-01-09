@@ -67,3 +67,34 @@ export const getTranslatedCategories = (language: Language): Record<string, stri
   return translations[language].projects?.categories || {};
 };
 
+/**
+ * Получает переведенные навыки
+ */
+export const getTranslatedSkills = (language: Language): TechSkill[] => {
+  const skills = translations[language].techStack?.skills;
+  if (!skills) return [];
+  
+  return skills.map((skill: any) => ({
+    name: skill.name,
+    level: skill.level,
+    category: skill.category
+  }));
+};
+
+/**
+ * Получает маппинг категорий для отображения (для проектов и блога)
+ */
+export const getCategoryMap = (language: Language, t: (key: string) => string): Record<string, string> => {
+  const categories = translations[language].projects?.categories || {};
+  return {
+    'AI': categories.ai || 'AI',
+    'DevOps': categories.devops || 'DevOps',
+    'FullStack': categories.fullstack || 'FullStack',
+    'All': categories.all || t('projects.categories.all'),
+    // Категории для блога
+    'AI Architecture': language === 'ru' ? 'Архитектура ИИ' : 'AI Architecture',
+    'High-Load': language === 'ru' ? 'Высокая нагрузка' : 'High-Load',
+    'Security': language === 'ru' ? 'Безопасность' : 'Security'
+  };
+};
+

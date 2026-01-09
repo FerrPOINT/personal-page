@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ResponsiveContainer, BarChart, Bar, XAxis, Cell, YAxis, CartesianGrid } from 'recharts';
-import { SKILLS } from '../constants';
 import { useLanguage } from '../i18n/hooks/useLanguage';
+import { TechSkill } from '../types';
+import { getTranslatedSkills } from '../i18n/utils/getTranslatedData';
 
 const TechStack: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  
+  const skills = useMemo(() => getTranslatedSkills(language), [language]);
   
   return (
     <section id="skills" className="py-24 bg-surface border-y border-white/5 scroll-mt-24">
@@ -46,7 +49,7 @@ const TechStack: React.FC = () => {
              >
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={SKILLS}
+                  data={skills}
                   layout="vertical"
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
@@ -61,7 +64,7 @@ const TechStack: React.FC = () => {
                     tickLine={false}
                   />
                   <Bar dataKey="level" barSize={20} radius={[0, 4, 4, 0]}>
-                    {SKILLS.map((entry, index) => (
+                    {skills.map((entry, index) => (
                       <Cell 
                         key={`cell-${index}`} 
                         fill={index % 2 === 0 ? '#00d9ff' : '#ff00ff'} 

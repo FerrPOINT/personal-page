@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, Github, Linkedin, FileText, Printer, Download, Briefcase } from 'lucide-react';
 import Modal from './Modal';
-import { EXPERIENCE, SKILLS } from '../constants';
 import { useLanguage } from '../i18n/hooks/useLanguage';
+import { getTranslatedExperience, getTranslatedSkills } from '../i18n/utils/getTranslatedData';
+import { ExperienceItem, TechSkill } from '../types';
 
 type FormData = {
   name: string;
@@ -13,12 +14,15 @@ type FormData = {
 };
 
 const Contact: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = useForm<FormData>();
   const [showResume, setShowResume] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [submitMessage, setSubmitMessage] = useState<string>('');
   const messageContent = watch('message', '');
+
+  const experienceItems = useMemo(() => getTranslatedExperience(language), [language]);
+  const skills = useMemo(() => getTranslatedSkills(language), [language]);
 
   const API_URL = import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim() !== '' ? import.meta.env.VITE_API_URL : '/api';
 
@@ -127,10 +131,11 @@ const Contact: React.FC = () => {
     if (printContent) {
         const win = window.open('', '', 'width=800,height=900');
         if (win) {
+            const pageTitle = t('contact.resume.pageTitle');
             win.document.write(`
                 <html>
                     <head>
-                        <title>Aleksandr Zhukov - Resume</title>
+                        <title>${pageTitle}</title>
                         <style>
                             body { font-family: Arial, sans-serif; line-height: 1.5; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
                             h1 { margin-bottom: 5px; }
@@ -293,7 +298,7 @@ const Contact: React.FC = () => {
       <Modal 
         isOpen={showResume} 
         onClose={() => setShowResume(false)}
-        title="Resume - Aleksandr Zhukov"
+        title={t('contact.resume.title')}
       >
         <div className="flex justify-end mb-4 no-print">
             <button 
@@ -301,15 +306,15 @@ const Contact: React.FC = () => {
                 className="flex items-center px-4 py-2 bg-accent-cyan text-black rounded hover:bg-white transition-colors text-sm font-bold"
             >
                 <Printer className="w-4 h-4 mr-2" />
-                Print / Save PDF
+                {t('contact.resume.printResume')}
             </button>
         </div>
 
         {/* Printable Area */}
         <div id="printable-resume" className="bg-white text-black p-8 rounded-lg">
             <div className="header border-b-2 border-black pb-4 mb-6">
-                <h1 className="text-3xl font-bold uppercase tracking-wider">Aleksandr Zhukov</h1>
-                <p className="text-lg text-gray-700">Senior Software Architect</p>
+                <h1 className="text-3xl font-bold uppercase tracking-wider">{t('contact.resume.name')}</h1>
+                <p className="text-lg text-gray-700">{t('contact.resume.position')}</p>
                 <div className="mt-2 text-sm text-gray-600 flex flex-wrap gap-4">
                     <span>+7 (983) 320-97-85</span>
                     <span>ferruspoint@mail.ru</span>
@@ -318,18 +323,16 @@ const Contact: React.FC = () => {
             </div>
 
             <section className="mb-6">
-                <h2 className="text-xl font-bold uppercase border-b border-gray-300 mb-4 pb-1">Professional Summary</h2>
+                <h2 className="text-xl font-bold uppercase border-b border-gray-300 mb-4 pb-1">{t('contact.resume.professionalSummary')}</h2>
                 <p className="text-sm text-gray-800 leading-relaxed">
-                    Software Engineer with over 10 years of experience in designing and implementing complex IT solutions. 
-                    Specializing in high-load distributed systems, microservices architectures, and AI-powered applications. 
-                    Expert in Java (Spring Boot) and Python (AI/ML), with deep knowledge of DevOps practices (Docker, K8s).
+                    {t('contact.resume.summaryText')}
                 </p>
             </section>
 
             <section className="mb-6">
-                <h2 className="text-xl font-bold uppercase border-b border-gray-300 mb-4 pb-1">Experience</h2>
+                <h2 className="text-xl font-bold uppercase border-b border-gray-300 mb-4 pb-1">{t('contact.resume.experience')}</h2>
                 <div className="space-y-6">
-                    {EXPERIENCE.map(job => (
+                    {experienceItems.map(job => (
                         <div key={job.id} className="job">
                             <div className="job-header flex justify-between items-baseline mb-2">
                                 <h3 className="font-bold text-lg">{job.role}</h3>
@@ -348,9 +351,9 @@ const Contact: React.FC = () => {
             </section>
 
             <section className="mb-6">
-                <h2 className="text-xl font-bold uppercase border-b border-gray-300 mb-4 pb-1">Technical Skills</h2>
+                <h2 className="text-xl font-bold uppercase border-b border-gray-300 mb-4 pb-1">{t('contact.resume.technicalSkills')}</h2>
                 <div className="skills flex flex-wrap gap-2">
-                    {SKILLS.map(skill => (
+                    {skills.map(skill => (
                         <span key={skill.name} className="skill-tag bg-gray-200 px-2 py-1 rounded text-sm font-medium">
                             {skill.name}
                         </span>
