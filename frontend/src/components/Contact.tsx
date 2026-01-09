@@ -12,16 +12,36 @@ type FormData = {
 };
 
 const Contact: React.FC = () => {
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<FormData>();
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = useForm<FormData>();
   const [showResume, setShowResume] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [submitMessage, setSubmitMessage] = useState<string>('');
+  const messageContent = watch('message', '');
 
   const API_URL = import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim() !== '' ? import.meta.env.VITE_API_URL : '/api';
+
+  // Вычисляем размер сообщения в реальном времени
+  const messageSize = messageContent ? new Blob([messageContent]).size : 0;
+  const maxSize = 100 * 1024; // 100KB
+  const sizeKB = (messageSize / 1024).toFixed(2);
+  const maxSizeKB = (maxSize / 1024).toFixed(0);
+  const isSizeWarning = messageSize > maxSize * 0.8; // Предупреждение при 80% лимита
+  const isSizeExceeded = messageSize > maxSize;
 
   const onSubmit = async (data: FormData) => {
     setSubmitStatus('idle');
     setSubmitMessage('');
+
+    // Валидация размера сообщения на фронтенде (максимум 100KB)
+    const messageSize = new Blob([data.message]).size;
+    const maxSize = 100 * 1024; // 100KB
+    if (messageSize > maxSize) {
+      const sizeMB = (messageSize / (1024 * 1024)).toFixed(2);
+      const maxMB = (maxSize / (1024 * 1024)).toFixed(2);
+      setSubmitStatus('error');
+      setSubmitMessage(`Message is too large (${sizeMB} MB). Maximum allowed size is ${maxMB} MB. Please shorten your message.`);
+      return;
+    }
 
     try {
       const response = await fetch(`${API_URL}/contact`, {
@@ -36,9 +56,43 @@ const Contact: React.FC = () => {
         }),
       });
 
+      // Проверяем статус ДО попытки парсить JSON
+      if (!response.ok) {
+        let errorMessage = 'Failed to send message.';
+        
+        // Обрабатываем специфичные статус-коды
+        switch (response.status) {
+          case 413:
+            errorMessage = 'Message is too large. The server rejected your request because it exceeds the maximum allowed size. Please shorten your message to less than 1 MB.';
+            break;
+          case 400:
+            // Пытаемся получить детали ошибки валидации
+            try {
+              const errorData = await response.json();
+              errorMessage = errorData.error || errorData.details?.join(', ') || 'Invalid request data. Please check your input.';
+            } catch {
+              errorMessage = 'Invalid request data. Please check your input.';
+            }
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          case 503:
+            errorMessage = 'Service temporarily unavailable. Please try again later.';
+            break;
+          default:
+            errorMessage = `Request failed with status ${response.status}. Please try again.`;
+        }
+
+        setSubmitStatus('error');
+        setSubmitMessage(errorMessage);
+        return;
+      }
+
+      // Если статус OK, парсим JSON
       const result = await response.json();
 
-      if (response.ok && result.success) {
+      if (result.success) {
         setSubmitStatus('success');
         setSubmitMessage('Thank you! Your message has been sent successfully.');
         reset();
@@ -54,7 +108,15 @@ const Contact: React.FC = () => {
     } catch (error) {
       console.error('Error submitting form:', error);
       setSubmitStatus('error');
-      setSubmitMessage('Network error. Please check your connection and try again.');
+      
+      // Более детальная обработка ошибок сети
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        setSubmitMessage('Network error: Unable to connect to the server. Please check your internet connection and try again.');
+      } else if (error instanceof SyntaxError) {
+        setSubmitMessage('Server returned invalid response. Please try again or contact support.');
+      } else {
+        setSubmitMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred. Please try again.'}`);
+      }
     }
   };
 
@@ -186,7 +248,14 @@ const Contact: React.FC = () => {
                   className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-colors"
                   placeholder="Briefly describe your project or inquiry..."
                 />
-                {errors.message && <span className="text-red-500 text-xs mt-1">Required</span>}
+                <div className="flex justify-between items-center mt-1">
+                  {errors.message && <span className="text-red-500 text-xs">Required</span>}
+                  <span className={`text-xs ml-auto ${isSizeExceeded ? 'text-red-500' : isSizeWarning ? 'text-yellow-500' : 'text-secondary'}`}>
+                    {sizeKB} KB / {maxSizeKB} KB
+                    {isSizeExceeded && ' (exceeded)'}
+                    {isSizeWarning && !isSizeExceeded && ' (warning)'}
+                  </span>
+                </div>
               </div>
 
               {submitStatus === 'success' && (
