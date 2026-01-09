@@ -47,7 +47,6 @@ app.use(cors({
       if (process.env.NODE_ENV === 'development') {
         callback(null, true);
       } else {
-        console.log(`❌ CORS: Rejecting origin "${origin}" (not in allowed list: [${allowedOrigins.join(', ')}])`);
         callback(new Error('Not allowed by CORS'));
       }
     }

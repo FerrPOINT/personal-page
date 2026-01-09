@@ -50,7 +50,61 @@
     "metrics": "Метрики"
   },
   "experience": {
-    "title": "Профессиональный путь"
+    "title": "Профессиональный путь",
+    "items": [
+      {
+        "id": "1",
+        "role": "Java Developer / Architect",
+        "company": "WMT Group",
+        "period": "Апр 2022 - Настоящее время",
+        "description": "Руководство разработкой сложных распределенных систем, включая архитектуру Multi-Agent AI, сервисы безопасности FinTech и HR платформы.",
+        "achievements": [
+          "Спроектировал Multi-Agent систему с использованием LangChain/LangGraph с 10+ автономными агентами.",
+          "Разработал комплексную HR платформу для рекрутинга (Full-Stack) с 4 независимыми модулями.",
+          "Реализовал криптографические сервисы (алгоритмы GOST) для обработки высоконагруженных цифровых подписей.",
+          "Настроил end-to-end CI/CD пайплайны в GitLab с автоматическим сканированием безопасности."
+        ],
+        "tech": ["Java 21", "Spring Boot 3", "Python", "LangChain", "PostgreSQL", "React", "Kubernetes"]
+      },
+      {
+        "id": "2",
+        "role": "FullStack Java Software Engineer",
+        "company": "Jar Soft",
+        "period": "Янв 2017 - Фев 2022",
+        "description": "Разработал высоконагруженные распределенные серверные системы и AdTech решения, обрабатывающие ~1 миллион RPS.",
+        "achievements": [
+          "Построил систему OpenRTB bidder, обрабатывающую ~1 миллион запросов в секунду.",
+          "Спроектировал архитектуру для сервисов предиктивного моделирования на AWS.",
+          "Разработал CRM UI и backend сервисы для управления кампаниями.",
+          "Настроил Aerospike и JVM для субмиллисекундного времени отклика."
+        ],
+        "tech": ["Java", "Spring Boot", "AWS", "Aerospike", "MySQL", "gRPC", "React", "OpenRTB"]
+      },
+      {
+        "id": "3",
+        "role": "Software Developer",
+        "company": "Improve Group",
+        "period": "Авг 2016 - Дек 2016",
+        "description": "Модификация ПО и исследование фреймворков.",
+        "achievements": [
+          "Быстрое внедрение новых фреймворков и технологий для клиентских проектов.",
+          "Модификация и поддержка существующих корпоративных приложений."
+        ],
+        "tech": ["Java", "Frameworks", "Enterprise Systems"]
+      },
+      {
+        "id": "4",
+        "role": "Software Developer",
+        "company": "Academ-Media",
+        "period": "Авг 2015 - Авг 2016",
+        "description": "Разработка игр и оптимизация движка для мобильных платформ.",
+        "achievements": [
+          "Оптимизировал игровой движок для устройств с ограниченными ресурсами.",
+          "Разработал приложения Universal Windows Platform (UWP) на C#."
+        ],
+        "tech": ["Java", "C#", "Game Dev", "Mobile Optimization"]
+      }
+    ]
   },
   "techStack": {
     "title": "Техническая экспертиза",

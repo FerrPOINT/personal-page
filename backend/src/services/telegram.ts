@@ -70,8 +70,6 @@ function setupMessageHandler(): void {
     // Check if sender is admin
     const isAdmin = TELEGRAM_ADMIN_ID && TELEGRAM_ADMIN_ID.trim() !== '' && userId === TELEGRAM_ADMIN_ID.trim();
     
-    console.log(`🔍 Admin check: userId=${userId}, TELEGRAM_ADMIN_ID=${TELEGRAM_ADMIN_ID}, isAdmin=${isAdmin}`);
-    
     if (isAdmin) {
       // Admin: respond with registered Telegram ID
       try {
