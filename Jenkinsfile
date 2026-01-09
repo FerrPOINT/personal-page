@@ -1,6 +1,12 @@
 pipeline {
     agent any
     
+    // Автоматический запуск при изменениях в main ветке
+    // Poll SCM каждые 5 минут - компромисс между ресурсами и скоростью
+    // Для мгновенного запуска нужен публичный URL Jenkins и GitHub webhook
+    triggers {
+        pollSCM('H/5 * * * *')
+    }
     
     environment {
         // SSH connection settings
