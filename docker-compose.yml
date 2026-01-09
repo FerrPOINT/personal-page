@@ -31,6 +31,7 @@ services:
       - .env
     environment:
       - NODE_ENV=${NODE_ENV:-production}
+      - FRONTEND_URL=${FRONTEND_URL:-}
     volumes:
       - backend_data:/app/data
     networks:
