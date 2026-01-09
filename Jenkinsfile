@@ -5,13 +5,16 @@ pipeline {
         // SSH connection settings
         // azhukov-dev - алиас (если не резолвится, используйте реальный хост ниже)
         // Реальный хост из deployment-guide: 7eb10d5af2ad.vps.myjino.ru:49233
-        DEPLOY_HOST = '7eb10d5af2ad.vps.myjino.ru'  // Реальный хост сервера
-        DEPLOY_PORT = '49233'  // SSH порт сервера
+        DEPLOY_HOST = 'azhukov-dev'  // Алиас сервера (или 7eb10d5af2ad.vps.myjino.ru)
+        DEPLOY_PORT = '22'  // SSH порт сервера (по умолчанию 22)
         DEPLOY_USER = 'root'
         DEPLOY_PATH = '/opt/personal-page'
         
         // Docker Compose settings
         COMPOSE_PROJECT_NAME = 'personal-page'
+        
+        // Jenkins URL для справки
+        JENKINS_URL = 'http://192.168.1.49:32768/'
     }
     
     options {
@@ -52,7 +55,13 @@ pipeline {
                     echo "🚀 Деплой на сервер ${DEPLOY_HOST}:${DEPLOY_PORT}..."
                     
                     // Используем SSH для подключения к серверу и запуска скрипта деплоя
-                    withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-ssh-deploy-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                    // Передаем секреты через переменные окружения (если настроены в Jenkins Credentials)
+                    withCredentials([
+                        sshUserPrivateKey(credentialsId: 'jenkins-ssh-deploy-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
+                        // Опционально: можно добавить секреты через string credentials
+                        // string(credentialsId: 'telegram-bot-token', variable: 'TELEGRAM_BOT_TOKEN'),
+                        // string(credentialsId: 'telegram-user-id', variable: 'TELEGRAM_USER_ID'),
+                    ]) {
                         sh """
                             # Подключение к серверу и запуск деплоя
                             SSH_PORT_FLAG=""
@@ -60,11 +69,19 @@ pipeline {
                                 SSH_PORT_FLAG="-p ${DEPLOY_PORT}"
                             fi
                             
+                            # Экспортируем секреты для передачи в скрипт деплоя (если они установлены)
+                            export TELEGRAM_BOT_TOKEN="${env.TELEGRAM_BOT_TOKEN ?: ''}"
+                            export TELEGRAM_USER_ID="${env.TELEGRAM_USER_ID ?: ''}"
+                            export GEMINI_API_KEY="${env.GEMINI_API_KEY ?: ''}"
+                            
                             ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} \${SSH_PORT_FLAG} ${DEPLOY_USER}@${DEPLOY_HOST} \
                                 "cd ${DEPLOY_PATH} && \
                                  git fetch origin && \
                                  git checkout -f origin/main || git checkout -f origin/master && \
                                  chmod +x scripts/deploy.sh && \
+                                 TELEGRAM_BOT_TOKEN='${env.TELEGRAM_BOT_TOKEN ?: ''}' \
+                                 TELEGRAM_USER_ID='${env.TELEGRAM_USER_ID ?: ''}' \
+                                 GEMINI_API_KEY='${env.GEMINI_API_KEY ?: ''}' \
                                  bash scripts/deploy.sh"
                         """
                     }

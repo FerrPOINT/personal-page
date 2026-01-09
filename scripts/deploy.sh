@@ -31,9 +31,53 @@ echo "✅ Код обновлен"
 # Настройка окружения
 echo ""
 echo "🔧 Настройка окружения..."
-if [ -f env.prod ]; then
+
+# Функция для проверки, содержит ли файл placeholder значения
+contains_placeholders() {
+    local file="$1"
+    if [ ! -f "$file" ]; then
+        return 1
+    fi
+    grep -q "your_bot_token_here\|your_user_id_here\|your_gemini_api_key_here" "$file" 2>/dev/null
+}
+
+# Если .env уже существует и содержит реальные значения (не placeholder), не перезаписываем
+if [ -f .env ] && ! contains_placeholders .env; then
+    echo "✅ .env уже существует с реальными значениями, сохраняем его"
+    # Обновляем только отсутствующие переменные из env.prod
+    if [ -f env.prod ]; then
+        # Добавляем только новые переменные, которых нет в .env
+        while IFS='=' read -r key value; do
+            # Пропускаем комментарии и пустые строки
+            [[ "$key" =~ ^#.*$ ]] && continue
+            [[ -z "$key" ]] && continue
+            # Пропускаем placeholder значения
+            [[ "$value" =~ your_.*_here ]] && continue
+            # Если переменная отсутствует в .env, добавляем её
+            if ! grep -q "^${key}=" .env 2>/dev/null; then
+                echo "${key}=${value}" >> .env
+                echo "  ➕ Добавлена переменная: ${key}"
+            fi
+        done < env.prod
+    fi
+elif [ -f env.prod ]; then
+    # Если .env не существует или содержит placeholder, копируем из env.prod
     cp env.prod .env
     echo "✅ env.prod скопирован в .env"
+    
+    # Обновляем секреты из переменных окружения Jenkins (если переданы)
+    if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ "$TELEGRAM_BOT_TOKEN" != "your_bot_token_here" ]; then
+        sed -i "s|^TELEGRAM_BOT_TOKEN=.*|TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}|" .env
+        echo "  🔐 TELEGRAM_BOT_TOKEN обновлен из Jenkins"
+    fi
+    if [ -n "$TELEGRAM_USER_ID" ] && [ "$TELEGRAM_USER_ID" != "your_user_id_here" ]; then
+        sed -i "s|^TELEGRAM_USER_ID=.*|TELEGRAM_USER_ID=${TELEGRAM_USER_ID}|" .env
+        echo "  🔐 TELEGRAM_USER_ID обновлен из Jenkins"
+    fi
+    if [ -n "$GEMINI_API_KEY" ] && [ "$GEMINI_API_KEY" != "your_gemini_api_key_here" ]; then
+        sed -i "s|^GEMINI_API_KEY=.*|GEMINI_API_KEY=${GEMINI_API_KEY}|" .env
+        echo "  🔐 GEMINI_API_KEY обновлен из Jenkins"
+    fi
 elif [ -f env.local ]; then
     cp env.local .env
     echo "✅ env.local скопирован в .env"
