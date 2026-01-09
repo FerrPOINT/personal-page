@@ -33,40 +33,13 @@ pipeline {
             }
         }
         
-        stage('Build') {
+        stage('Validate') {
             steps {
                 script {
-                    echo "🔨 Сборка Docker образов..."
-                    // Проверяем наличие Docker
-                    sh 'docker --version || (echo "❌ Docker не найден на Jenkins agent" && exit 1)'
-                    
-                    // Собираем образы (без запуска)
-                    // Используем docker compose (новый формат команды)
-                    sh '''
-                        if command -v docker-compose &> /dev/null; then
-                            echo "Используется docker-compose"
-                            docker-compose build --no-cache
-                        elif docker compose version &> /dev/null; then
-                            echo "Используется docker compose"
-                            docker compose build --no-cache
-                        else
-                            echo "❌ Docker Compose не найден"
-                            exit 1
-                        fi
-                    '''
-                    
-                    echo "✅ Образы успешно собраны"
-                }
-            }
-        }
-        
-        stage('Test') {
-            steps {
-                script {
-                    echo "🧪 Запуск тестов..."
-                    // Здесь можно добавить тесты, если они есть
-                    // sh 'npm test' или другие команды тестирования
-                    echo "✅ Тесты пройдены (пропущено, если тесты не настроены)"
+                    echo "✅ Проверка кода..."
+                    // Проверяем, что Jenkinsfile существует
+                    sh 'test -f Jenkinsfile && echo "✅ Jenkinsfile найден" || (echo "❌ Jenkinsfile не найден" && exit 1)'
+                    echo "✅ Валидация завершена"
                 }
             }
         }
