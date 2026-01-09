@@ -1,0 +1,84 @@
+# Jenkins CI/CD - Быстрая шпаргалка
+
+## 🚀 Быстрый старт (5 минут)
+
+### 1. SSH ключ
+```bash
+# Показать ключ для Jenkins credentials
+cat ~/.ssh/id_ed25519
+
+# Добавить на сервер
+ssh-copy-id -i ~/.ssh/id_ed25519.pub -p <PORT> root@<HOST>
+```
+
+### 2. Jenkins Credentials
+- **ID**: `jenkins-ssh-deploy-key`
+- **Kind**: SSH Username with private key
+- **Username**: `root`
+- **Private Key**: вставить из шага 1
+
+### 3. Jenkinsfile переменные
+```groovy
+DEPLOY_HOST = 'your-server.com'
+DEPLOY_PORT = '22'
+DEPLOY_USER = 'root'
+DEPLOY_PATH = '/opt/your-project'
+COMPOSE_PROJECT_NAME = 'your-project'
+credentialsId: 'jenkins-ssh-deploy-key'  // ⚠️ Должен совпадать!
+```
+
+### 4. Скрипт deploy.sh
+```bash
+#!/bin/bash
+set -e
+cp env.prod .env || true
+docker compose down || true
+docker compose up -d --build
+sleep 5
+docker compose exec -T backend npm run migrate || true
+curl -f http://localhost:9000/health || exit 1
+```
+
+### 5. Сервер
+```bash
+ssh root@<HOST> "cd /opt/your-project && git clone <repo> . && cp env.example.txt env.prod"
+```
+
+## 📋 Чек-лист
+
+- [ ] SSH ключ создан
+- [ ] Credentials в Jenkins (ID: `jenkins-ssh-deploy-key`)
+- [ ] Jenkinsfile настроен
+- [ ] scripts/deploy.sh создан (`chmod +x`)
+- [ ] Репозиторий клонирован на сервере
+- [ ] env.prod настроен на сервере
+- [ ] Первый build успешен
+
+## 🔍 Проверка
+
+```bash
+# Статус build
+curl -s -u user:token \
+  "http://jenkins/job/job-name/lastBuild/api/json?tree=result"
+
+# Логи
+curl -s -u user:token \
+  "http://jenkins/job/job-name/lastBuild/consoleText" | tail -50
+
+# Контейнеры на сервере
+ssh root@host "cd /opt/project && docker compose ps"
+```
+
+## 🐛 Частые проблемы
+
+| Проблема | Решение |
+|----------|---------|
+| `Could not find credentials` | Проверьте ID в Jenkinsfile |
+| `Permission denied` | Добавьте публичный ключ на сервер |
+| `docker-compose: not found` | Используйте `docker compose` (без дефиса) |
+| Build зависает | Проверьте таймаут и доступность сервера |
+
+## 📚 Полная документация
+
+См. `info/jenkins-cicd-setup-guide.qmd` для детальной инструкции.
+
