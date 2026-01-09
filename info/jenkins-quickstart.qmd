@@ -1,0 +1,135 @@
+# Jenkins Pipeline - Быстрый старт
+
+## ✅ Проверка подключения
+
+Jenkins доступен и работает:
+- **URL**: `http://192.168.1.49:32768/`
+- **Пользователь**: `ferrpoint`
+- **Токен**: `1191a9f019fc3989d7a5ff30d456fb9cf3`
+
+**✅ Jenkins job уже создан автоматически!**
+- **Job**: `personal-page-deploy`
+- **URL**: `http://192.168.1.49:32768/job/personal-page-deploy`
+
+Проверить подключение можно командой:
+```bash
+bash scripts/check-jenkins.sh
+```
+
+---
+
+## 🚀 Быстрая настройка (5 минут)
+
+### 1. Установите плагины в Jenkins
+
+Перейдите: **Manage Jenkins** → **Plugins** → **Available plugins**
+
+Установите:
+- ✅ Pipeline
+- ✅ SSH Pipeline Steps
+- ✅ Docker Pipeline
+- ✅ Git Plugin
+
+### 2. Настройте SSH Credentials
+
+**Manage Jenkins** → **Credentials** → **System** → **Global credentials** → **Add Credentials**
+
+- **Kind**: SSH Username with private key
+- **ID**: `jenkins-ssh-deploy-key`
+- **Username**: `root`
+- **Private Key**: Вставьте приватный SSH ключ для доступа к `7eb10d5af2ad.vps.myjino.ru:49233`
+
+### 3. Pipeline Job уже создан ✅
+
+Job `personal-page-deploy` уже создан автоматически через API.
+
+**Проверить job**: `http://192.168.1.49:32768/job/personal-page-deploy`
+
+Если нужно пересоздать job:
+```bash
+bash scripts/create-jenkins-job.sh "git@github.com:FerrPOINT/personal-page.git"
+```
+
+### 4. Настройте GitHub Webhook (опционально)
+
+В GitHub: **Settings** → **Webhooks** → **Add webhook**
+
+- **Payload URL**: `http://192.168.1.49:32768/github-webhook/`
+- **Content type**: `application/json`
+- **Events**: Just the push event
+
+### 5. Запустите первый build
+
+В Jenkins: Откройте job → **Build Now**
+
+---
+
+## 📋 Что делает Pipeline
+
+```{mermaid}
+graph LR
+    A[Git Push] --> B[Checkout]
+    B --> C[Build Images]
+    C --> D[Deploy]
+    D --> E[Health Check]
+    E --> F[✅ Done]
+    
+    style A fill:#e1f5ff
+    style F fill:#d4edda
+```
+
+1. **Checkout** - клонирует код из репозитория
+2. **Build** - собирает Docker образы
+3. **Deploy** - деплоит на сервер через SSH:
+   - `git pull` на сервере
+   - `docker compose up -d --build`
+   - Запуск миграций
+4. **Health Check** - проверяет работоспособность
+
+---
+
+## 🔧 Проверка на сервере
+
+Убедитесь, что на сервере есть файл `env.prod`:
+
+```bash
+ssh root@7eb10d5af2ad.vps.myjino.ru -p 49233
+cd /opt/personal-page
+ls -la env.prod
+```
+
+Если файла нет, создайте его на основе `env.example.txt`.
+
+---
+
+## 🐛 Troubleshooting
+
+### Jenkins не может подключиться к серверу
+
+```bash
+# Проверьте SSH доступ вручную
+ssh -p 49233 root@7eb10d5af2ad.vps.myjino.ru
+```
+
+### Job не запускается
+
+1. Проверьте логи: **Build** → **Console Output**
+2. Убедитесь, что Jenkinsfile в корне репозитория
+3. Проверьте настройки Git credentials
+
+### Деплой не работает
+
+1. Проверьте SSH credentials в Jenkins
+2. Проверьте права доступа на сервере
+3. Проверьте логи на сервере: `docker compose logs`
+
+---
+
+## 📚 Подробная документация
+
+См. `info/jenkins-pipeline.qmd` для полной документации.
+
+---
+
+**Готово!** После настройки pipeline будет автоматически деплоить приложение при каждом push в репозиторий.
+
