@@ -49,100 +49,15 @@ pipeline {
                 script {
                     echo "🚀 Деплой на сервер ${DEPLOY_HOST}:${DEPLOY_PORT}..."
                     
-                    // Используем SSH для подключения к серверу
+                    // Используем SSH для подключения к серверу и запуска скрипта деплоя
                     withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-ssh-deploy-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                         sh """
-                            ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'ENDSSH'
-                                set -e
-                                echo "📂 Переход в директорию проекта..."
-                                cd ${DEPLOY_PATH}
-                                
-                                echo "🔄 Обновление кода из репозитория..."
-                                git fetch origin
-                                git reset --hard origin/main || git reset --hard origin/master
-                                
-                                echo "🔧 Настройка окружения..."
-                                if [ -f env.prod ]; then
-                                    cp env.prod .env
-                                    echo "✅ env.prod скопирован в .env"
-                                else
-                                    echo "⚠️  env.prod не найден, используем существующий .env"
-                                fi
-                                
-                                echo "🐳 Остановка старых контейнеров..."
-                                if command -v docker-compose &> /dev/null; then
-                                    docker-compose down || true
-                                else
-                                    docker compose down || true
-                                fi
-                                
-                                echo "🔨 Сборка и запуск новых контейнеров..."
-                                if command -v docker-compose &> /dev/null; then
-                                    docker-compose up -d --build
-                                else
-                                    docker compose up -d --build
-                                fi
-                                
-                                echo "⏳ Ожидание запуска сервисов..."
-                                sleep 5
-                                
-                                echo "🗄️  Запуск миграций базы данных..."
-                                if command -v docker-compose &> /dev/null; then
-                                    docker-compose exec -T backend npm run migrate || echo "⚠️  Миграция уже выполнена"
-                                else
-                                    docker compose exec -T backend npm run migrate || echo "⚠️  Миграция уже выполнена"
-                                fi
-                                
-                                echo "📊 Проверка статуса контейнеров..."
-                                if command -v docker-compose &> /dev/null; then
-                                    docker-compose ps
-                                else
-                                    docker compose ps
-                                fi
-                                
-                                echo "✅ Деплой завершен успешно!"
-ENDSSH
-                        """
-                    }
-                }
-            }
-        }
-        
-        stage('Health Check') {
-            steps {
-                script {
-                    echo "🏥 Проверка здоровья сервисов..."
-                    
-                    withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-ssh-deploy-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
-                        sh """
-                            ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'ENDSSH'
-                                echo "🔍 Проверка backend health endpoint..."
-                                sleep 3
-                                
-                                # Проверяем health endpoint
-                                if curl -f http://localhost:9000/health > /dev/null 2>&1; then
-                                    echo "✅ Backend health check: OK"
-                                    curl http://localhost:9000/health
-                                else
-                                    echo "❌ Backend health check: FAILED"
-                                    echo "📋 Логи backend:"
-                                    if command -v docker-compose &> /dev/null; then
-                                        docker-compose logs --tail=50 backend
-                                    else
-                                        docker compose logs --tail=50 backend
-                                    fi
-                                    exit 1
-                                fi
-                                
-                                # Проверяем, что контейнеры запущены
-                                echo "🔍 Проверка статуса контейнеров..."
-                                if command -v docker-compose &> /dev/null; then
-                                    docker-compose ps | grep -q "Up" || exit 1
-                                else
-                                    docker compose ps | grep -q "Up" || exit 1
-                                fi
-                                echo "✅ Все контейнеры запущены"
-ENDSSH
+                            ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} \
+                                "cd ${DEPLOY_PATH} && \
+                                 git fetch origin && \
+                                 git checkout -f origin/main || git checkout -f origin/master && \
+                                 chmod +x scripts/deploy.sh && \
+                                 bash scripts/deploy.sh"
                         """
                     }
                 }
