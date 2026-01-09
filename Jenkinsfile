@@ -1,11 +1,6 @@
 pipeline {
     agent any
     
-    // Автоматический запуск при изменениях в main ветке
-    triggers {
-        // Проверка изменений каждую минуту для быстрого деплоя
-        pollSCM('* * * * *')
-    }
     
     environment {
         // SSH connection settings
