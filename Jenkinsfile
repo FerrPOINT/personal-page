@@ -55,14 +55,39 @@ pipeline {
                     
                     // Используем SSH для подключения к серверу и запуска скрипта деплоя
                     // BEST PRACTICE 2026: Используем Jenkins Credentials для секретов (не логируются)
+                    // Секреты опциональны - если не созданы в Jenkins, используются значения из .env на сервере
                     withCredentials([
                         sshUserPrivateKey(credentialsId: 'jenkins-ssh-deploy-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
-                        // Секреты через Jenkins Credentials (создайте в Jenkins UI: Manage Jenkins → Credentials)
-                        // ID credentials должны совпадать с указанными ниже
-                        string(credentialsId: 'telegram-bot-token', variable: 'TELEGRAM_BOT_TOKEN', required: false),
-                        string(credentialsId: 'telegram-user-id', variable: 'TELEGRAM_USER_ID', required: false),
-                        string(credentialsId: 'gemini-api-key', variable: 'GEMINI_API_KEY', required: false),
                     ]) {
+                        // Опциональные секреты (создайте в Jenkins UI: Manage Jenkins → Credentials, если нужны)
+                        // Если не созданы, deploy.sh использует существующий .env на сервере
+                        def telegramBotToken = ''
+                        def telegramUserId = ''
+                        def geminiApiKey = ''
+                        
+                        try {
+                            withCredentials([string(credentialsId: 'telegram-bot-token', variable: 'TELEGRAM_BOT_TOKEN')]) {
+                                telegramBotToken = env.TELEGRAM_BOT_TOKEN ?: ''
+                            }
+                        } catch (Exception e) {
+                            echo "⚠️  telegram-bot-token credentials не найдены, используем .env на сервере"
+                        }
+                        
+                        try {
+                            withCredentials([string(credentialsId: 'telegram-user-id', variable: 'TELEGRAM_USER_ID')]) {
+                                telegramUserId = env.TELEGRAM_USER_ID ?: ''
+                            }
+                        } catch (Exception e) {
+                            echo "⚠️  telegram-user-id credentials не найдены, используем .env на сервере"
+                        }
+                        
+                        try {
+                            withCredentials([string(credentialsId: 'gemini-api-key', variable: 'GEMINI_API_KEY')]) {
+                                geminiApiKey = env.GEMINI_API_KEY ?: ''
+                            }
+                        } catch (Exception e) {
+                            echo "⚠️  gemini-api-key credentials не найдены, используем .env на сервере"
+                        }
                         sh """
                             # Подключение к серверу и запуск деплоя
                             SSH_PORT_FLAG=""
@@ -77,9 +102,9 @@ pipeline {
                                  git fetch origin && \
                                  git checkout -f origin/main || git checkout -f origin/master && \
                                  chmod +x scripts/deploy.sh && \
-                                 TELEGRAM_BOT_TOKEN='${TELEGRAM_BOT_TOKEN ?: ''}' \
-                                 TELEGRAM_USER_ID='${TELEGRAM_USER_ID ?: ''}' \
-                                 GEMINI_API_KEY='${GEMINI_API_KEY ?: ''}' \
+                                 TELEGRAM_BOT_TOKEN='${telegramBotToken}' \
+                                 TELEGRAM_USER_ID='${telegramUserId}' \
+                                 GEMINI_API_KEY='${geminiApiKey}' \
                                  bash scripts/deploy.sh"
                         """
                     }
