@@ -1,0 +1,119 @@
+{
+  "common": {
+    "loading": "Loading 3D Assets...",
+    "all": "All",
+    "readArticle": "Read Article",
+    "close": "Close",
+    "closeArticle": "Close Article",
+    "writtenBy": "Written by Aleksandr Zhukov"
+  },
+  "hero": {
+    "badge": "Open for New Opportunities",
+    "name": "Aleksandr",
+    "surname": "Zhukov",
+    "description": "Software Architect & Engineer with {years} of experience. Expert in {java}, {highload}, and {ai}.",
+    "years": "10+ years",
+    "java": "Java/Spring",
+    "highload": "High-Load Systems",
+    "ai": "AI Integration",
+    "viewProjects": "View Projects",
+    "contactMe": "Contact Me",
+    "stats": {
+      "yearsExp": "Years Exp",
+      "rpsScaled": "RPS Scaled",
+      "fullStackCycle": "Stack Cycle"
+    }
+  },
+  "navbar": {
+    "about": "About",
+    "experience": "Experience",
+    "projects": "Projects",
+    "skills": "Skills",
+    "insights": "Insights",
+    "contact": "Contact",
+    "letsTalk": "Let's Talk"
+  },
+  "projects": {
+    "title": "Featured Projects",
+    "description": "Full-Stack development and DevOps solutions delivered at scale. From high-load systems to complete CI/CD pipelines.",
+    "categories": {
+      "all": "All",
+      "ai": "AI",
+      "devops": "DevOps",
+      "fullstack": "FullStack"
+    },
+    "viewDetails": "View Details",
+    "role": "Role",
+    "challenges": "Challenges",
+    "results": "Results",
+    "stack": "Tech Stack",
+    "metrics": "Metrics"
+  },
+  "experience": {
+    "title": "Professional Journey"
+  },
+  "techStack": {
+    "title": "Technical Expertise",
+    "description": "Balanced proficiency across Infrastructure, Backend Engineering, and AI integration. My focus is on reliability, scalability, and maintainability.",
+    "architecture": {
+      "title": "Architecture",
+      "description": "Distributed Systems, Event-Driven, Microservices"
+    },
+    "aiMl": {
+      "title": "AI/ML",
+      "description": "LangChain, RAG, PyTorch, Model Serving"
+    }
+  },
+  "insights": {
+    "title": "Architecture Insights",
+    "modalTitle": "Architecture Insights"
+  },
+  "contact": {
+    "title": "Let's Build Something",
+    "titleScalable": "Scalable",
+    "description": "Software Architect with 10+ years of experience. Available for high-load system design, technical leadership, and complex AI integrations.",
+    "email": "Email",
+    "phone": "Phone",
+    "location": "Location",
+    "locationValue": "Novosibirsk, Russia (Remote/Relocation)",
+    "github": "GitHub",
+    "linkedin": "LinkedIn",
+    "form": {
+      "title": "Send a Message",
+      "name": "Name",
+      "namePlaceholder": "Your name",
+      "nameRequired": "Required",
+      "email": "Email",
+      "emailPlaceholder": "your@email.com",
+      "emailRequired": "Valid email required",
+      "message": "Message",
+      "messagePlaceholder": "Briefly describe your project or inquiry...",
+      "messageRequired": "Required",
+      "sizeExceeded": " (exceeded)",
+      "sizeWarning": " (warning)",
+      "submit": "Send Message",
+      "sending": "Sending...",
+      "success": "Thank you! Your message has been sent successfully.",
+      "error": "Failed to send message. Please try again.",
+      "errorNetwork": "Network error: Unable to connect to the server. Please check your internet connection and try again.",
+      "errorInvalidResponse": "Server returned invalid response. Please try again or contact support.",
+      "errorUnknown": "Unknown error occurred. Please try again.",
+      "errorTooLarge": "Message is too large ({size} MB). Maximum allowed size is {max} MB. Please shorten your message.",
+      "error413": "Message is too large. The server rejected your request because it exceeds the maximum allowed size. Please shorten your message to less than 1 MB.",
+      "error400": "Invalid request data. Please check your input.",
+      "error500": "Server error. Please try again later.",
+      "error503": "Service temporarily unavailable. Please try again later.",
+      "errorStatus": "Request failed with status {status}. Please try again."
+    },
+    "resume": {
+      "viewResume": "View Resume",
+      "downloadResume": "Download Resume",
+      "printResume": "Print Resume"
+    }
+  },
+  "footer": {
+    "copyright": "All rights reserved.",
+    "builtWith": "Built with React, Tailwind & Three.js"
+  }
+}
+

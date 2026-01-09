@@ -2,8 +2,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Briefcase, Calendar, ChevronRight } from 'lucide-react';
 import { EXPERIENCE } from '../constants';
+import { useLanguage } from '../i18n/hooks/useLanguage';
 
 const Experience: React.FC = () => {
+  const { t } = useLanguage();
+  
   return (
     <section id="experience" className="py-24 bg-surface relative overflow-hidden scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -13,7 +16,7 @@ const Experience: React.FC = () => {
           viewport={{ once: true }}
           className="mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Professional Journey</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('experience.title')}</h2>
           <div className="w-20 h-1 bg-gradient-to-r from-accent-cyan to-accent-magenta"></div>
         </motion.div>
 

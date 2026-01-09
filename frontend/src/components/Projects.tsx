@@ -4,12 +4,19 @@ import { ExternalLink, Layers, Server, Cpu, Globe, CheckCircle } from 'lucide-re
 import { PROJECTS } from '../constants';
 import { Project } from '../types';
 import Modal from './Modal';
-
-const Categories = ['All', 'AI', 'DevOps', 'FullStack'];
+import { useLanguage } from '../i18n/hooks/useLanguage';
 
 const Projects: React.FC = () => {
+  const { t } = useLanguage();
   const [filter, setFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  const categories = [
+    { key: 'All', label: t('projects.categories.all') },
+    { key: 'AI', label: t('projects.categories.ai') },
+    { key: 'DevOps', label: t('projects.categories.devops') },
+    { key: 'FullStack', label: t('projects.categories.fullstack') }
+  ];
 
   const filteredProjects = PROJECTS.filter(
     (p) => filter === 'All' || p.categories.includes(filter)
@@ -25,25 +32,25 @@ const Projects: React.FC = () => {
           className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6"
         >
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Featured Projects</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('projects.title')}</h2>
             <div className="w-20 h-1 bg-gradient-to-r from-accent-cyan to-accent-magenta mb-4"></div>
             <p className="text-secondary max-w-xl">
-              Full-Stack development and DevOps solutions delivered at scale. From high-load systems to complete CI/CD pipelines.
+              {t('projects.description')}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {Categories.map((cat) => (
+            {categories.map((cat) => (
               <button
-                key={cat}
-                onClick={() => setFilter(cat)}
+                key={cat.key}
+                onClick={() => setFilter(cat.key)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                  filter === cat
+                  filter === cat.key
                     ? 'bg-white text-black'
                     : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
                 }`}
               >
-                {cat}
+                {cat.label}
               </button>
             ))}
           </div>
@@ -110,7 +117,7 @@ const Projects: React.FC = () => {
             <div className="bg-white/5 rounded-lg p-6 border border-white/10">
               <h4 className="text-xl font-bold text-white mb-4 flex items-center">
                 <Globe className="w-5 h-5 mr-2 text-accent-cyan" />
-                Project Overview
+                {t('projects.title')}
               </h4>
               <p className="text-gray-300 leading-relaxed text-base">
                 {selectedProject.fullDescription}
@@ -121,7 +128,7 @@ const Projects: React.FC = () => {
               <div className="bg-white/5 rounded-lg p-6 border border-white/10">
                 <h4 className="text-lg font-bold text-white mb-4 flex items-center">
                   <Cpu className="w-5 h-5 mr-2 text-accent-magenta" />
-                  Key Challenges
+                  {t('projects.challenges')}
                 </h4>
                 <ul className="space-y-3">
                   {selectedProject.challenges.map((challenge, idx) => (
@@ -135,7 +142,7 @@ const Projects: React.FC = () => {
               <div className="bg-white/5 rounded-lg p-6 border border-white/10">
                 <h4 className="text-lg font-bold text-white mb-4 flex items-center">
                   <CheckCircle className="w-5 h-5 mr-2 text-accent-cyan" />
-                  Results Delivered
+                  {t('projects.results')}
                 </h4>
                 <ul className="space-y-3">
                   {selectedProject.results.map((res, idx) => (
@@ -151,7 +158,7 @@ const Projects: React.FC = () => {
             <div className="bg-white/5 rounded-lg p-6 border border-white/10">
                <h4 className="text-lg font-bold text-white mb-4 flex items-center">
                  <Server className="w-5 h-5 mr-2 text-accent-cyan" />
-                 Technology Stack
+                 {t('projects.stack')}
                </h4>
                <div className="flex flex-wrap gap-2 mb-6">
                  {selectedProject.stack.map(tech => (
@@ -174,7 +181,7 @@ const Projects: React.FC = () => {
                         : 'bg-accent-magenta/10 text-accent-magenta border border-accent-magenta/30 hover:bg-accent-magenta/20'
                     }`}
                   >
-                    Close Details
+                    {t('common.close')}
                   </button>
                </div>
             </div>

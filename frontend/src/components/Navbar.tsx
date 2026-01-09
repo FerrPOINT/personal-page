@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Terminal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { NAV_ITEMS } from '../constants';
+import { useLanguage } from '../i18n/hooks/useLanguage';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Navbar: React.FC = () => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  
+  const navItems = [
+    { label: t('navbar.about'), href: '#hero' },
+    { label: t('navbar.experience'), href: '#experience' },
+    { label: t('navbar.projects'), href: '#projects' },
+    { label: t('navbar.skills'), href: '#skills' },
+    { label: t('navbar.insights'), href: '#insights' },
+    { label: t('navbar.contact'), href: '#contact' },
+  ];
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -45,9 +56,9 @@ const Navbar: React.FC = () => {
           {/* Desktop Nav */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-8">
-              {NAV_ITEMS.map((item) => (
+              {navItems.map((item) => (
                 <a
-                  key={item.label}
+                  key={item.href}
                   href={item.href}
                   onClick={(e) => handleScrollTo(e, item.href)}
                   className="text-sm font-medium text-secondary hover:text-accent-cyan transition-colors duration-200 relative group"
@@ -59,18 +70,20 @@ const Navbar: React.FC = () => {
             </div>
           </div>
 
-          <div className="hidden md:block">
-             <a 
-               href="#contact"
-               onClick={(e) => handleScrollTo(e, '#contact')}
-               className="px-6 py-2 rounded-full border border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10 transition-all duration-300 font-medium text-sm"
-             >
-               Let's Talk
-             </a>
+          <div className="hidden md:flex items-center gap-4">
+            <LanguageSwitcher />
+            <a 
+              href="#contact"
+              onClick={(e) => handleScrollTo(e, '#contact')}
+              className="px-6 py-2 rounded-full border border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10 transition-all duration-300 font-medium text-sm"
+            >
+              {t('navbar.letsTalk')}
+            </a>
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-3">
+            <LanguageSwitcher />
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="text-gray-300 hover:text-white focus:outline-none"
@@ -91,9 +104,9 @@ const Navbar: React.FC = () => {
             className="md:hidden bg-surface border-b border-white/5 overflow-hidden"
           >
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              {NAV_ITEMS.map((item) => (
+              {navItems.map((item) => (
                 <a
-                  key={item.label}
+                  key={item.href}
                   href={item.href}
                   onClick={(e) => handleScrollTo(e, item.href)}
                   className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-white/5"
@@ -101,6 +114,15 @@ const Navbar: React.FC = () => {
                   {item.label}
                 </a>
               ))}
+              <div className="px-3 py-2">
+                <a 
+                  href="#contact"
+                  onClick={(e) => handleScrollTo(e, '#contact')}
+                  className="block w-full text-center px-4 py-2 rounded-full border border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10 transition-all duration-300 font-medium text-sm"
+                >
+                  {t('navbar.letsTalk')}
+                </a>
+              </div>
             </div>
           </motion.div>
         )}

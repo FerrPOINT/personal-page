@@ -4,15 +4,17 @@ import { Clock, ArrowUpRight } from 'lucide-react';
 import { BLOG_POSTS } from '../constants';
 import { BlogPost } from '../types';
 import Modal from './Modal';
+import { useLanguage } from '../i18n/hooks/useLanguage';
 
 const Insights: React.FC = () => {
+  const { t } = useLanguage();
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
 
   return (
     <section id="insights" className="py-24 bg-background scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Architecture Insights</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('insights.title')}</h2>
           <div className="w-20 h-1 bg-gradient-to-r from-accent-cyan to-accent-magenta mx-auto"></div>
         </div>
 
@@ -46,7 +48,7 @@ const Insights: React.FC = () => {
                   {post.readTime}
                 </div>
                 <div className="flex items-center text-sm font-bold text-white group-hover:text-accent-magenta transition-colors">
-                  Read Article
+                  {t('common.readArticle')}
                   <ArrowUpRight className="w-4 h-4 ml-1" />
                 </div>
               </div>
@@ -58,7 +60,7 @@ const Insights: React.FC = () => {
       <Modal
         isOpen={!!selectedPost}
         onClose={() => setSelectedPost(null)}
-        title="Architecture Insights"
+        title={t('insights.modalTitle')}
       >
         {selectedPost && (
             <article className="prose prose-invert max-w-none">
@@ -76,9 +78,9 @@ const Insights: React.FC = () => {
                 </div>
                 
                 <div className="mt-8 pt-6 border-t border-white/10 flex justify-between items-center">
-                    <span className="text-sm text-secondary">Written by Aleksandr Zhukov</span>
+                    <span className="text-sm text-secondary">{t('common.writtenBy')}</span>
                     <button onClick={() => setSelectedPost(null)} className="text-accent-cyan hover:underline text-sm font-medium">
-                        Close Article
+                        {t('common.closeArticle')}
                     </button>
                 </div>
             </article>

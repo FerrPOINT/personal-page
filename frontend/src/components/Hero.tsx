@@ -4,6 +4,7 @@ import { PerspectiveCamera, Stars, Trail, Float, Text, OrbitControls, Billboard 
 import { motion } from 'framer-motion';
 import { ArrowRight, Mail } from 'lucide-react';
 import * as THREE from 'three';
+import { useLanguage } from '../i18n/hooks/useLanguage';
 
 // Augmented type definition to fix missing intrinsic elements errors
 declare global {
@@ -232,6 +233,8 @@ const SolarSystemScene = () => {
 
 
 const Hero: React.FC = () => {
+  const { t } = useLanguage();
+  
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
     const element = document.getElementById(id);
@@ -292,19 +295,30 @@ const Hero: React.FC = () => {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-accent-cyan text-sm font-mono mb-6 backdrop-blur-sm shadow-[0_0_15px_rgba(0,217,255,0.1)]">
-              Open for New Opportunities
+              {t('hero.badge')}
             </span>
             
             <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-6 tracking-tight">
-              Aleksandr <br />
+              {t('hero.name')} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan to-accent-magenta filter drop-shadow-[0_0_10px_rgba(255,0,255,0.3)]">
-                Zhukov
+                {t('hero.surname')}
               </span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-secondary mb-8 leading-relaxed max-w-lg">
-              Software Architect & Engineer with <span className="text-white font-semibold">10+ years</span> of experience. Expert in <span className="text-white font-semibold">Java/Spring</span>, <span className="text-white font-semibold">High-Load Systems</span>, and <span className="text-white font-semibold">AI Integration</span>.
-            </p>
+            <p 
+              className="text-xl md:text-2xl text-secondary mb-8 leading-relaxed max-w-lg"
+              dangerouslySetInnerHTML={{
+                __html: t('hero.description', {
+                  years: t('hero.years'),
+                  java: t('hero.java'),
+                  highload: t('hero.highload'),
+                  ai: t('hero.ai')
+                }).replace(/\{years\}/g, `<span class="text-white font-semibold">${t('hero.years')}</span>`)
+                  .replace(/\{java\}/g, `<span class="text-white font-semibold">${t('hero.java')}</span>`)
+                  .replace(/\{highload\}/g, `<span class="text-white font-semibold">${t('hero.highload')}</span>`)
+                  .replace(/\{ai\}/g, `<span class="text-white font-semibold">${t('hero.ai')}</span>`)
+              }}
+            />
 
             <div className="flex flex-col sm:flex-row gap-4">
               <a
@@ -312,7 +326,7 @@ const Hero: React.FC = () => {
                 onClick={(e) => scrollToSection(e, 'projects')}
                 className="group flex items-center justify-center px-8 py-4 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition-all cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)]"
               >
-                View Projects
+                {t('hero.viewProjects')}
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
               <a
@@ -320,7 +334,7 @@ const Hero: React.FC = () => {
                 onClick={(e) => scrollToSection(e, 'contact')}
                 className="group flex items-center justify-center px-8 py-4 bg-transparent border border-white/20 text-white font-bold rounded-lg hover:bg-white/5 transition-all cursor-pointer backdrop-blur-sm"
               >
-                Contact Me
+                {t('hero.contactMe')}
                 <Mail className="ml-2 w-5 h-5 group-hover:text-accent-cyan transition-colors" />
               </a>
             </div>
@@ -334,15 +348,15 @@ const Hero: React.FC = () => {
               >
                 <div>
                   <p className="text-3xl font-bold text-white">10+</p>
-                  <p className="text-xs text-secondary uppercase tracking-wider mt-1">Years Exp</p>
+                  <p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.yearsExp')}</p>
                 </div>
                 <div>
                   <p className="text-3xl font-bold text-white">1M+</p>
-                  <p className="text-xs text-secondary uppercase tracking-wider mt-1">RPS Scaled</p>
+                  <p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.rpsScaled')}</p>
                 </div>
                 <div>
                   <p className="text-3xl font-bold text-white">Full</p>
-                  <p className="text-xs text-secondary uppercase tracking-wider mt-1">Stack Cycle</p>
+                  <p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.fullStackCycle')}</p>
                 </div>
               </motion.div>
           </motion.div>
