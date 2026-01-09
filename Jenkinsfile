@@ -71,39 +71,17 @@ pipeline {
                                 SSH_PORT_FLAG="-p ${DEPLOY_PORT}"
                             fi
                             
-                            # BEST PRACTICE: Передаем секреты через stdin (не видны в логах)
-                            # Используем base64 для безопасной передачи через SSH
-                            SECRETS_ENV=""
-                            if [ -n "\${TELEGRAM_BOT_TOKEN}" ]; then
-                                SECRETS_ENV="\${SECRETS_ENV}TELEGRAM_BOT_TOKEN=\${TELEGRAM_BOT_TOKEN}\\n"
-                            fi
-                            if [ -n "\${TELEGRAM_USER_ID}" ]; then
-                                SECRETS_ENV="\${SECRETS_ENV}TELEGRAM_USER_ID=\${TELEGRAM_USER_ID}\\n"
-                            fi
-                            if [ -n "\${GEMINI_API_KEY}" ]; then
-                                SECRETS_ENV="\${SECRETS_ENV}GEMINI_API_KEY=\${GEMINI_API_KEY}\\n"
-                            fi
-                            
-                            # Передаем секреты через stdin (безопаснее, чем через аргументы команды)
-                            if [ -n "\${SECRETS_ENV}" ]; then
-                                echo -e "\${SECRETS_ENV}" | ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} \${SSH_PORT_FLAG} ${DEPLOY_USER}@${DEPLOY_HOST} \
-                                    "cd ${DEPLOY_PATH} && \
-                                     git fetch origin && \
-                                     git checkout -f origin/main || git checkout -f origin/master && \
-                                     chmod +x scripts/deploy.sh && \
-                                     while IFS='=' read -r key value; do \
-                                       [ -n \"\$key\" ] && export \"\$key\"=\"\$value\"; \
-                                     done && \
-                                     bash scripts/deploy.sh"
-                            else
-                                # Если секреты не переданы, используем существующий .env на сервере
-                                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} \${SSH_PORT_FLAG} ${DEPLOY_USER}@${DEPLOY_HOST} \
-                                    "cd ${DEPLOY_PATH} && \
-                                     git fetch origin && \
-                                     git checkout -f origin/main || git checkout -f origin/master && \
-                                     chmod +x scripts/deploy.sh && \
-                                     bash scripts/deploy.sh"
-                            fi
+                            # BEST PRACTICE: Передаем секреты через переменные окружения
+                            # withCredentials защищает их от логирования в Jenkins
+                            ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} \${SSH_PORT_FLAG} ${DEPLOY_USER}@${DEPLOY_HOST} \
+                                "cd ${DEPLOY_PATH} && \
+                                 git fetch origin && \
+                                 git checkout -f origin/main || git checkout -f origin/master && \
+                                 chmod +x scripts/deploy.sh && \
+                                 TELEGRAM_BOT_TOKEN='${TELEGRAM_BOT_TOKEN ?: ''}' \
+                                 TELEGRAM_USER_ID='${TELEGRAM_USER_ID ?: ''}' \
+                                 GEMINI_API_KEY='${GEMINI_API_KEY ?: ''}' \
+                                 bash scripts/deploy.sh"
                         """
                     }
                 }
