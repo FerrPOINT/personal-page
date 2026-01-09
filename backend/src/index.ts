@@ -30,13 +30,20 @@ const allowedOrigins = process.env.FRONTEND_URL
 
 app.use(cors({
   origin: (origin, callback) => {
+    // Debug logging
+    console.log(`🔍 CORS check: origin="${origin}", allowedOrigins=[${allowedOrigins.join(', ')}]`);
+    
     // Allow requests with no origin (mobile apps, Postman, etc.) in development
     if (!origin && process.env.NODE_ENV === 'development') {
+      console.log('✅ CORS: Allowing request with no origin (development mode)');
       return callback(null, true);
     }
+    
     if (!origin || allowedOrigins.includes(origin)) {
+      console.log(`✅ CORS: Allowing origin "${origin}"`);
       callback(null, true);
     } else {
+      console.log(`❌ CORS: Rejecting origin "${origin}" (not in allowed list)`);
       callback(new Error('Not allowed by CORS'));
     }
   },
