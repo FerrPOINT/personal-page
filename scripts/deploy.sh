@@ -65,18 +65,31 @@ elif [ -f env.prod ]; then
     cp env.prod .env
     echo "✅ env.prod скопирован в .env"
     
-    # Обновляем секреты из переменных окружения Jenkins (если переданы)
+    # Обновляем секреты из переменных окружения (если переданы через Jenkins)
+    # BEST PRACTICE: Секреты передаются через переменные окружения, не через файлы
     if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ "$TELEGRAM_BOT_TOKEN" != "your_bot_token_here" ]; then
-        sed -i "s|^TELEGRAM_BOT_TOKEN=.*|TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}|" .env
-        echo "  🔐 TELEGRAM_BOT_TOKEN обновлен из Jenkins"
+        if grep -q "^TELEGRAM_BOT_TOKEN=" .env 2>/dev/null; then
+            sed -i "s|^TELEGRAM_BOT_TOKEN=.*|TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}|" .env
+        else
+            echo "TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}" >> .env
+        fi
+        echo "  🔐 TELEGRAM_BOT_TOKEN обновлен из Jenkins Credentials"
     fi
     if [ -n "$TELEGRAM_USER_ID" ] && [ "$TELEGRAM_USER_ID" != "your_user_id_here" ]; then
-        sed -i "s|^TELEGRAM_USER_ID=.*|TELEGRAM_USER_ID=${TELEGRAM_USER_ID}|" .env
-        echo "  🔐 TELEGRAM_USER_ID обновлен из Jenkins"
+        if grep -q "^TELEGRAM_USER_ID=" .env 2>/dev/null; then
+            sed -i "s|^TELEGRAM_USER_ID=.*|TELEGRAM_USER_ID=${TELEGRAM_USER_ID}|" .env
+        else
+            echo "TELEGRAM_USER_ID=${TELEGRAM_USER_ID}" >> .env
+        fi
+        echo "  🔐 TELEGRAM_USER_ID обновлен из Jenkins Credentials"
     fi
     if [ -n "$GEMINI_API_KEY" ] && [ "$GEMINI_API_KEY" != "your_gemini_api_key_here" ]; then
-        sed -i "s|^GEMINI_API_KEY=.*|GEMINI_API_KEY=${GEMINI_API_KEY}|" .env
-        echo "  🔐 GEMINI_API_KEY обновлен из Jenkins"
+        if grep -q "^GEMINI_API_KEY=" .env 2>/dev/null; then
+            sed -i "s|^GEMINI_API_KEY=.*|GEMINI_API_KEY=${GEMINI_API_KEY}|" .env
+        else
+            echo "GEMINI_API_KEY=${GEMINI_API_KEY}" >> .env
+        fi
+        echo "  🔐 GEMINI_API_KEY обновлен из Jenkins Credentials"
     fi
 elif [ -f env.local ]; then
     cp env.local .env
