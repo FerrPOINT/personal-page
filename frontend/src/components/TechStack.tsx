@@ -2,8 +2,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ResponsiveContainer, BarChart, Bar, XAxis, Cell, YAxis, CartesianGrid } from 'recharts';
 import { SKILLS } from '../constants';
+import { useLanguage } from '../i18n/hooks/useLanguage';
 
 const TechStack: React.FC = () => {
+  const { t } = useLanguage();
+  
   return (
     <section id="skills" className="py-24 bg-surface border-y border-white/5 scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,21 +18,20 @@ const TechStack: React.FC = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Technical Expertise</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('techStack.title')}</h2>
               <div className="w-20 h-1 bg-gradient-to-r from-accent-cyan to-accent-magenta mb-6"></div>
               <p className="text-secondary mb-8 leading-relaxed">
-                Balanced proficiency across Infrastructure, Backend Engineering, and AI integration. 
-                My focus is on reliability, scalability, and maintainability.
+                {t('techStack.description')}
               </p>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <div className="p-4 bg-white/5 rounded-lg border border-white/5">
-                    <h4 className="text-accent-cyan font-bold mb-1">Architecture</h4>
-                    <p className="text-xs text-secondary">Distributed Systems, Event-Driven, Microservices</p>
+                    <h4 className="text-accent-cyan font-bold mb-1">{t('techStack.architecture.title')}</h4>
+                    <p className="text-xs text-secondary">{t('techStack.architecture.description')}</p>
                  </div>
                  <div className="p-4 bg-white/5 rounded-lg border border-white/5">
-                    <h4 className="text-accent-magenta font-bold mb-1">AI/ML</h4>
-                    <p className="text-xs text-secondary">LangChain, RAG, PyTorch, Model Serving</p>
+                    <h4 className="text-accent-magenta font-bold mb-1">{t('techStack.aiMl.title')}</h4>
+                    <p className="text-xs text-secondary">{t('techStack.aiMl.description')}</p>
                  </div>
               </div>
             </motion.div>

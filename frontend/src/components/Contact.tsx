@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, Github, Linkedin, FileText, Printer, Download, Briefcase } from 'lucide-react';
 import Modal from './Modal';
 import { EXPERIENCE, SKILLS } from '../constants';
+import { useLanguage } from '../i18n/hooks/useLanguage';
 
 type FormData = {
   name: string;
@@ -12,6 +13,7 @@ type FormData = {
 };
 
 const Contact: React.FC = () => {
+  const { t } = useLanguage();
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = useForm<FormData>();
   const [showResume, setShowResume] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -39,7 +41,7 @@ const Contact: React.FC = () => {
       const sizeMB = (messageSize / (1024 * 1024)).toFixed(2);
       const maxMB = (maxSize / (1024 * 1024)).toFixed(2);
       setSubmitStatus('error');
-      setSubmitMessage(`Message is too large (${sizeMB} MB). Maximum allowed size is ${maxMB} MB. Please shorten your message.`);
+      setSubmitMessage(t('contact.form.errorTooLarge', { size: sizeMB, max: maxMB }));
       return;
     }
 
@@ -58,30 +60,30 @@ const Contact: React.FC = () => {
 
       // Проверяем статус ДО попытки парсить JSON
       if (!response.ok) {
-        let errorMessage = 'Failed to send message.';
+        let errorMessage = t('contact.form.error');
         
         // Обрабатываем специфичные статус-коды
         switch (response.status) {
           case 413:
-            errorMessage = 'Message is too large. The server rejected your request because it exceeds the maximum allowed size. Please shorten your message to less than 1 MB.';
+            errorMessage = t('contact.form.error413');
             break;
           case 400:
             // Пытаемся получить детали ошибки валидации
             try {
               const errorData = await response.json();
-              errorMessage = errorData.error || errorData.details?.join(', ') || 'Invalid request data. Please check your input.';
+              errorMessage = errorData.error || errorData.details?.join(', ') || t('contact.form.error400');
             } catch {
-              errorMessage = 'Invalid request data. Please check your input.';
+              errorMessage = t('contact.form.error400');
             }
             break;
           case 500:
-            errorMessage = 'Server error. Please try again later.';
+            errorMessage = t('contact.form.error500');
             break;
           case 503:
-            errorMessage = 'Service temporarily unavailable. Please try again later.';
+            errorMessage = t('contact.form.error503');
             break;
           default:
-            errorMessage = `Request failed with status ${response.status}. Please try again.`;
+            errorMessage = t('contact.form.errorStatus', { status: response.status.toString() });
         }
 
         setSubmitStatus('error');
@@ -94,7 +96,7 @@ const Contact: React.FC = () => {
 
       if (result.success) {
         setSubmitStatus('success');
-        setSubmitMessage('Thank you! Your message has been sent successfully.');
+        setSubmitMessage(t('contact.form.success'));
         reset();
         // Clear success message after 5 seconds
         setTimeout(() => {
@@ -103,7 +105,7 @@ const Contact: React.FC = () => {
         }, 5000);
       } else {
         setSubmitStatus('error');
-        setSubmitMessage(result.error || result.details?.join(', ') || 'Failed to send message. Please try again.');
+        setSubmitMessage(result.error || result.details?.join(', ') || t('contact.form.error'));
       }
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -111,11 +113,11 @@ const Contact: React.FC = () => {
       
       // Более детальная обработка ошибок сети
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        setSubmitMessage('Network error: Unable to connect to the server. Please check your internet connection and try again.');
+        setSubmitMessage(t('contact.form.errorNetwork'));
       } else if (error instanceof SyntaxError) {
-        setSubmitMessage('Server returned invalid response. Please try again or contact support.');
+        setSubmitMessage(t('contact.form.errorInvalidResponse'));
       } else {
-        setSubmitMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred. Please try again.'}`);
+        setSubmitMessage(t('contact.form.errorUnknown'));
       }
     }
   };
@@ -164,9 +166,9 @@ const Contact: React.FC = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-8">Let's Build Something<br /> <span className="text-accent-cyan">Scalable</span></h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-8">{t('contact.title')}<br /> <span className="text-accent-cyan">{t('contact.titleScalable')}</span></h2>
             <p className="text-secondary text-lg mb-12">
-              Software Architect with 10+ years of experience. Available for high-load system design, technical leadership, and complex AI integrations.
+              {t('contact.description')}
             </p>
 
             <div className="space-y-6 mb-12">
@@ -175,7 +177,7 @@ const Contact: React.FC = () => {
                   <Mail className="w-5 h-5 text-accent-cyan" />
                 </div>
                 <div>
-                  <p className="text-xs text-secondary uppercase tracking-wider">Email</p>
+                  <p className="text-xs text-secondary uppercase tracking-wider">{t('contact.email')}</p>
                   <p className="text-white font-medium hover:text-accent-cyan transition-colors">ferruspoint@mail.ru</p>
                 </div>
               </a>
@@ -185,7 +187,7 @@ const Contact: React.FC = () => {
                   <Phone className="w-5 h-5 text-accent-magenta" />
                 </div>
                 <div>
-                  <p className="text-xs text-secondary uppercase tracking-wider">Phone</p>
+                  <p className="text-xs text-secondary uppercase tracking-wider">{t('contact.phone')}</p>
                   <p className="text-white font-medium hover:text-accent-magenta transition-colors">+7 (983) 320-97-85</p>
                 </div>
               </a>
@@ -195,8 +197,8 @@ const Contact: React.FC = () => {
                   <MapPin className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-xs text-secondary uppercase tracking-wider">Location</p>
-                  <p className="text-white font-medium group-hover:underline">Novosibirsk, Russia (Remote/Relocation)</p>
+                  <p className="text-xs text-secondary uppercase tracking-wider">{t('contact.location')}</p>
+                  <p className="text-white font-medium group-hover:underline">{t('contact.locationValue')}</p>
                 </div>
               </a>
             </div>
@@ -207,7 +209,7 @@ const Contact: React.FC = () => {
                 className="flex items-center px-6 py-3 bg-white/5 border border-white/20 rounded-lg text-white hover:bg-white/10 transition-colors group"
               >
                 <FileText className="w-5 h-5 mr-2 text-accent-cyan" />
-                <span>View Full Resume</span>
+                <span>{t('contact.resume.viewResume')}</span>
               </button>
             </div>
           </motion.div>
@@ -221,39 +223,39 @@ const Contact: React.FC = () => {
           >
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">Name</label>
+                <label className="block text-sm font-medium text-secondary mb-2">{t('contact.form.name')}</label>
                 <input
                   {...register("name", { required: true })}
                   className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-colors"
-                  placeholder="Your Name"
+                  placeholder={t('contact.form.namePlaceholder')}
                 />
-                {errors.name && <span className="text-red-500 text-xs mt-1">Required</span>}
+                {errors.name && <span className="text-red-500 text-xs mt-1">{t('contact.form.nameRequired')}</span>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">Email</label>
+                <label className="block text-sm font-medium text-secondary mb-2">{t('contact.form.email')}</label>
                 <input
                   {...register("email", { required: true, pattern: /^\S+@\S+$/i })}
                   className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-colors"
-                  placeholder="your@email.com"
+                  placeholder={t('contact.form.emailPlaceholder')}
                 />
-                {errors.email && <span className="text-red-500 text-xs mt-1">Valid email required</span>}
+                {errors.email && <span className="text-red-500 text-xs mt-1">{t('contact.form.emailRequired')}</span>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">Message</label>
+                <label className="block text-sm font-medium text-secondary mb-2">{t('contact.form.message')}</label>
                 <textarea
                   {...register("message", { required: true })}
                   rows={4}
                   className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-colors"
-                  placeholder="Briefly describe your project or inquiry..."
+                  placeholder={t('contact.form.messagePlaceholder')}
                 />
                 <div className="flex justify-between items-center mt-1">
-                  {errors.message && <span className="text-red-500 text-xs">Required</span>}
+                  {errors.message && <span className="text-red-500 text-xs">{t('contact.form.messageRequired')}</span>}
                   <span className={`text-xs ml-auto ${isSizeExceeded ? 'text-red-500' : isSizeWarning ? 'text-yellow-500' : 'text-secondary'}`}>
                     {sizeKB} KB / {maxSizeKB} KB
-                    {isSizeExceeded && ' (exceeded)'}
-                    {isSizeWarning && !isSizeExceeded && ' (warning)'}
+                    {isSizeExceeded && t('contact.form.sizeExceeded')}
+                    {isSizeWarning && !isSizeExceeded && t('contact.form.sizeWarning')}
                   </span>
                 </div>
               </div>
@@ -278,7 +280,7 @@ const Contact: React.FC = () => {
                 {isSubmitting ? (
                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <>Send Message <Send className="w-4 h-4 ml-2" /></>
+                  <>{t('contact.form.submit')} <Send className="w-4 h-4 ml-2" /></>
                 )}
               </button>
             </form>
