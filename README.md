@@ -214,6 +214,21 @@ All services are orchestrated via Docker Compose.
 
 Подробная инструкция по развертыванию: см. `info/deployment-guide.qmd`
 
+## 🔒 Security Features
+
+The backend includes several security measures:
+
+- **Rate Limiting**: Contact form endpoint is protected with rate limiting (5 requests per 15 minutes per IP)
+- **CORS Protection**: Configured to only allow requests from specified frontend origins (configurable via `FRONTEND_URL`)
+- **Helmet.js**: Security headers protection (XSS, clickjacking, MIME-sniffing)
+- **Input Sanitization**: HTML tags and control characters are removed from user input
+- **Request Size Limit**: Body size limited to 1MB to prevent DoS attacks
+
+**Configuration:**
+- Set `FRONTEND_URL` in `.env` to specify allowed origins (comma-separated)
+- Rate limiting can be adjusted in `backend/src/routes/contact.ts`
+- Security headers are configured via Helmet.js in `backend/src/index.ts`
+
 ## 🛠️ Development Guide
 
 ### Prerequisites
