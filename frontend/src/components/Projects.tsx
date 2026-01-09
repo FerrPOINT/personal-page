@@ -76,6 +76,7 @@ const Projects: React.FC = () => {
                 project={project} 
                 onClick={() => setSelectedProject(project)}
                 categoryMap={categoryMap}
+                t={t}
               />
             ))}
           </AnimatePresence>
@@ -220,7 +221,7 @@ const Projects: React.FC = () => {
   );
 };
 
-const ProjectCard: React.FC<{ project: Project, onClick: () => void, categoryMap: Record<string, string> }> = ({ project, onClick, categoryMap }) => {
+const ProjectCard: React.FC<{ project: Project, onClick: () => void, categoryMap: Record<string, string>, t: (key: string) => string }> = ({ project, onClick, categoryMap, t }) => {
   return (
     <motion.div
       layout
