@@ -50,9 +50,9 @@ pipeline {
                     echo "🚀 Деплой на сервер ${DEPLOY_HOST}:${DEPLOY_PORT}..."
                     
                     // Используем SSH для подключения к серверу
-                    sshagent(credentials: ['jenkins-ssh-deploy-key']) {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-ssh-deploy-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                         sh """
-                            ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'ENDSSH'
+                            ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'ENDSSH'
                                 set -e
                                 echo "📂 Переход в директорию проекта..."
                                 cd ${DEPLOY_PATH}
@@ -113,9 +113,9 @@ ENDSSH
                 script {
                     echo "🏥 Проверка здоровья сервисов..."
                     
-                    sshagent(credentials: ['jenkins-ssh-deploy-key']) {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-ssh-deploy-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                         sh """
-                            ssh -o StrictHostKeyChecking=no -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'ENDSSH'
+                            ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} << 'ENDSSH'
                                 echo "🔍 Проверка backend health endpoint..."
                                 sleep 3
                                 
