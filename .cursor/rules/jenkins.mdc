@@ -1,3 +1,9 @@
+---
+description: "Правила настройки Jenkins CI/CD Pipeline для автоматического деплоя"
+globs: ["Jenkinsfile", "scripts/deploy.sh", "**/jenkins*.qmd", "**/jenkins*.md"]
+alwaysApply: false
+---
+
 # Jenkins CI/CD Pipeline Setup Rules
 
 ## 🎯 Обзор Jenkins CI/CD Pipeline
