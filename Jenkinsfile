@@ -3,8 +3,10 @@ pipeline {
     
     environment {
         // SSH connection settings
-        DEPLOY_HOST = '7eb10d5af2ad.vps.myjino.ru'
-        DEPLOY_PORT = '49233'
+        // azhukov-dev - алиас (если не резолвится, используйте реальный хост ниже)
+        // Реальный хост из deployment-guide: 7eb10d5af2ad.vps.myjino.ru:49233
+        DEPLOY_HOST = '7eb10d5af2ad.vps.myjino.ru'  // Реальный хост сервера
+        DEPLOY_PORT = '49233'  // SSH порт сервера
         DEPLOY_USER = 'root'
         DEPLOY_PATH = '/opt/personal-page'
         
@@ -52,7 +54,13 @@ pipeline {
                     // Используем SSH для подключения к серверу и запуска скрипта деплоя
                     withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-ssh-deploy-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                         sh """
-                            ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} \
+                            # Подключение к серверу и запуск деплоя
+                            SSH_PORT_FLAG=""
+                            if [ "${DEPLOY_PORT}" != "22" ]; then
+                                SSH_PORT_FLAG="-p ${DEPLOY_PORT}"
+                            fi
+                            
+                            ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} \${SSH_PORT_FLAG} ${DEPLOY_USER}@${DEPLOY_HOST} \
                                 "cd ${DEPLOY_PATH} && \
                                  git fetch origin && \
                                  git checkout -f origin/main || git checkout -f origin/master && \
