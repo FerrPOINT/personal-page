@@ -299,6 +299,9 @@
     },
     "resume": {
       "title": "Resume - Aleksandr Zhukov",
+      "pageTitle": "Aleksandr Zhukov - Resume",
+      "name": "Aleksandr Zhukov",
+      "position": "Senior Software Architect",
       "viewResume": "View Resume",
       "downloadResume": "Download Resume",
       "printResume": "Print / Save PDF",
