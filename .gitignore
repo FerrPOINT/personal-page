@@ -55,3 +55,4 @@ data/
 *.db-shm
 *.db-wal
 nul
+jenkins.help
