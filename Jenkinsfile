@@ -37,15 +37,21 @@ pipeline {
             steps {
                 script {
                     echo "🔨 Сборка Docker образов..."
-                    // Проверяем наличие docker-compose
-                    sh 'docker-compose --version || echo "⚠️  docker-compose не найден, будет использован docker compose"'
+                    // Проверяем наличие Docker
+                    sh 'docker --version || (echo "❌ Docker не найден на Jenkins agent" && exit 1)'
                     
                     // Собираем образы (без запуска)
+                    // Используем docker compose (новый формат команды)
                     sh '''
                         if command -v docker-compose &> /dev/null; then
+                            echo "Используется docker-compose"
                             docker-compose build --no-cache
-                        else
+                        elif docker compose version &> /dev/null; then
+                            echo "Используется docker compose"
                             docker compose build --no-cache
+                        else
+                            echo "❌ Docker Compose не найден"
+                            exit 1
                         fi
                     '''
                     
