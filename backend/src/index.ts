@@ -24,27 +24,32 @@ const PORT = process.env.API_PORT || 9000;
 app.use(helmet());
 
 // CORS configuration
+// BEST PRACTICE: Для same-origin запросов (относительный путь /api) CORS не нужен
+// Разрешаем запросы без origin (same-origin через nginx proxy) и из разрешенных доменов
 const allowedOrigins = process.env.FRONTEND_URL 
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
   : ['http://localhost:8888', 'http://localhost:5173'];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Debug logging
-    console.log(`🔍 CORS check: origin="${origin}", allowedOrigins=[${allowedOrigins.join(', ')}]`);
-    
-    // Allow requests with no origin (mobile apps, Postman, etc.) in development
-    if (!origin && process.env.NODE_ENV === 'development') {
-      console.log('✅ CORS: Allowing request with no origin (development mode)');
-      return callback(null, true);
+    // Разрешаем запросы без origin (same-origin через nginx proxy)
+    // Это запросы с относительным путем /api, которые проксируются nginx
+    if (!origin) {
+      callback(null, true);
+      return;
     }
     
-    if (!origin || allowedOrigins.includes(origin)) {
-      console.log(`✅ CORS: Allowing origin "${origin}"`);
+    // Разрешаем запросы из разрешенных доменов
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log(`❌ CORS: Rejecting origin "${origin}" (not in allowed list)`);
-      callback(new Error('Not allowed by CORS'));
+      // В development режиме разрешаем все для удобства разработки
+      if (process.env.NODE_ENV === 'development') {
+        callback(null, true);
+      } else {
+        console.log(`❌ CORS: Rejecting origin "${origin}" (not in allowed list: [${allowedOrigins.join(', ')}])`);
+        callback(new Error('Not allowed by CORS'));
+      }
     }
   },
   credentials: true,
