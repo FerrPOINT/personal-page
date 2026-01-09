@@ -1,15 +1,29 @@
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { createMessage } from '../models/Message.js';
 import { validateContactForm, sanitizeString } from '../services/validation.js';
 import { processMessage } from '../workers/telegram-worker.js';
 
 const router = Router();
 
+// Rate limiting: 5 requests per 15 minutes per IP
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many requests',
+    message: 'Too many contact form submissions from this IP, please try again later.',
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
 /**
  * POST /api/contact
  * Create a new contact form message
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', contactLimiter, async (req: Request, res: Response) => {
   try {
     // Extract and sanitize input
     const formData = {

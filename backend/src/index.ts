@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { testConnection, closeDatabase } from './services/database.js';
 import { testTelegramConnection } from './services/telegram.js';
@@ -19,9 +20,33 @@ dotenv.config({ path: resolve(__dirname, '../../.env') });
 const app = express();
 const PORT = process.env.API_PORT || 9000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Security middleware
+app.use(helmet());
+
+// CORS configuration
+const allowedOrigins = process.env.FRONTEND_URL 
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+  : ['http://localhost:8888', 'http://localhost:5173'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.) in development
+    if (!origin && process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+}));
+
+// Body parsing
+app.use(express.json({ limit: '1mb' })); // Limit request body size
 
 // Request logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
