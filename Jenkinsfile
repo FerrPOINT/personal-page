@@ -1,8 +1,12 @@
 pipeline {
     agent any
     
-    // Автоматический запуск через GitHub webhook или post-receive hook
-    // Не используем pollSCM - не тратим ресурсы на постоянные проверки
+    // Автоматический запуск при изменениях в main ветке
+    // Poll SCM каждые 10 минут - оптимальный баланс между ресурсами и скоростью
+    // Для внутреннего Jenkins без публичного URL это самый простой и надежный вариант
+    triggers {
+        pollSCM('H/10 * * * *')
+    }
     
     environment {
         // SSH connection settings
