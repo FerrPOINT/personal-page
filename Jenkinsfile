@@ -3,10 +3,9 @@ pipeline {
     
     environment {
         // SSH connection settings
-        // azhukov-dev - алиас (если не резолвится, используйте реальный хост ниже)
-        // Реальный хост из deployment-guide: 7eb10d5af2ad.vps.myjino.ru:49233
-        DEPLOY_HOST = 'azhukov-dev'  // Алиас сервера (или 7eb10d5af2ad.vps.myjino.ru)
-        DEPLOY_PORT = '22'  // SSH порт сервера (по умолчанию 22)
+        // Реальный хост сервера (azhukov-dev - алиас, который может не резолвиться на Jenkins)
+        DEPLOY_HOST = '7eb10d5af2ad.vps.myjino.ru'  // Реальный хост сервера
+        DEPLOY_PORT = '49233'  // SSH порт сервера
         DEPLOY_USER = 'root'
         DEPLOY_PATH = '/opt/personal-page'
         
