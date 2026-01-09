@@ -318,7 +318,7 @@ const Contact: React.FC = () => {
                 <div className="mt-2 text-sm text-gray-600 flex flex-wrap gap-4">
                     <span>+7 (983) 320-97-85</span>
                     <span>ferruspoint@mail.ru</span>
-                    <span>Novosibirsk, Russia</span>
+                    <span>{t('contact.locationValue')}</span>
                 </div>
             </div>
 

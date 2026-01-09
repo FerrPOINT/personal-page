@@ -40,14 +40,14 @@ const TechStack: React.FC = () => {
             </motion.div>
           </div>
 
-          <div className="w-full lg:w-2/3 h-[400px]">
+          <div className="w-full lg:w-2/3 h-[400px] min-h-[400px]">
              <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                className="w-full h-full"
+                className="w-full h-full min-h-[400px]"
              >
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minHeight={400}>
                 <BarChart
                   data={skills}
                   layout="vertical"
