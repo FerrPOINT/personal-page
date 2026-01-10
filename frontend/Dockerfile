@@ -14,11 +14,9 @@ COPY . .
 
 # Build arguments (for Vite environment variables)
 ARG VITE_API_URL
-ARG GEMINI_API_KEY
 
 # Set environment variables for build
 ENV VITE_API_URL=${VITE_API_URL}
-ENV GEMINI_API_KEY=${GEMINI_API_KEY}
 
 # Build the application
 RUN npm run build

@@ -38,7 +38,7 @@ contains_placeholders() {
     if [ ! -f "$file" ]; then
         return 1
     fi
-    grep -q "your_bot_token_here\|your_user_id_here\|your_gemini_api_key_here" "$file" 2>/dev/null
+    grep -q "your_bot_token_here\|your_user_id_here" "$file" 2>/dev/null
 }
 
 # Если .env уже существует и содержит реальные значения (не placeholder), не перезаписываем
@@ -82,14 +82,6 @@ elif [ -f env.prod ]; then
             echo "TELEGRAM_USER_ID=${TELEGRAM_USER_ID}" >> .env
         fi
         echo "  🔐 TELEGRAM_USER_ID обновлен из Jenkins Credentials"
-    fi
-    if [ -n "$GEMINI_API_KEY" ] && [ "$GEMINI_API_KEY" != "your_gemini_api_key_here" ]; then
-        if grep -q "^GEMINI_API_KEY=" .env 2>/dev/null; then
-            sed -i "s|^GEMINI_API_KEY=.*|GEMINI_API_KEY=${GEMINI_API_KEY}|" .env
-        else
-            echo "GEMINI_API_KEY=${GEMINI_API_KEY}" >> .env
-        fi
-        echo "  🔐 GEMINI_API_KEY обновлен из Jenkins Credentials"
     fi
 elif [ -f env.local ]; then
     cp env.local .env

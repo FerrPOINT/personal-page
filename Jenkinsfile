@@ -10,9 +10,8 @@ pipeline {
     
     environment {
         // SSH connection settings
-        // Реальный хост сервера (azhukov-dev - алиас, который может не резолвиться на Jenkins)
-        DEPLOY_HOST = '7eb10d5af2ad.vps.myjino.ru'  // Реальный хост сервера
-        DEPLOY_PORT = '49233'  // SSH порт сервера
+        DEPLOY_HOST = 'azhukov-dev'  // SSH алиас сервера
+        DEPLOY_PORT = '22'  // SSH порт (по умолчанию 22)
         DEPLOY_USER = 'root'
         DEPLOY_PATH = '/opt/personal-page'
         
@@ -70,7 +69,6 @@ pipeline {
                         // Если не созданы, deploy.sh использует существующий .env на сервере
                         def telegramBotToken = ''
                         def telegramUserId = ''
-                        def geminiApiKey = ''
                         
                         try {
                             withCredentials([string(credentialsId: 'telegram-bot-token', variable: 'TELEGRAM_BOT_TOKEN')]) {
@@ -87,14 +85,6 @@ pipeline {
                         } catch (Exception e) {
                             echo "⚠️  telegram-user-id credentials не найдены, используем .env на сервере"
                         }
-                        
-                        try {
-                            withCredentials([string(credentialsId: 'gemini-api-key', variable: 'GEMINI_API_KEY')]) {
-                                geminiApiKey = env.GEMINI_API_KEY ?: ''
-                            }
-                        } catch (Exception e) {
-                            echo "⚠️  gemini-api-key credentials не найдены, используем .env на сервере"
-                        }
                         // BEST PRACTICE 2026: Используем экранирование для предотвращения интерполяции секретов
                         // \$SSH_KEY - shell переменная (не интерполируется Groovy)
                         // Это предотвращает логирование секретов в Jenkins
@@ -107,6 +97,8 @@ pipeline {
                             
                             # BEST PRACTICE: Используем экранированные переменные для секретов
                             # \$SSH_KEY - shell переменная, не интерполируется Groovy (безопасно)
+                            # ВАЖНО: Передаем переменные через переменные окружения SSH команды
+                            # Groovy автоматически экранирует специальные символы при интерполяции
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" \${SSH_PORT_FLAG} ${DEPLOY_USER}@${DEPLOY_HOST} \
                                 "cd ${DEPLOY_PATH} && \
                                  git fetch origin && \
@@ -114,7 +106,6 @@ pipeline {
                                  chmod +x deploy.sh && \
                                  TELEGRAM_BOT_TOKEN='${telegramBotToken ?: ''}' \
                                  TELEGRAM_USER_ID='${telegramUserId ?: ''}' \
-                                 GEMINI_API_KEY='${geminiApiKey ?: ''}' \
                                  bash deploy.sh"
                         """
                     }

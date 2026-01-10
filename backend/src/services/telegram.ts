@@ -13,7 +13,6 @@ dotenv.config({ path: resolve(__dirname, '../../../.env') });
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_USER_ID = process.env.TELEGRAM_USER_ID;
-const TELEGRAM_ADMIN_ID = process.env.TELEGRAM_ADMIN_ID;
 
 // Create bot instance only if token is available (polling enabled to receive first message)
 let bot: TelegramBot | null = null;
@@ -32,7 +31,7 @@ if (TELEGRAM_BOT_TOKEN) {
     // Always setup handler to capture messages (in case user ID changes or wasn't set)
     setupMessageHandler();
     
-    console.log(`✅ Telegram bot initialized. Admin ID: ${TELEGRAM_ADMIN_ID || 'not set'}`);
+    console.log(`✅ Telegram bot initialized. User ID: ${TELEGRAM_USER_ID || 'not set'}`);
   } catch (error) {
     console.error('❌ Error initializing Telegram bot:', error);
   }
@@ -65,10 +64,10 @@ function setupMessageHandler(): void {
       return; // Skip if no user ID in message
     }
     
-    console.log(`📨 Received message from user ID: ${userId}, admin ID configured: ${TELEGRAM_ADMIN_ID ? 'yes' : 'no'}`);
+    console.log(`📨 Received message from user ID: ${userId}, user ID configured: ${TELEGRAM_USER_ID ? 'yes' : 'no'}`);
     
-    // Check if sender is admin
-    const isAdmin = TELEGRAM_ADMIN_ID && TELEGRAM_ADMIN_ID.trim() !== '' && userId === TELEGRAM_ADMIN_ID.trim();
+    // Check if sender is the configured user (admin check)
+    const isAdmin = TELEGRAM_USER_ID && TELEGRAM_USER_ID.trim() !== '' && userId === TELEGRAM_USER_ID.trim();
     
     if (isAdmin) {
       // Admin: respond with registered Telegram ID
@@ -97,7 +96,7 @@ function setupMessageHandler(): void {
     }
     
     // For non-admin users, ignore messages (don't register or respond)
-    console.log(`ℹ️  Message from non-admin user ${userId} ignored (admin ID: ${TELEGRAM_ADMIN_ID || 'not set'})`);
+    console.log(`ℹ️  Message from non-admin user ${userId} ignored (user ID: ${TELEGRAM_USER_ID || 'not set'})`);
     return;
   });
 
