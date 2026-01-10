@@ -13,6 +13,18 @@ export default defineConfig(({ mode }) => {
       build: {
         outDir: 'dist',
         sourcemap: false,
+        // Оптимизация CSS для production
+        cssCodeSplit: true,
+        cssMinify: true,
+        // Оптимизация chunk size
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              'react-vendor': ['react', 'react-dom'],
+              'three-vendor': ['@react-three/fiber', '@react-three/drei'],
+            },
+          },
+        },
       },
       server: {
         port: 8888,

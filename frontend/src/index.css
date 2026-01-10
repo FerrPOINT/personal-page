@@ -5,26 +5,69 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* CSS переменные для будущего расширения (dark mode, themes) */
+    --color-background: 10 10 10; /* #0a0a0a */
+    --color-surface: 18 18 18; /* #121212 */
+    --color-primary: 240 240 240; /* #f0f0f0 */
+    --color-secondary: 136 136 136; /* #888888 */
+    --color-accent-cyan: 0 217 255; /* #00d9ff */
+    --color-accent-magenta: 255 0 255; /* #ff00ff */
+  }
+
   body {
     @apply bg-background text-primary font-sans antialiased;
+    /* Улучшенная производительность рендеринга */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Предотвращение горизонтального скролла */
+    overflow-x: hidden;
   }
-  
-  /* Custom Scrollbar */
+
+  /* Современный скроллбар с поддержкой всех браузеров */
   ::-webkit-scrollbar {
-    width: 8px;
+    @apply w-2;
   }
-  
+
   ::-webkit-scrollbar-track {
-    background: #0a0a0a;
+    @apply bg-background;
   }
-  
+
   ::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 4px;
+    @apply bg-surface rounded-full;
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
-    background: #00d9ff;
+    @apply bg-accent-cyan;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--color-surface)) rgb(var(--color-background));
+  }
+
+  /* Улучшенная типографика */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+
+  /* Улучшенная доступность для фокуса */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent-cyan ring-offset-2 ring-offset-background;
+  }
+
+  /* Предотвращение выделения текста на интерактивных элементах */
+  button, a {
+    @apply select-none;
+  }
+
+  /* Улучшенная производительность анимаций */
+  * {
+    @apply transition-colors duration-200;
   }
 }
 
