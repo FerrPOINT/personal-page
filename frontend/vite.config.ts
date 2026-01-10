@@ -27,14 +27,17 @@ export default defineConfig(({ mode }) => {
               if (id.includes('i18n/translations/en.json')) {
                 return 'translations-en';
               }
-              // Vendor chunks
+              // Vendor chunks - React and all React-dependent libraries in one chunk
               if (id.includes('node_modules')) {
-                if (id.includes('react') || id.includes('react-dom')) {
+                // React core libraries
+                if (id.includes('react') || id.includes('react-dom') || id.includes('react/jsx-runtime')) {
                   return 'react-vendor';
                 }
-                if (id.includes('@react-three/fiber') || id.includes('@react-three/drei')) {
-                  return 'three-vendor';
+                // React-dependent libraries (they depend on React, so must be in same chunk or after)
+                if (id.includes('@react-three') || id.includes('framer-motion') || id.includes('react-hook-form') || id.includes('recharts')) {
+                  return 'react-vendor';
                 }
+                // All other vendor libraries
                 return 'vendor';
               }
             },
