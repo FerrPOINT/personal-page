@@ -61,3 +61,14 @@ data/
 nul
 jenkins.help
 scripts/
+
+# Security: Keys and certificates
+*.key
+*.pem
+*.p12
+*.crt
+*.cer
+id_rsa*
+id_ed25519*
+*.pub
+*.ssh

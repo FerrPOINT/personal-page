@@ -5,7 +5,7 @@
 Jenkins доступен и работает:
 - **URL**: `http://192.168.1.49:32768/`
 - **Пользователь**: `ferrpoint`
-- **Токен**: `1191a9f019fc3989d7a5ff30d456fb9cf3`
+- **Токен**: `YOUR_JENKINS_API_TOKEN`
 
 **✅ Jenkins job уже создан автоматически!**
 - **Job**: `personal-page-deploy`
