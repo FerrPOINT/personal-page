@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { Language, detectLanguage, saveLanguage } from '../utils/languageDetector';
 import { translations } from '../translations';
 
@@ -22,12 +22,13 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     saveLanguage(language);
   }, [language]);
 
-  const setLanguage = (lang: Language) => {
+  const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
-  };
+  }, []);
 
   // Функция перевода с поддержкой вложенных ключей и интерполяции (например, 'hero.title', 'hero.description' с {years})
-  const t = (key: string, params?: Record<string, string>): string => {
+  // Используем useCallback для стабильности ссылки и защиты от проблем минификации
+  const t = useCallback((key: string, params?: Record<string, string>): string => {
     const keys = key.split('.');
     let value: any = translations[language];
 
@@ -63,7 +64,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     }
 
     return result;
-  };
+  }, [language]);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
