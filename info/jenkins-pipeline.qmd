@@ -6,7 +6,7 @@
 
 **Jenkins URL**: `http://192.168.1.49:32768/`  
 **Пользователь**: `ferrpoint`  
-**Токен**: `1191a9f019fc3989d7a5ff30d456fb9cf3`
+**Токен**: `YOUR_JENKINS_API_TOKEN`
 
 ---
 
@@ -212,15 +212,15 @@ sequenceDiagram
 
 ```bash
 # Проверка доступности Jenkins
-curl -u ferrpoint:1191a9f019fc3989d7a5ff30d456fb9cf3 \
+curl -u ferrpoint:YOUR_JENKINS_API_TOKEN \
   http://192.168.1.49:32768/api/json
 
 # Получение информации о версии
-curl -u ferrpoint:1191a9f019fc3989d7a5ff30d456fb9cf3 \
+curl -u ferrpoint:YOUR_JENKINS_API_TOKEN \
   http://192.168.1.49:32768/api/json?tree=version
 
 # Список всех jobs
-curl -u ferrpoint:1191a9f019fc3989d7a5ff30d456fb9cf3 \
+curl -u ferrpoint:YOUR_JENKINS_API_TOKEN \
   http://192.168.1.49:32768/api/json?tree=jobs[name,url]
 ```
 

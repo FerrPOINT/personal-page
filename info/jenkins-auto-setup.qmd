@@ -79,7 +79,7 @@ chmod 600 ~/.ssh/authorized_keys
 
 #### Через API:
 ```bash
-curl -X POST -u ferrpoint:1191a9f019fc3989d7a5ff30d456fb9cf3 \
+curl -X POST -u ferrpoint:YOUR_JENKINS_API_TOKEN \
   http://192.168.1.49:32768/job/personal-page-deploy/build
 ```
 
@@ -94,13 +94,13 @@ bash scripts/trigger-jenkins-build.sh
 
 ### Проверить статус job:
 ```bash
-curl -s -u ferrpoint:1191a9f019fc3989d7a5ff30d456fb9cf3 \
+curl -s -u ferrpoint:YOUR_JENKINS_API_TOKEN \
   "http://192.168.1.49:32768/job/personal-page-deploy/api/json?tree=lastBuild[number,result,url]"
 ```
 
 ### Просмотреть логи последнего build:
 ```bash
-curl -s -u ferrpoint:1191a9f019fc3989d7a5ff30d456fb9cf3 \
+curl -s -u ferrpoint:YOUR_JENKINS_API_TOKEN \
   "http://192.168.1.49:32768/job/personal-page-deploy/lastBuild/consoleText"
 ```
 
@@ -164,7 +164,7 @@ graph TD
 bash scripts/check-jenkins.sh
 
 # Проверьте логи
-curl -s -u ferrpoint:1191a9f019fc3989d7a5ff30d456fb9cf3 \
+curl -s -u ferrpoint:YOUR_JENKINS_API_TOKEN \
   "http://192.168.1.49:32768/job/personal-page-deploy/lastBuild/consoleText" | tail -50
 ```
 

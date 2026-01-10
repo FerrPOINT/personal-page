@@ -67,11 +67,11 @@ bash scripts/trigger-jenkins-build.sh
 
 ```bash
 # Проверить статус build:
-curl -s -u ferrpoint:1191a9f019fc3989d7a5ff30d456fb9cf3 \
+curl -s -u ferrpoint:YOUR_JENKINS_API_TOKEN \
   "http://192.168.1.49:32768/job/personal-page-deploy/lastBuild/api/json?tree=number,result,building"
 
 # Посмотреть логи:
-curl -s -u ferrpoint:1191a9f019fc3989d7a5ff30d456fb9cf3 \
+curl -s -u ferrpoint:YOUR_JENKINS_API_TOKEN \
   "http://192.168.1.49:32768/job/personal-page-deploy/lastBuild/consoleText" | tail -50
 ```
 

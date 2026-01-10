@@ -118,7 +118,7 @@ bash scripts/trigger-jenkins-build.sh
 
 ### Через API:
 ```bash
-curl -X POST -u ferrpoint:1191a9f019fc3989d7a5ff30d456fb9cf3 \
+curl -X POST -u ferrpoint:YOUR_JENKINS_API_TOKEN \
   http://192.168.1.49:32768/job/personal-page-deploy/build
 ```
 
