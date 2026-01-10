@@ -130,7 +130,7 @@ export const config = {
   },
   telegram: {
     botToken: process.env.TELEGRAM_BOT_TOKEN || '',
-    adminId: process.env.TELEGRAM_ADMIN_ID || '',
+    adminId: process.env.TELEGRAM_USER_ID || '',
   },
   security: {
     rateLimit: {
