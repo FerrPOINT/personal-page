@@ -33,18 +33,30 @@ export default defineConfig(({ mode }) => {
                 if (id.includes('react') || id.includes('react-dom') || id.includes('react/jsx-runtime')) {
                   return 'react-vendor';
                 }
-                // ALL React-dependent libraries MUST be in react-vendor to avoid initialization order issues
+                // ALL React-dependent libraries and their dependencies MUST be in react-vendor
+                // This includes transitive dependencies that might import React
                 if (
                   id.includes('@react-three') || 
                   id.includes('framer-motion') || 
                   id.includes('react-hook-form') || 
                   id.includes('recharts') ||
                   id.includes('lucide-react') ||
-                  id.includes('three') && !id.includes('three/examples')
+                  id.includes('three') ||
+                  id.includes('zustand') ||
+                  id.includes('@use-gesture') ||
+                  id.includes('suspend-react') ||
+                  id.includes('leva') ||
+                  id.includes('maath') ||
+                  id.includes('meshline') ||
+                  id.includes('lamina') ||
+                  id.includes('react-spring') ||
+                  id.includes('react-use-gesture') ||
+                  id.includes('d3-') ||
+                  id.includes('@types/react')
                 ) {
                   return 'react-vendor';
                 }
-                // All other vendor libraries (non-React dependencies)
+                // All other vendor libraries (truly non-React dependencies like build tools, etc.)
                 return 'vendor';
               }
             },
