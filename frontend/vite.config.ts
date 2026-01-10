@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
               // Vendor chunks - ALL node_modules in react-vendor to avoid initialization order issues
               // The Activity error occurs when vendor chunk tries to use React before it's initialized
               // Solution: put everything in react-vendor to ensure React loads first
+              // This guarantees proper initialization order and eliminates chunk dependency issues
               if (id.includes('node_modules')) {
                 // Put ALL dependencies in react-vendor to guarantee React loads before any other code
                 // This ensures no code tries to access React APIs before React is initialized
