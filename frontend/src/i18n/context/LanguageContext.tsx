@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo } from 'react';
 import { Language, detectLanguage, saveLanguage } from '../utils/languageDetector';
 import { translations } from '../translations';
 
@@ -14,57 +14,99 @@ interface LanguageProviderProps {
   children: ReactNode;
 }
 
+// Cache for compiled regex patterns for interpolation
+const interpolationCache = new Map<string, RegExp>();
+
+// Cache for translation lookups (key path -> value)
+const translationCache = new Map<string, string>();
+
+/**
+ * Get or create regex pattern for interpolation parameter
+ */
+const getInterpolationRegex = (param: string): RegExp => {
+  const cacheKey = `param:${param}`;
+  if (!interpolationCache.has(cacheKey)) {
+    interpolationCache.set(cacheKey, new RegExp(`\\{${param}\\}`, 'g'));
+  }
+  return interpolationCache.get(cacheKey)!;
+};
+
+/**
+ * Optimized translation lookup with caching
+ * Cache key includes language to avoid conflicts
+ */
+const getTranslationValue = (translationObj: any, keyPath: string[], language: Language): string | null => {
+  const cacheKey = `${language}:${keyPath.join('.')}`;
+  
+  if (translationCache.has(cacheKey)) {
+    return translationCache.get(cacheKey)!;
+  }
+
+  let value: any = translationObj;
+  for (const k of keyPath) {
+    if (value && typeof value === 'object' && k in value) {
+      value = value[k];
+    } else {
+      return null;
+    }
+  }
+
+  const result = typeof value === 'string' ? value : null;
+  if (result) {
+    translationCache.set(cacheKey, result);
+  }
+  return result;
+};
+
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => detectLanguage());
 
-  // Сохраняем язык в localStorage при изменении
+  // Memoize current translations object
+  const currentTranslations = useMemo(() => translations[language], [language]);
+
+  // Save language to localStorage when changed
   useEffect(() => {
     saveLanguage(language);
+    // Clear translation cache when language changes
+    translationCache.clear();
   }, [language]);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
   }, []);
 
-  // Функция перевода с поддержкой вложенных ключей и интерполяции (например, 'hero.title', 'hero.description' с {years})
-  // Используем useCallback для стабильности ссылки и защиты от проблем минификации
+  // Optimized translation function with caching and memoization
   const t = useCallback((key: string, params?: Record<string, string>): string => {
-    const keys = key.split('.');
-    let value: any = translations[language];
-
-    for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
-        value = value[k];
-      } else {
-        // Fallback на английский, если ключ не найден
-        if (language !== 'en') {
-          value = translations.en;
-          for (const fallbackKey of keys) {
-            if (value && typeof value === 'object' && fallbackKey in value) {
-              value = value[fallbackKey];
-            } else {
-              console.warn(`Translation key not found: ${key}`);
-              return key;
-            }
-          }
-        } else {
-          console.warn(`Translation key not found: ${key}`);
-          return key;
-        }
-      }
-    }
-
-    let result = typeof value === 'string' ? value : key;
+    const keyPath = key.split('.');
     
-    // Интерполяция параметров (замена {param} на значения)
-    if (params && typeof result === 'string') {
-      Object.keys(params).forEach((param) => {
-        result = result.replace(new RegExp(`\\{${param}\\}`, 'g'), params[param]);
-      });
+    // Try to get translation from current language
+    let result = getTranslationValue(currentTranslations, keyPath, language);
+    
+    // Fallback to English if not found
+    if (!result && language !== 'en') {
+      result = getTranslationValue(translations.en, keyPath, 'en');
     }
-
+    
+    // If still not found, return key and warn
+    if (!result) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`Translation key not found: ${key}`);
+      }
+      return key;
+    }
+    
+    // Optimized interpolation with cached regex patterns
+    if (params && Object.keys(params).length > 0) {
+      let interpolated = result;
+      for (const [param, value] of Object.entries(params)) {
+        const regex = getInterpolationRegex(param);
+        interpolated = interpolated.replace(regex, value);
+      }
+      return interpolated;
+    }
+    
     return result;
-  }, [language]);
+  }, [language, currentTranslations]);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>

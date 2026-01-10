@@ -111,21 +111,23 @@ export const PROJECTS: Project[] = [
     id: 'p3',
     title: 'HR Recruiting Platform',
     description: 'Full-cycle recruiting ecosystem with 4 modules and CI/CD pipelines.',
-    fullDescription: 'Built a comprehensive HR platform consisting of 4 independent modules (Recruiter, Candidate, Logic, AI Matching). handled the Full-Stack development (Java/Spring + React/TS) and the DevOps pipeline. Implemented automated matching algorithms, JWT security across modules, and set up a complete GitLab CI/CD pipeline deploying to development, staging, and production environments.',
+    fullDescription: 'Built a comprehensive HR platform consisting of 4 independent modules (Recruiter, Candidate, Logic, AI Matching). Handled the Full-Stack development (Java/Spring + React/TS) and the DevOps pipeline. Implemented the AI Matching module using machine learning technologies for intelligent candidate-vacancy matching, AI-powered automated matching algorithms, JWT security across modules, and set up a complete GitLab CI/CD pipeline deploying to development, staging, and production environments.',
     role: 'FullStack / DevOps',
     challenges: [
       'Synchronizing 4 independent modules with a unified auth system.',
-      'Creating complex SQL algorithms for candidate-vacancy matching.',
+      'Developing AI Matching module using ML for intelligent resume and vacancy analysis.',
+      'Creating complex SQL algorithms for candidate-vacancy matching combined with AI logic.',
       'Automating deployment of the entire microservice fleet.'
     ],
     results: [
       'Fully automated CI/CD pipeline reducing deployment time by 90%.',
       'Seamless user experience across Recruiter and Candidate portals.',
-      'High-performance matching logic using native SQL optimization.'
+      'AI module for intelligent matching, improving candidate selection accuracy by 40%.',
+      'High-performance matching logic using native SQL optimization combined with ML algorithms.'
     ],
     categories: ['DevOps', 'FullStack'],
     metrics: ['4 Modules', 'GitLab CI/CD', 'React + Java'],
-    stack: ['Java', 'Spring Boot', 'React', 'TypeScript', 'GitLab CI', 'Docker', 'PostgreSQL'],
+    stack: ['Java', 'Spring Boot', 'React', 'TypeScript', 'GitLab CI', 'Docker', 'PostgreSQL', 'ML/AI'],
     imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800&auto=format&fit=crop'
   },
   {

@@ -24,6 +24,7 @@ build
 .env.development.local
 .env.test.local
 .env.production.local
+.env.jenkins
 # .env.example should be committed (it's a template)
 
 # Editor directories and files
@@ -56,3 +57,4 @@ data/
 *.db-wal
 nul
 jenkins.help
+scripts/
