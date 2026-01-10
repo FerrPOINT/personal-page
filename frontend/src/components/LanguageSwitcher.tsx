@@ -11,12 +11,16 @@ const LanguageSwitcher: React.FC = () => {
     setLanguage(newLanguage);
   };
 
+  // Вычисляем значения заранее, чтобы избежать проблем с минификацией
+  const targetLangText = language === 'ru' ? t('common.english') : t('common.russian');
+  const switchLabel = t('common.switchLanguage', { lang: targetLangText });
+
   return (
     <button
       onClick={toggleLanguage}
       className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-secondary hover:text-white transition-all duration-200 border border-white/10 hover:border-accent-cyan/30"
-      aria-label={t('common.switchLanguage', { lang: language === 'ru' ? t('common.english') : t('common.russian') })}
-      title={t('common.switchLanguage', { lang: language === 'ru' ? t('common.english') : t('common.russian') })}
+      aria-label={switchLabel}
+      title={switchLabel}
     >
       <Globe className="w-4 h-4" />
       <span className="text-sm font-medium uppercase">{language === 'ru' ? 'RU' : 'EN'}</span>

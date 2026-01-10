@@ -191,7 +191,7 @@ const Spaceship = ({ radiusX, radiusZ, speed, offset, yOffset }: { radiusX: numb
   );
 };
 
-const SolarSystemScene = () => {
+const SolarSystemScene = ({ t }: { t: (key: string) => string }) => {
   return (
     <group rotation={[0.2, 0, 0]} position={[2, 0, 0]}> 
       <Sun />
@@ -263,7 +263,7 @@ const Hero: React.FC = () => {
               
               <Suspense fallback={null}>
                 <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.2}>
-                    <SolarSystemScene />
+                    <SolarSystemScene t={t} />
                 </Float>
               </Suspense>
               
