@@ -19,9 +19,24 @@ export default defineConfig(({ mode }) => {
         // Оптимизация chunk size
         rollupOptions: {
           output: {
-            manualChunks: {
-              'react-vendor': ['react', 'react-dom'],
-              'three-vendor': ['@react-three/fiber', '@react-three/drei'],
+            manualChunks: (id) => {
+              // Separate translations into their own chunks for better code splitting
+              if (id.includes('i18n/translations/ru.json')) {
+                return 'translations-ru';
+              }
+              if (id.includes('i18n/translations/en.json')) {
+                return 'translations-en';
+              }
+              // Vendor chunks
+              if (id.includes('node_modules')) {
+                if (id.includes('react') || id.includes('react-dom')) {
+                  return 'react-vendor';
+                }
+                if (id.includes('@react-three/fiber') || id.includes('@react-three/drei')) {
+                  return 'three-vendor';
+                }
+                return 'vendor';
+              }
             },
           },
         },

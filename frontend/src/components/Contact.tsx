@@ -26,19 +26,19 @@ const Contact: React.FC = () => {
 
   const API_URL = import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim() !== '' ? import.meta.env.VITE_API_URL : '/api';
 
-  // Вычисляем размер сообщения в реальном времени
+  // Calculate message size in real-time
   const messageSize = messageContent ? new Blob([messageContent]).size : 0;
   const maxSize = 100 * 1024; // 100KB
   const sizeKB = (messageSize / 1024).toFixed(2);
   const maxSizeKB = (maxSize / 1024).toFixed(0);
-  const isSizeWarning = messageSize > maxSize * 0.8; // Предупреждение при 80% лимита
+  const isSizeWarning = messageSize > maxSize * 0.8; // Warning at 80% of limit
   const isSizeExceeded = messageSize > maxSize;
 
   const onSubmit = async (data: FormData) => {
     setSubmitStatus('idle');
     setSubmitMessage('');
 
-    // Валидация размера сообщения на фронтенде (максимум 100KB)
+    // Validate message size on frontend (maximum 100KB)
     const messageSize = new Blob([data.message]).size;
     const maxSize = 100 * 1024; // 100KB
     if (messageSize > maxSize) {
@@ -62,17 +62,17 @@ const Contact: React.FC = () => {
         }),
       });
 
-      // Проверяем статус ДО попытки парсить JSON
+      // Check status BEFORE attempting to parse JSON
       if (!response.ok) {
         let errorMessage = t('contact.form.error');
         
-        // Обрабатываем специфичные статус-коды
+        // Handle specific status codes
         switch (response.status) {
           case 413:
             errorMessage = t('contact.form.error413');
             break;
           case 400:
-            // Пытаемся получить детали ошибки валидации
+            // Try to get validation error details
             try {
               const errorData = await response.json();
               errorMessage = errorData.error || errorData.details?.join(', ') || t('contact.form.error400');
@@ -95,7 +95,7 @@ const Contact: React.FC = () => {
         return;
       }
 
-      // Если статус OK, парсим JSON
+      // If status OK, parse JSON
       const result = await response.json();
 
       if (result.success) {
@@ -115,7 +115,7 @@ const Contact: React.FC = () => {
       console.error('Error submitting form:', error);
       setSubmitStatus('error');
       
-      // Более детальная обработка ошибок сети
+      // More detailed network error handling
       if (error instanceof TypeError && error.message.includes('fetch')) {
         setSubmitMessage(t('contact.form.errorNetwork'));
       } else if (error instanceof SyntaxError) {

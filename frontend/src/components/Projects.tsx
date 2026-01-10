@@ -6,12 +6,26 @@ import Modal from './Modal';
 import { useLanguage } from '../i18n/hooks/useLanguage';
 import { getTranslatedProjects, getCategoryMap } from '../i18n/utils/getTranslatedData';
 
+/**
+ * Normalizes category key (AI/ИИ -> AI)
+ */
+const normalizeCategoryKey = (category: string): string => {
+  return category === 'ИИ' ? 'AI' : category;
+};
+
+/**
+ * Checks if project has AI category (handles both 'AI' and 'ИИ')
+ */
+const hasAICategory = (categories: string[]): boolean => {
+  return categories.includes('AI') || categories.includes('ИИ');
+};
+
 const Projects: React.FC = () => {
   const { t, language } = useLanguage();
   const [filter, setFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  // Маппинг категорий для отображения
+  // Category mapping for display
   const categoryMap = useMemo(() => getCategoryMap(language, t), [language, t]);
 
   const projects = useMemo(() => getTranslatedProjects(language), [language]);
@@ -26,9 +40,9 @@ const Projects: React.FC = () => {
   const filteredProjects = projects.filter(
     (p) => {
       if (filter === 'All') return true;
-      // Для фильтрации учитываем, что в ru.json категория AI может быть "ИИ"
+      // For filtering, account for AI category being "ИИ" in ru.json
       if (filter === 'AI') {
-        return p.categories.includes('AI') || p.categories.includes('ИИ');
+        return hasAICategory(p.categories);
       }
       return p.categories.includes(filter);
     }
@@ -100,7 +114,7 @@ const Projects: React.FC = () => {
                <div className="absolute top-6 left-6 right-6 flex justify-between items-start">
                  <div className="flex flex-wrap gap-2">
                    {selectedProject.categories.map((cat, idx) => {
-                     const categoryKey = cat === 'ИИ' ? 'AI' : cat;
+                     const categoryKey = normalizeCategoryKey(cat);
                      return (
                        <span key={idx} className={`px-4 py-2 bg-black/60 backdrop-blur-md text-sm font-mono border rounded-lg ${
                          categoryKey === 'DevOps' || categoryKey === 'AI'
@@ -119,7 +133,7 @@ const Projects: React.FC = () => {
                <div className="absolute bottom-6 left-6 right-6">
                  <div className="flex flex-wrap gap-2 mb-4">
                    {selectedProject.metrics.map((m, i) => {
-                     const hasAI = selectedProject.categories.some(c => c === 'AI' || c === 'ИИ');
+                     const hasAI = hasAICategory(selectedProject.categories);
                      const hasDevOps = selectedProject.categories.includes('DevOps');
                      return (
                        <span key={i} className={`px-4 py-2 bg-black/60 backdrop-blur-md text-sm rounded-lg font-mono border ${
@@ -183,7 +197,7 @@ const Projects: React.FC = () => {
                </h4>
                <div className="flex flex-wrap gap-2 mb-6">
                  {selectedProject.stack.map(tech => {
-                   const hasAI = selectedProject.categories.some(c => c === 'AI' || c === 'ИИ');
+                   const hasAI = hasAICategory(selectedProject.categories);
                    const hasDevOps = selectedProject.categories.includes('DevOps');
                    return (
                      <span key={tech} className={`px-3 py-1.5 rounded-lg text-sm font-medium border ${
@@ -202,7 +216,7 @@ const Projects: React.FC = () => {
                     onClick={() => setSelectedProject(null)}
                     className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
                       (() => {
-                        const hasAI = selectedProject.categories.some(c => c === 'AI' || c === 'ИИ');
+                        const hasAI = hasAICategory(selectedProject.categories);
                         const hasDevOps = selectedProject.categories.includes('DevOps');
                         return hasDevOps || hasAI;
                       })()
@@ -231,7 +245,7 @@ const ProjectCard: React.FC<{ project: Project, onClick: () => void, categoryMap
       transition={{ duration: 0.3 }}
       className={`group relative bg-surface border rounded-xl overflow-hidden transition-all duration-300 flex flex-col h-full ${
         (() => {
-          const hasAI = project.categories.some(c => c === 'AI' || c === 'ИИ');
+          const hasAI = hasAICategory(project.categories);
           const hasDevOps = project.categories.includes('DevOps');
           return hasDevOps || hasAI;
         })()
@@ -250,8 +264,7 @@ const ProjectCard: React.FC<{ project: Project, onClick: () => void, categoryMap
         <div className="absolute top-4 right-4 z-20">
           <div className="flex flex-col gap-1">
             {project.categories.map((cat, idx) => {
-              // Определяем внутренний ключ категории для логики
-              const categoryKey = cat === 'ИИ' ? 'AI' : cat;
+              const categoryKey = normalizeCategoryKey(cat);
               return (
                 <span key={idx} className={`px-3 py-1 bg-black/70 backdrop-blur-md text-xs font-mono border rounded ${
                   categoryKey === 'DevOps' || categoryKey === 'AI'
@@ -280,18 +293,18 @@ const ProjectCard: React.FC<{ project: Project, onClick: () => void, categoryMap
         </p>
 
         <div className="grid grid-cols-3 gap-2 mb-6">
-          {project.metrics.map((metric, i) => (
-            <div key={i} className="flex items-center justify-center text-xs font-mono text-gray-300 bg-white/5 p-2 rounded border border-white/10 text-center">
-              <div className={`w-1.5 h-1.5 rounded-full mr-1.5 shrink-0 ${
-                (() => {
-                  const hasAI = project.categories.some(c => c === 'AI' || c === 'ИИ');
-                  const hasDevOps = project.categories.includes('DevOps');
-                  return hasDevOps || hasAI;
-                })() ? 'bg-accent-cyan' : 'bg-accent-magenta'
-              }`} />
-              <span className="truncate">{metric}</span>
-            </div>
-          ))}
+          {project.metrics.map((metric, i) => {
+            const hasAI = hasAICategory(project.categories);
+            const hasDevOps = project.categories.includes('DevOps');
+            return (
+              <div key={i} className="flex items-center justify-center text-xs font-mono text-gray-300 bg-white/5 p-2 rounded border border-white/10 text-center">
+                <div className={`w-1.5 h-1.5 rounded-full mr-1.5 shrink-0 ${
+                  hasDevOps || hasAI ? 'bg-accent-cyan' : 'bg-accent-magenta'
+                }`} />
+                <span className="truncate">{metric}</span>
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6">
@@ -312,7 +325,7 @@ const ProjectCard: React.FC<{ project: Project, onClick: () => void, categoryMap
                 onClick={onClick}
                 className={`w-full flex items-center justify-center text-sm font-bold py-2.5 px-4 rounded-lg transition-all group/btn ${
                   (() => {
-                    const hasAI = project.categories.some(c => c === 'AI' || c === 'ИИ');
+                    const hasAI = hasAICategory(project.categories);
                     const hasDevOps = project.categories.includes('DevOps');
                     return hasDevOps || hasAI;
                   })()

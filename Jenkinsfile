@@ -111,11 +111,11 @@ pipeline {
                                 "cd ${DEPLOY_PATH} && \
                                  git fetch origin && \
                                  git checkout -f origin/main || git checkout -f origin/master && \
-                                 chmod +x scripts/deploy.sh && \
+                                 chmod +x deploy.sh && \
                                  TELEGRAM_BOT_TOKEN='${telegramBotToken ?: ''}' \
                                  TELEGRAM_USER_ID='${telegramUserId ?: ''}' \
                                  GEMINI_API_KEY='${geminiApiKey ?: ''}' \
-                                 bash scripts/deploy.sh"
+                                 bash deploy.sh"
                         """
                     }
                 }
