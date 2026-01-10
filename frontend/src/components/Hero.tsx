@@ -308,15 +308,23 @@ const Hero: React.FC = () => {
             <p 
               className="text-xl md:text-2xl text-secondary mb-8 leading-relaxed max-w-lg"
               dangerouslySetInnerHTML={{
-                __html: t('hero.description', {
-                  years: t('hero.years'),
-                  java: t('hero.java'),
-                  highload: t('hero.highload'),
-                  ai: t('hero.ai')
-                }).replace(/\{years\}/g, `<span class="text-white font-semibold">${t('hero.years')}</span>`)
-                  .replace(/\{java\}/g, `<span class="text-white font-semibold">${t('hero.java')}</span>`)
-                  .replace(/\{highload\}/g, `<span class="text-white font-semibold">${t('hero.highload')}</span>`)
-                  .replace(/\{ai\}/g, `<span class="text-white font-semibold">${t('hero.ai')}</span>`)
+                __html: (() => {
+                  const yearsText = t('hero.years');
+                  const javaText = t('hero.java');
+                  const highloadText = t('hero.highload');
+                  const aiText = t('hero.ai');
+                  const description = t('hero.description', {
+                    years: yearsText,
+                    java: javaText,
+                    highload: highloadText,
+                    ai: aiText
+                  });
+                  return description
+                    .replace(/\{years\}/g, `<span class="text-white font-semibold">${yearsText}</span>`)
+                    .replace(/\{java\}/g, `<span class="text-white font-semibold">${javaText}</span>`)
+                    .replace(/\{highload\}/g, `<span class="text-white font-semibold">${highloadText}</span>`)
+                    .replace(/\{ai\}/g, `<span class="text-white font-semibold">${aiText}</span>`);
+                })()
               }}
             />
 
