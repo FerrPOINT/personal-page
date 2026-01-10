@@ -10,8 +10,8 @@ pipeline {
     
     environment {
         // SSH connection settings
-        DEPLOY_HOST = 'azhukov-dev'  // SSH алиас сервера
-        DEPLOY_PORT = '22'  // SSH порт (по умолчанию 22)
+        DEPLOY_HOST = '7eb10d5af2ad.vps.myjino.ru'  // Реальный хост сервера
+        DEPLOY_PORT = '49233'  // SSH порт сервера
         DEPLOY_USER = 'root'
         DEPLOY_PATH = '/opt/personal-page'
         
