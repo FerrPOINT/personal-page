@@ -18,7 +18,7 @@ const LanguageSwitcher: React.FC = () => {
   return (
     <button
       onClick={toggleLanguage}
-      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-secondary hover:text-white transition-all duration-200 border border-white/10 hover:border-accent-cyan/30"
+      className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/5 hover:bg-white/10 text-secondary hover:text-white transition-all duration-200 border border-white/10 hover:border-accent-cyan/30"
       aria-label={switchLabel}
       title={switchLabel}
     >
