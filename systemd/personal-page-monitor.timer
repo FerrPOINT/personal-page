@@ -1,0 +1,12 @@
+[Unit]
+Description=Personal Page Monitor Timer - Run every 5 minutes
+Requires=personal-page-monitor.service
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target
+

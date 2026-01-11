@@ -23,8 +23,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install runtime dependencies for better-sqlite3
-RUN apk add --no-cache sqlite
+# Install runtime dependencies for better-sqlite3 and health checks
+RUN apk add --no-cache sqlite wget
 
 # Copy package files and install production dependencies only
 COPY package.json package-lock.json* ./

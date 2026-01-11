@@ -8,7 +8,7 @@ services:
     container_name: personal-page-frontend
     ports:
       - "8888:80"
-    restart: unless-stopped
+    restart: always
     env_file:
       - .env
     environment:
@@ -16,7 +16,14 @@ services:
     networks:
       - app-network
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   backend:
     build:
@@ -25,7 +32,7 @@ services:
     container_name: personal-page-backend
     ports:
       - "9000:9000"
-    restart: unless-stopped
+    restart: always
     env_file:
       - .env
     environment:
@@ -35,6 +42,12 @@ services:
       - backend_data:/app/data
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   backend_data:

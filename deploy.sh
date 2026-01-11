@@ -155,3 +155,10 @@ echo "✅ Деплой завершен успешно!"
 echo "🌐 Frontend: http://$(hostname -I | awk '{print $1}'):8888"
 echo "🔌 Backend API: http://$(hostname -I | awk '{print $1}'):9000"
 
+# Проверяем и перезапускаем systemd сервис если он установлен
+if systemctl is-enabled personal-page.service > /dev/null 2>&1; then
+    echo ""
+    echo "🔄 Перезапуск systemd сервиса..."
+    systemctl restart personal-page.service || true
+fi
+
