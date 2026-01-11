@@ -1,0 +1,15 @@
+[Unit]
+Description=Personal Page Monitor - Health Check and Auto-Recovery
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/personal-page/monitor.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=personal-page-monitor
+
+[Install]
+WantedBy=multi-user.target
+
