@@ -17,6 +17,26 @@ const TELEGRAM_USER_ID = process.env.TELEGRAM_USER_ID;
 // Create bot instance only if token is available (polling enabled to receive first message)
 let bot: TelegramBot | null = null;
 
+// Log buffer for diagnostics (last 50 log entries)
+const logBuffer: Array<{ timestamp: string; level: string; message: string }> = [];
+const MAX_LOG_ENTRIES = 50;
+
+function addLog(level: string, message: string): void {
+  logBuffer.push({
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+  });
+  // Keep only last MAX_LOG_ENTRIES entries
+  if (logBuffer.length > MAX_LOG_ENTRIES) {
+    logBuffer.shift();
+  }
+}
+
+export function getTelegramLogs(): Array<{ timestamp: string; level: string; message: string }> {
+  return [...logBuffer];
+}
+
 if (TELEGRAM_BOT_TOKEN) {
   try {
     bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
@@ -25,18 +45,26 @@ if (TELEGRAM_BOT_TOKEN) {
     if (TELEGRAM_USER_ID && TELEGRAM_USER_ID.trim() !== '') {
       const userId = TELEGRAM_USER_ID.trim();
       setTelegramChatId(userId);
-      console.log(`✅ User ID loaded from environment, chat ID set: ${userId}`);
+      const msg = `✅ User ID loaded from environment, chat ID set: ${userId}`;
+      console.log(msg);
+      addLog('info', msg);
     }
     
     // Always setup handler to capture messages (in case user ID changes or wasn't set)
     setupMessageHandler();
     
-    console.log(`✅ Telegram bot initialized. User ID: ${TELEGRAM_USER_ID || 'not set'}`);
-  } catch (error) {
-    console.error('❌ Error initializing Telegram bot:', error);
+    const initMsg = `✅ Telegram bot initialized. User ID: ${TELEGRAM_USER_ID || 'not set'}`;
+    console.log(initMsg);
+    addLog('info', initMsg);
+  } catch (error: any) {
+    const errorMsg = `❌ Error initializing Telegram bot: ${error.message || error}`;
+    console.error(errorMsg);
+    addLog('error', errorMsg);
   }
 } else {
-  console.warn('⚠️  TELEGRAM_BOT_TOKEN not set - Telegram service will not be available');
+  const warnMsg = '⚠️  TELEGRAM_BOT_TOKEN not set - Telegram service will not be available';
+  console.warn(warnMsg);
+  addLog('warn', warnMsg);
 }
 
 export interface MessageData {
@@ -215,11 +243,42 @@ export async function testTelegramConnection(): Promise<boolean> {
 
   try {
     const botInfo = await bot.getMe();
-    console.log(`✅ Telegram bot connected: @${botInfo.username}`);
+    const msg = `✅ Telegram bot connected: @${botInfo.username}`;
+    console.log(msg);
+    addLog('info', msg);
     return true;
-  } catch (error) {
-    console.error('❌ Telegram connection test failed:', error);
+  } catch (error: any) {
+    const errorMsg = `❌ Telegram connection test failed: ${error.message || error}`;
+    console.error(errorMsg);
+    addLog('error', errorMsg);
     return false;
+  }
+}
+
+/**
+ * Test Telegram connection with detailed error information
+ */
+export async function testTelegramConnectionWithDetails(): Promise<{ connected: boolean; username?: string; error?: string }> {
+  if (!bot) {
+    return { connected: false, error: 'Bot is not initialized' };
+  }
+
+  try {
+    const botInfo = await bot.getMe();
+    const msg = `✅ Telegram bot connected: @${botInfo.username}`;
+    addLog('info', msg);
+    return { connected: true, username: botInfo.username };
+  } catch (error: any) {
+    let errorMessage = 'Unknown error';
+    if (error.response) {
+      errorMessage = `Telegram API error: ${error.response.statusCode || 'unknown'} - ${error.response.body?.description || error.message || 'unknown error'}`;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    const errorMsg = `❌ Telegram connection test failed: ${errorMessage}`;
+    console.error(errorMsg);
+    addLog('error', errorMsg);
+    return { connected: false, error: errorMessage };
   }
 }
 
