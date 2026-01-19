@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import { createMessage } from '../models/Message.js';
 import { validateContactForm, sanitizeString } from '../services/validation.js';
 import { processMessage } from '../workers/telegram-worker.js';
+import { apiLogger } from '../utils/logger.js';
 
 const router = Router();
 
@@ -45,11 +46,8 @@ router.post('/', contactLimiter, async (req: Request, res: Response) => {
     // Create message in database
     const message = await createMessage(formData);
 
-    // Process message immediately (send to Telegram)
-    // Don't wait for worker interval - send right away
     processMessage(message).catch(error => {
-      console.error(`❌ Error processing message ${message.id} immediately:`, error);
-      // Don't fail the request if Telegram send fails - message is already saved
+      apiLogger.error('Error processing message immediately', { messageId: message.id, error: error.message, stack: error.stack });
     });
 
     // Return success response
@@ -61,8 +59,8 @@ router.post('/', contactLimiter, async (req: Request, res: Response) => {
         status: message.status,
       },
     });
-  } catch (error) {
-    console.error('❌ Error creating message:', error);
+  } catch (error: any) {
+    apiLogger.error('Error creating message', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
       error: 'Internal server error',
