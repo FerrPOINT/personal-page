@@ -1,5 +1,6 @@
 import { findPendingOrFailed, updateMessageStatus } from '../models/Message.js';
 import { sendTelegramMessage } from '../services/telegram.js';
+import { workerLogger } from '../utils/logger.js';
 import dotenv from 'dotenv';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
@@ -22,9 +23,8 @@ let intervalId: NodeJS.Timeout | null = null;
  */
 export async function processMessage(message: any): Promise<void> {
   try {
-    console.log(`📨 Processing message ${message.id} from ${message.email}`);
+    workerLogger.info('Processing message', { messageId: message.id, email: message.email });
 
-    // Send to Telegram
     await sendTelegramMessage({
       name: message.name,
       email: message.email,
@@ -32,16 +32,15 @@ export async function processMessage(message: any): Promise<void> {
       createdAt: new Date(message.created_at),
     });
 
-    // Update status to 'sent'
     await updateMessageStatus({
       id: message.id,
       status: 'sent',
       sent_at: new Date(),
     });
 
-    console.log(`✅ Message ${message.id} sent successfully`);
+    workerLogger.info('Message sent successfully', { messageId: message.id });
   } catch (error: any) {
-    console.error(`❌ Error processing message ${message.id}:`, error);
+    workerLogger.error('Error processing message', { messageId: message.id, error: error.message, stack: error.stack });
 
     // Update status to 'failed' with error message
     const errorMessage = error.message || error.toString();
@@ -60,33 +59,30 @@ export async function processMessage(message: any): Promise<void> {
  */
 async function processMessages(): Promise<void> {
   if (isRunning) {
-    console.log('⏳ Worker is already processing messages, skipping...');
+    workerLogger.debug('Worker is already processing messages, skipping');
     return;
   }
 
   isRunning = true;
 
   try {
-    // Find messages to process (limit to 10 at a time to avoid overload)
     const messages = await findPendingOrFailed(10);
 
     if (messages.length === 0) {
-      console.log('✅ No messages to process');
+      workerLogger.debug('No messages to process');
       return;
     }
 
-    console.log(`📬 Found ${messages.length} message(s) to process`);
+    workerLogger.info('Found messages to process', { count: messages.length });
 
-    // Process messages sequentially to avoid rate limits
     for (const message of messages) {
       await processMessage(message);
-      // Small delay between messages to avoid Telegram rate limits
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    console.log(`✅ Processed ${messages.length} message(s)`);
-  } catch (error) {
-    console.error('❌ Error in worker process:', error);
+    workerLogger.info('Processed messages', { count: messages.length });
+  } catch (error: any) {
+    workerLogger.error('Error in worker process', { error: error.message, stack: error.stack });
   } finally {
     isRunning = false;
   }
@@ -97,26 +93,23 @@ async function processMessages(): Promise<void> {
  */
 export function startWorker(): void {
   if (intervalId !== null) {
-    console.warn('⚠️  Worker is already running');
+    workerLogger.warn('Worker is already running');
     return;
   }
 
-  console.log('🚀 Starting Telegram worker...');
-  console.log(`⏰ Worker will check for messages every ${WORKER_INTERVAL_MS / 1000 / 60} minutes`);
+  workerLogger.info('Starting Telegram worker', { intervalMinutes: WORKER_INTERVAL_MS / 1000 / 60 });
 
-  // Process immediately on start
   processMessages().catch(error => {
-    console.error('❌ Error in initial worker run:', error);
+    workerLogger.error('Error in initial worker run', { error: error.message, stack: error.stack });
   });
 
-  // Then process periodically
   intervalId = setInterval(() => {
     processMessages().catch(error => {
-      console.error('❌ Error in periodic worker run:', error);
+      workerLogger.error('Error in periodic worker run', { error: error.message, stack: error.stack });
     });
   }, WORKER_INTERVAL_MS);
 
-  console.log('✅ Worker started successfully');
+  workerLogger.info('Worker started successfully');
 }
 
 /**
@@ -124,26 +117,25 @@ export function startWorker(): void {
  */
 export function stopWorker(): void {
   if (intervalId === null) {
-    console.warn('⚠️  Worker is not running');
+    workerLogger.warn('Worker is not running');
     return;
   }
 
-  console.log('🛑 Stopping Telegram worker...');
+  workerLogger.info('Stopping Telegram worker');
   clearInterval(intervalId);
   intervalId = null;
   isRunning = false;
-  console.log('✅ Worker stopped');
+  workerLogger.info('Worker stopped');
 }
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM received, stopping worker...');
+  workerLogger.info('SIGTERM received, stopping worker');
   stopWorker();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('🛑 SIGINT received, stopping worker...');
+  workerLogger.info('SIGINT received, stopping worker');
   stopWorker();
   process.exit(0);
 });

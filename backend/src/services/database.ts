@@ -1,4 +1,5 @@
 import Database, { type Database as DatabaseType } from 'better-sqlite3';
+import { dbLogger } from '../utils/logger.js';
 import dotenv from 'dotenv';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
@@ -27,7 +28,7 @@ const dbInstance: DatabaseType = new Database(DB_PATH);
 dbInstance.pragma('foreign_keys = ON');
 dbInstance.pragma('journal_mode = WAL');
 
-console.log(`✅ SQLite database connected: ${DB_PATH}`);
+dbLogger.info('SQLite database connected', { path: DB_PATH });
 
 // Export database instance
 export const db: DatabaseType = dbInstance;
@@ -37,8 +38,8 @@ export async function testConnection(): Promise<boolean> {
   try {
     const result = db.prepare('SELECT 1 as test').get() as { test: number };
     return result.test === 1;
-  } catch (error) {
-    console.error('❌ Database connection test failed:', error);
+  } catch (error: any) {
+    dbLogger.error('Database connection test failed', { error: error.message, stack: error.stack });
     return false;
   }
 }
@@ -48,8 +49,7 @@ export function getDatabase(): DatabaseType {
   return db;
 }
 
-// Graceful shutdown
 export async function closeDatabase(): Promise<void> {
   db.close();
-  console.log('🔌 Database connection closed');
+  dbLogger.info('Database connection closed');
 }
