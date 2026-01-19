@@ -1,0 +1,78 @@
+{"type":"entity","name":"Personal Page Project","entityType":"Project","observations":["Персональное портфолио Senior Software Architect","React 19.2 frontend + Node.js/Express backend","SQLite база данных для хранения сообщений","Telegram бот для уведомлений","Полная интернационализация (i18n) с поддержкой ru/en","CI/CD через Jenkins с автоматическим деплоем","Docker контейнеризация для production","Технологический стек: React 19.2, TypeScript 5.8, Vite 6.2, Express 4.18, SQLite, Three.js, Tailwind CSS","Архитектура: Frontend (React SPA) -> Backend (Express API) -> Database (SQLite) -> Worker (Telegram)","Безопасность: Rate limiting, CORS, Helmet.js, input sanitization","Производительность: Code splitting, lazy loading, оптимизированная сборка","Документация: info/ директория с .qmd файлами","Memory MCP настроен для сохранения в корне проекта (memory.json)"]}
+{"type":"entity","name":"Frontend Application","entityType":"Component","observations":["React 19.2 с TypeScript 5.8","Vite 6.2 как build tool","Three.js для 3D фона (солнечная система)","Framer Motion для анимаций","React Hook Form для форм","i18n через Context API и localStorage","Порт: 8888 (production), 5173 (dev)"]}
+{"type":"entity","name":"Backend API","entityType":"Component","observations":["Express 4.18 сервер на Node.js 20+","TypeScript 5.3 для type safety","SQLite через better-sqlite3","Helmet.js для security headers","Rate limiting: 5 req/15min на IP","CORS настроен для frontend origins","Порт: 9000"]}
+{"type":"entity","name":"Telegram Bot Service","entityType":"Service","observations":["Worker pattern для асинхронной отправки сообщений","Автоматическая регистрация User ID при первом сообщении","Отправка уведомлений о новых сообщениях из contact form","Опциональный сервис - не запускается без TELEGRAM_BOT_TOKEN"]}
+{"type":"entity","name":"i18n System","entityType":"Feature","observations":["Автоматическое определение языка через navigator.language","Сохранение выбора в localStorage","Поддержка ru (русский) и en (английский)","Context API для управления состоянием языка","useLanguage hook для доступа к переводам","Fallback на английский при отсутствии ключа"]}
+{"type":"entity","name":"Jenkins CI/CD","entityType":"Infrastructure","observations":["PollSCM каждые 10 минут для проверки изменений","Автоматический SSH деплой на production сервер","Timezone: Asia/Novosibirsk (UTC+7)","Pipeline: Checkout -> Validate -> Deploy","Jenkinsfile в корне проекта"]}
+{"type":"entity","name":"Docker Setup","entityType":"Infrastructure","observations":["Docker Compose для оркестрации контейнеров","Отдельные Dockerfile для frontend и backend","Nginx для serving frontend в production","Volume mounts для данных БД","Порты: 8888 (frontend), 9000 (backend)"]}
+{"type":"entity","name":"001_telegram-bot-notifications","entityType":"Task","observations":["Telegram-бот для уведомлений из формы контактов","Статус: Создана, 0% готовности","Спринт: Sprint 1","Реализован через worker pattern","Автоматическая регистрация User ID"]}
+{"type":"entity","name":"002_add-github-contact","entityType":"Task","observations":["Добавить GitHub в список контактов","Статус: Создана, 0% готовности","Спринт: Sprint 1","Изменения в компоненте Contact.tsx"]}
+{"type":"entity","name":"003_add-russian-language","entityType":"Task","observations":["Добавление русского языка - полный перевод сайта","Статус: Создана, 0% готовности","Спринт: Sprint 1","Автоопределение языка и переключатель","Использует i18n System"]}
+{"type":"entity","name":"Memory MCP Best Practices","entityType":"Rule","observations":["Хранить только значимые знания: архитектурные решения, правила, проблемы и решения, конфигурации","НЕ хранить: промежуточные мысли, случайные обсуждения, временный контекст, секреты, дублирование документации","Перед записью проверять: окончательное решение? будет использоваться? уникально? относится к проекту?","Использовать search_nodes() и open_nodes() вместо read_graph() для конкретных запросов","Сохранять только окончательные решения, не промежуточные мысли","Чек-лист перед записью: окончательное решение? будет использоваться? уникально? относится к проекту? не секрет? не временный контекст?","Документация: info/memory-mcp-best-practices.qmd содержит полные правила использования","Workflow: перед началом задачи - поиск контекста, во время работы - сохранение только окончательных решений, после завершения - обновление статуса"]}
+{"type":"entity","name":"Hero Component","entityType":"Component","observations":["React компонент для главной секции сайта","Использует Three.js через @react-three/fiber для 3D фона (солнечная система)","Framer Motion для анимаций","Поддерживает i18n через useLanguage hook"]}
+{"type":"entity","name":"Navbar Component","entityType":"Component","observations":["Навигационная панель с переключателем языка","Интегрирован LanguageSwitcher для смены языка","Использует i18n для переводов пунктов меню"]}
+{"type":"entity","name":"Contact Component","entityType":"Component","observations":["Форма обратной связи с валидацией","React Hook Form для управления формой","Отправляет данные на /api/contact endpoint","Поддерживает загрузку резюме"]}
+{"type":"entity","name":"Projects Component","entityType":"Component","observations":["Отображает портфолио проектов","Использует i18n для переводов описаний","Framer Motion для анимаций карточек"]}
+{"type":"entity","name":"Experience Component","entityType":"Component","observations":["Отображает профессиональный опыт","Использует i18n для переводов","Визуализация через Recharts"]}
+{"type":"entity","name":"TechStack Component","entityType":"Component","observations":["Визуализация технических навыков","Использует i18n для переводов","Интерактивные элементы с Framer Motion"]}
+{"type":"entity","name":"Insights Component","entityType":"Component","observations":["Отображает блог посты и статьи","Использует i18n для переводов","Модальные окна для детального просмотра"]}
+{"type":"entity","name":"LanguageContext","entityType":"Service","observations":["React Context для управления состоянием языка","Автоматическое определение через navigator.language","Сохранение выбора в localStorage","Провайдер для всего приложения"]}
+{"type":"entity","name":"Contact API Endpoint","entityType":"API","observations":["POST /api/contact для обработки формы","Валидация входных данных через validation service","Сохранение в SQLite через database service","Rate limiting: 5 req/15min на IP","Возвращает статус сохранения сообщения"]}
+{"type":"entity","name":"Database Service","entityType":"Service","observations":["SQLite через better-sqlite3","Миграции в backend/db/migrations/","Таблицы: messages, bot_settings","Автоматический запуск миграций при старте"]}
+{"type":"entity","name":"Validation Service","entityType":"Service","observations":["Валидация данных формы контактов","Проверка email, имени, сообщения","Санитизация HTML тегов и control characters","Возвращает массив ошибок валидации"]}
+{"type":"entity","name":"Telegram Worker","entityType":"Worker","observations":["Background worker для асинхронной отправки сообщений","Обрабатывает сообщения со статусом pending","Автоматическая регистрация User ID при первом сообщении","Логирование ошибок отправки"]}
+{"type":"entity","name":"Message Model","entityType":"Model","observations":["Модель для хранения сообщений из формы","Поля: id, name, email, message, status, created_at, sent_at, error_message","Статусы: pending, sent, failed"]}
+{"type":"entity","name":"BotSettings Model","entityType":"Model","observations":["Модель для настроек Telegram бота","Поля: id, telegram_user_id, telegram_chat_id, updated_at","Хранит ID пользователя для отправки уведомлений"]}
+{"type":"entity","name":"Docker Compose","entityType":"Infrastructure","observations":["Оркестрация frontend и backend контейнеров","Nginx для serving frontend в production","Volume mounts для данных БД","Порты: 8888 (frontend), 9000 (backend)"]}
+{"type":"entity","name":"Makefile","entityType":"Tool","observations":["Кросс-платформенная автоматизация сборки","Команды: make local, make dev-frontend, make dev-backend, make docker-build","Унифицированные команды для разработки и деплоя"]}
+{"type":"entity","name":"React 19.2","entityType":"Technology","observations":["Основной UI фреймворк для frontend","Версия 19.2 с concurrent features","Используется во всех компонентах frontend"]}
+{"type":"entity","name":"TypeScript 5.8","entityType":"Technology","observations":["Type safety для frontend (5.8) и backend (5.3)","Strict mode включен","Полная типизация всех компонентов и сервисов"]}
+{"type":"entity","name":"Vite 6.2","entityType":"Technology","observations":["Build tool для frontend","Dev server с HMR","Оптимизированная сборка для production"]}
+{"type":"entity","name":"Three.js","entityType":"Technology","observations":["3D графика через @react-three/fiber и @react-three/drei","Используется в Hero компоненте для солнечной системы","Оптимизированная производительность"]}
+{"type":"entity","name":"Express 4.18","entityType":"Technology","observations":["Web framework для backend API","RESTful endpoints","Middleware: CORS, Helmet, rate limiting"]}
+{"type":"entity","name":"SQLite","entityType":"Technology","observations":["База данных через better-sqlite3","Файловая БД в ./data/database.db","Выбрана для простоты, не нужен отдельный сервер БД","Автоматические миграции"]}
+{"type":"entity","name":"Tailwind CSS","entityType":"Technology","observations":["Utility-first CSS framework","Используется для стилизации всех компонентов","PostCSS для обработки"]}
+{"type":"entity","name":"Nginx","entityType":"Technology","observations":["Web server для production frontend","Reverse proxy для статических файлов","Конфигурация в frontend/nginx.conf"]}
+{"type":"entity","name":"Memory MCP Configuration","entityType":"Configuration","observations":["Файл memory.json сохранен в корне проекта","Конфигурация через MEMORY_FILE_PATH=/local-directory/memory.json","Тестирование выполнено 2025-01-19"]}
+{"type":"relation","from":"Frontend Application","to":"Personal Page Project","relationType":"part_of"}
+{"type":"relation","from":"Backend API","to":"Personal Page Project","relationType":"part_of"}
+{"type":"relation","from":"Telegram Bot Service","to":"Backend API","relationType":"used_by"}
+{"type":"relation","from":"Frontend Application","to":"i18n System","relationType":"uses"}
+{"type":"relation","from":"Backend API","to":"Personal Page Project","relationType":"serves"}
+{"type":"relation","from":"Jenkins CI/CD","to":"Personal Page Project","relationType":"deploys"}
+{"type":"relation","from":"Docker Setup","to":"Personal Page Project","relationType":"containerizes"}
+{"type":"relation","from":"001_telegram-bot-notifications","to":"Telegram Bot Service","relationType":"implements"}
+{"type":"relation","from":"001_telegram-bot-notifications","to":"Backend API","relationType":"modifies"}
+{"type":"relation","from":"002_add-github-contact","to":"Frontend Application","relationType":"modifies"}
+{"type":"relation","from":"003_add-russian-language","to":"i18n System","relationType":"enhances"}
+{"type":"relation","from":"003_add-russian-language","to":"Frontend Application","relationType":"modifies"}
+{"type":"relation","from":"Memory MCP Best Practices","to":"Personal Page Project","relationType":"applies_to"}
+{"type":"relation","from":"Hero Component","to":"Frontend Application","relationType":"part_of"}
+{"type":"relation","from":"Navbar Component","to":"Frontend Application","relationType":"part_of"}
+{"type":"relation","from":"Contact Component","to":"Frontend Application","relationType":"part_of"}
+{"type":"relation","from":"Projects Component","to":"Frontend Application","relationType":"part_of"}
+{"type":"relation","from":"Experience Component","to":"Frontend Application","relationType":"part_of"}
+{"type":"relation","from":"TechStack Component","to":"Frontend Application","relationType":"part_of"}
+{"type":"relation","from":"Insights Component","to":"Frontend Application","relationType":"part_of"}
+{"type":"relation","from":"Hero Component","to":"i18n System","relationType":"uses"}
+{"type":"relation","from":"Navbar Component","to":"i18n System","relationType":"uses"}
+{"type":"relation","from":"Contact Component","to":"Contact API Endpoint","relationType":"calls"}
+{"type":"relation","from":"Contact API Endpoint","to":"Backend API","relationType":"part_of"}
+{"type":"relation","from":"Contact API Endpoint","to":"Validation Service","relationType":"uses"}
+{"type":"relation","from":"Contact API Endpoint","to":"Database Service","relationType":"uses"}
+{"type":"relation","from":"Database Service","to":"Message Model","relationType":"manages"}
+{"type":"relation","from":"Database Service","to":"BotSettings Model","relationType":"manages"}
+{"type":"relation","from":"Telegram Worker","to":"Telegram Bot Service","relationType":"implements"}
+{"type":"relation","from":"Telegram Worker","to":"Database Service","relationType":"uses"}
+{"type":"relation","from":"LanguageContext","to":"i18n System","relationType":"implements"}
+{"type":"relation","from":"Docker Compose","to":"Docker Setup","relationType":"part_of"}
+{"type":"relation","from":"Makefile","to":"Personal Page Project","relationType":"automates"}
+{"type":"relation","from":"React 19.2","to":"Frontend Application","relationType":"powers"}
+{"type":"relation","from":"TypeScript 5.8","to":"Frontend Application","relationType":"powers"}
+{"type":"relation","from":"Vite 6.2","to":"Frontend Application","relationType":"builds"}
+{"type":"relation","from":"Three.js","to":"Hero Component","relationType":"powers"}
+{"type":"relation","from":"Express 4.18","to":"Backend API","relationType":"powers"}
+{"type":"relation","from":"SQLite","to":"Database Service","relationType":"powers"}
+{"type":"relation","from":"Tailwind CSS","to":"Frontend Application","relationType":"styles"}
+{"type":"relation","from":"Nginx","to":"Docker Compose","relationType":"serves"}
+{"type":"relation","from":"Memory MCP Configuration","to":"Personal Page Project","relationType":"part_of"}
