@@ -76,40 +76,34 @@ function setupMessageHandler(): void {
         const registeredChatId = getTelegramChatId();
         const chatId = msg.chat.id.toString();
         
-        // Save chat ID if not already saved (for private chats, chat ID = user ID)
         if (!registeredChatId || registeredChatId !== chatId) {
           setTelegramChatId(chatId);
-          console.log(`✅ Saved chat ID for admin: ${chatId}`);
+          logInfo(`✅ Saved chat ID for admin: ${chatId}`);
         }
         
         const responseMessage = registeredChatId
           ? `📋 Записанный Telegram Chat ID: \`${registeredChatId}\`\n✅ Chat ID обновлен: \`${chatId}\``
           : `✅ Telegram Chat ID зарегистрирован: \`${chatId}\``;
         
-        console.log(`📤 Sending response to admin ${userId}: ${responseMessage}`);
+        logInfo(`📤 Sending response to admin ${userId}: ${responseMessage}`);
         
-        await bot!.sendMessage(
-          chatId,
-          responseMessage,
-          { parse_mode: 'Markdown' }
-        );
+        await bot!.sendMessage(chatId, responseMessage, { parse_mode: 'Markdown' });
         
-        console.log(`✅ Admin ${userId} chat ID saved: ${chatId}`);
-      } catch (error) {
-        console.error('❌ Error sending admin response:', error);
-        if (error instanceof Error) {
-          console.error('Error details:', error.message, error.stack);
+        logInfo(`✅ Admin ${userId} chat ID saved: ${chatId}`);
+      } catch (error: any) {
+        logError(`❌ Error sending admin response: ${error.message || error}`);
+        if (error instanceof Error && error.stack) {
+          logError(`Error stack: ${error.stack}`);
         }
       }
-      return; // Don't process further for admin
+      return;
     }
     
-    // For non-admin users, ignore messages (don't register or respond)
-    console.log(`ℹ️  Message from non-admin user ${userId} ignored (user ID: ${TELEGRAM_USER_ID || 'not set'})`);
+    logInfo(`ℹ️  Message from non-admin user ${userId} ignored (user ID: ${TELEGRAM_USER_ID || 'not set'})`);
     return;
   });
 
-  console.log('✅ Telegram bot message handler setup complete');
+  logInfo('✅ Telegram bot message handler setup complete');
 }
 
 /**
@@ -139,16 +133,13 @@ export async function sendTelegramMessage(messageData: MessageData): Promise<boo
       disable_web_page_preview: true,
     });
 
-    console.log(`✅ Message sent to Telegram user ${userId} for: ${messageData.email}`);
+    logInfo(`✅ Message sent to Telegram user ${userId} for: ${messageData.email}`);
     return true;
   } catch (error: any) {
-    console.error('❌ Error sending message to Telegram:', error);
-    
-    // Log error details for debugging
+    logError(`❌ Error sending message to Telegram: ${error.message || error}`);
     if (error.response) {
-      console.error('Telegram API response:', error.response);
+      logError(`Telegram API response: ${JSON.stringify(error.response)}`);
     }
-    
     throw error;
   }
 }
@@ -216,14 +207,10 @@ export async function testTelegramConnection(): Promise<boolean> {
 
   try {
     const botInfo = await bot.getMe();
-    const msg = `✅ Telegram bot connected: @${botInfo.username}`;
-    console.log(msg);
-    addLog('info', msg);
+    logInfo(`✅ Telegram bot connected: @${botInfo.username}`);
     return true;
   } catch (error: any) {
-    const errorMsg = `❌ Telegram connection test failed: ${error.message || error}`;
-    console.error(errorMsg);
-    addLog('error', errorMsg);
+    logError(`❌ Telegram connection test failed: ${error.message || error}`);
     return false;
   }
 }
@@ -238,8 +225,7 @@ export async function testTelegramConnectionWithDetails(): Promise<{ connected: 
 
   try {
     const botInfo = await bot.getMe();
-    const msg = `✅ Telegram bot connected: @${botInfo.username}`;
-    addLog('info', msg);
+    logInfo(`✅ Telegram bot connected: @${botInfo.username}`);
     return { connected: true, username: botInfo.username };
   } catch (error: any) {
     let errorMessage = 'Unknown error';
@@ -248,9 +234,7 @@ export async function testTelegramConnectionWithDetails(): Promise<{ connected: 
     } else if (error.message) {
       errorMessage = error.message;
     }
-    const errorMsg = `❌ Telegram connection test failed: ${errorMessage}`;
-    console.error(errorMsg);
-    addLog('error', errorMsg);
+    logError(`❌ Telegram connection test failed: ${errorMessage}`);
     return { connected: false, error: errorMessage };
   }
 }
