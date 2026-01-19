@@ -6,6 +6,7 @@ import { testConnection, closeDatabase } from './services/database.js';
 import { testTelegramConnection } from './services/telegram.js';
 import contactRoutes from './routes/contact.js';
 import { startWorker, stopWorker } from './workers/telegram-worker.js';
+import { getTelegramChatId } from './models/BotSettings.js';
 
 // Load environment variables from project root
 // In Docker, variables are already set via docker-compose, dotenv won't override them
@@ -74,6 +75,56 @@ app.get('/health', async (req: Request, res: Response) => {
     database: dbConnected ? 'connected' : 'disconnected',
     timestamp: new Date().toISOString(),
   });
+});
+
+// Telegram diagnostic endpoint
+app.get('/api/telegram/status', async (req: Request, res: Response) => {
+  try {
+    const tokenSet = !!process.env.TELEGRAM_BOT_TOKEN;
+    const tokenLength = process.env.TELEGRAM_BOT_TOKEN?.length || 0;
+    const userIdSet = !!process.env.TELEGRAM_USER_ID;
+    const chatIdRegistered = !!getTelegramChatId();
+    const chatId = getTelegramChatId();
+    
+    let telegramConnected = false;
+    let botUsername = null;
+    let error = null;
+    
+    if (tokenSet) {
+      try {
+        telegramConnected = await testTelegramConnection();
+        // Try to get bot info if connected
+        if (telegramConnected) {
+          // We can't directly access bot here, but testTelegramConnection already checked
+          botUsername = 'connected';
+        }
+      } catch (err: any) {
+        error = err.message || err.toString();
+      }
+    }
+    
+    res.json({
+      success: true,
+      telegram: {
+        tokenConfigured: tokenSet,
+        tokenLength: tokenLength,
+        userIdConfigured: userIdSet,
+        userId: userIdSet ? process.env.TELEGRAM_USER_ID : null,
+        chatIdRegistered: chatIdRegistered,
+        chatId: chatId,
+        botConnected: telegramConnected,
+        botUsername: botUsername,
+        error: error,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Unknown error',
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // API routes
