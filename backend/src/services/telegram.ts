@@ -61,11 +61,11 @@ function setupMessageHandler(): void {
     // Get user ID from message (msg.from.id is the actual user ID)
     const userId = msg.from?.id?.toString();
     if (!userId) {
-      console.log('⚠️  Received message without user ID');
-      return; // Skip if no user ID in message
+      telegramLogger.warn('Received message without user ID');
+      return;
     }
     
-    console.log(`📨 Received message from user ID: ${userId}, user ID configured: ${TELEGRAM_USER_ID ? 'yes' : 'no'}`);
+    telegramLogger.info('Received message', { userId, hasConfiguredUserId: !!TELEGRAM_USER_ID });
     
     // Check if sender is the configured user (admin check)
     const isAdmin = TELEGRAM_USER_ID && TELEGRAM_USER_ID.trim() !== '' && userId === TELEGRAM_USER_ID.trim();
@@ -201,7 +201,7 @@ function escapeMarkdown(text: string): string {
  */
 export async function testTelegramConnection(): Promise<boolean> {
   if (!bot) {
-    console.warn('⚠️  Telegram bot is not initialized');
+    telegramLogger.warn('Telegram bot is not initialized');
     return false;
   }
 
