@@ -4,7 +4,7 @@ import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { getTelegramChatId, setTelegramChatId } from '../models/BotSettings.js';
-import { logInfo, logError, logWarn } from '../utils/logger.js';
+import { telegramLogger } from '../utils/logger.js';
 
 // Load .env from project root
 // In Docker, variables are already set via docker-compose, dotenv won't override them
@@ -26,18 +26,18 @@ if (TELEGRAM_BOT_TOKEN) {
     if (TELEGRAM_USER_ID && TELEGRAM_USER_ID.trim() !== '') {
       const userId = TELEGRAM_USER_ID.trim();
       setTelegramChatId(userId);
-      logInfo(`✅ User ID loaded from environment, chat ID set: ${userId}`);
+      telegramLogger.info('User ID loaded from environment', { userId });
     }
     
     // Always setup handler to capture messages (in case user ID changes or wasn't set)
     setupMessageHandler();
     
-    logInfo(`✅ Telegram bot initialized. User ID: ${TELEGRAM_USER_ID || 'not set'}`);
+    telegramLogger.info('Telegram bot initialized', { userId: TELEGRAM_USER_ID || null });
   } catch (error: any) {
-    logError(`❌ Error initializing Telegram bot: ${error.message || error}`);
+    telegramLogger.error('Error initializing Telegram bot', { error: error.message, stack: error.stack });
   }
 } else {
-  logWarn('⚠️  TELEGRAM_BOT_TOKEN not set - Telegram service will not be available');
+  telegramLogger.warn('TELEGRAM_BOT_TOKEN not set - Telegram service will not be available');
 }
 
 export interface MessageData {
@@ -78,32 +78,29 @@ function setupMessageHandler(): void {
         
         if (!registeredChatId || registeredChatId !== chatId) {
           setTelegramChatId(chatId);
-          logInfo(`✅ Saved chat ID for admin: ${chatId}`);
+          telegramLogger.info('Saved chat ID for admin', { chatId, userId });
         }
         
         const responseMessage = registeredChatId
           ? `📋 Записанный Telegram Chat ID: \`${registeredChatId}\`\n✅ Chat ID обновлен: \`${chatId}\``
           : `✅ Telegram Chat ID зарегистрирован: \`${chatId}\``;
         
-        logInfo(`📤 Sending response to admin ${userId}: ${responseMessage}`);
+        telegramLogger.info('Sending response to admin', { userId, chatId });
         
         await bot!.sendMessage(chatId, responseMessage, { parse_mode: 'Markdown' });
         
-        logInfo(`✅ Admin ${userId} chat ID saved: ${chatId}`);
+        telegramLogger.info('Admin chat ID saved', { userId, chatId });
       } catch (error: any) {
-        logError(`❌ Error sending admin response: ${error.message || error}`);
-        if (error instanceof Error && error.stack) {
-          logError(`Error stack: ${error.stack}`);
-        }
+        telegramLogger.error('Error sending admin response', { error: error.message, stack: error.stack, userId });
       }
       return;
     }
     
-    logInfo(`ℹ️  Message from non-admin user ${userId} ignored (user ID: ${TELEGRAM_USER_ID || 'not set'})`);
+    telegramLogger.info('Message from non-admin user ignored', { userId, configuredUserId: TELEGRAM_USER_ID || null });
     return;
   });
 
-  logInfo('✅ Telegram bot message handler setup complete');
+  telegramLogger.info('Telegram bot message handler setup complete');
 }
 
 /**
@@ -133,13 +130,16 @@ export async function sendTelegramMessage(messageData: MessageData): Promise<boo
       disable_web_page_preview: true,
     });
 
-    logInfo(`✅ Message sent to Telegram user ${userId} for: ${messageData.email}`);
+    telegramLogger.info('Message sent to Telegram', { userId, email: messageData.email, messageId: messageData.name });
     return true;
   } catch (error: any) {
-    logError(`❌ Error sending message to Telegram: ${error.message || error}`);
-    if (error.response) {
-      logError(`Telegram API response: ${JSON.stringify(error.response)}`);
-    }
+    telegramLogger.error('Error sending message to Telegram', {
+      error: error.message,
+      stack: error.stack,
+      response: error.response,
+      userId,
+      email: messageData.email,
+    });
     throw error;
   }
 }
@@ -207,10 +207,10 @@ export async function testTelegramConnection(): Promise<boolean> {
 
   try {
     const botInfo = await bot.getMe();
-    logInfo(`✅ Telegram bot connected: @${botInfo.username}`);
+    telegramLogger.info('Telegram bot connected', { username: botInfo.username, botId: botInfo.id });
     return true;
   } catch (error: any) {
-    logError(`❌ Telegram connection test failed: ${error.message || error}`);
+    telegramLogger.error('Telegram connection test failed', { error: error.message, stack: error.stack });
     return false;
   }
 }
@@ -225,7 +225,7 @@ export async function testTelegramConnectionWithDetails(): Promise<{ connected: 
 
   try {
     const botInfo = await bot.getMe();
-    logInfo(`✅ Telegram bot connected: @${botInfo.username}`);
+    telegramLogger.info('Telegram bot connected', { username: botInfo.username, botId: botInfo.id });
     return { connected: true, username: botInfo.username };
   } catch (error: any) {
     let errorMessage = 'Unknown error';
@@ -234,7 +234,7 @@ export async function testTelegramConnectionWithDetails(): Promise<{ connected: 
     } else if (error.message) {
       errorMessage = error.message;
     }
-    logError(`❌ Telegram connection test failed: ${errorMessage}`);
+    telegramLogger.error('Telegram connection test failed', { error: errorMessage, response: error.response });
     return { connected: false, error: errorMessage };
   }
 }
