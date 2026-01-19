@@ -8,6 +8,7 @@ import contactRoutes from './routes/contact.js';
 import { startWorker, stopWorker } from './workers/telegram-worker.js';
 import { getTelegramChatId } from './models/BotSettings.js';
 import logger, { apiLogger } from './utils/logger.js';
+import { requestIdMiddleware } from './middleware/requestId.js';
 
 // Load environment variables from project root
 // In Docker, variables are already set via docker-compose, dotenv won't override them
@@ -58,12 +59,38 @@ app.use(cors({
   allowedHeaders: ['Content-Type'],
 }));
 
-// Body parsing
-app.use(express.json({ limit: '1mb' })); // Limit request body size
+// Request ID middleware (must be before logging)
+app.use(requestIdMiddleware);
 
-// Request logging middleware
+// Body parsing
+app.use(express.json({ limit: '1mb' }));
+
+// Request logging middleware with request ID (best practice 2026)
 app.use((req: Request, res: Response, next: NextFunction) => {
-  apiLogger.info('Incoming request', { method: req.method, path: req.path, ip: req.ip });
+  const startTime = Date.now();
+  
+  // Log request start
+  apiLogger.info('Incoming request', {
+    requestId: req.requestId,
+    method: req.method,
+    path: req.path,
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+  });
+  
+  // Log response when finished
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    const logLevel = res.statusCode >= 400 ? 'error' : res.statusCode >= 300 ? 'warn' : 'info';
+    apiLogger[logLevel]('Request completed', {
+      requestId: req.requestId,
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      duration: `${duration}ms`,
+    });
+  });
+  
   next();
 });
 
@@ -145,13 +172,21 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// Error handler
+// Error handler with request ID (best practice 2026)
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  apiLogger.error('Unhandled error', { error: err.message, stack: err.stack, path: req.path, method: req.method });
+  apiLogger.error('Unhandled error', {
+    requestId: req.requestId,
+    error: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+    ip: req.ip,
+  });
   res.status(500).json({
     success: false,
     error: 'Internal server error',
-    message: err.message || 'An unexpected error occurred',
+    message: process.env.NODE_ENV === 'production' ? 'An unexpected error occurred' : err.message,
+    requestId: req.requestId, // Include request ID in error response for debugging
   });
 });
 
