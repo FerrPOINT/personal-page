@@ -147,7 +147,7 @@ app.use((req: Request, res: Response) => {
 
 // Error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('❌ Unhandled error:', err);
+  apiLogger.error('Unhandled error', { error: err.message, stack: err.stack, path: req.path, method: req.method });
   res.status(500).json({
     success: false,
     error: 'Internal server error',
@@ -157,14 +157,14 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully...');
+  logger.info('SIGTERM received, shutting down gracefully');
   stopWorker();
   await closeDatabase();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('🛑 SIGINT received, shutting down gracefully...');
+  logger.info('SIGINT received, shutting down gracefully');
   stopWorker();
   await closeDatabase();
   process.exit(0);
