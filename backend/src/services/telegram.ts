@@ -70,22 +70,30 @@ function setupMessageHandler(): void {
     const isAdmin = TELEGRAM_USER_ID && TELEGRAM_USER_ID.trim() !== '' && userId === TELEGRAM_USER_ID.trim();
     
     if (isAdmin) {
-      // Admin: respond with registered Telegram ID
+      // Admin: save chat ID if not already saved, then respond
       try {
         const registeredChatId = getTelegramChatId();
+        const chatId = msg.chat.id.toString();
+        
+        // Save chat ID if not already saved (for private chats, chat ID = user ID)
+        if (!registeredChatId || registeredChatId !== chatId) {
+          setTelegramChatId(chatId);
+          console.log(`✅ Saved chat ID for admin: ${chatId}`);
+        }
+        
         const responseMessage = registeredChatId
-          ? `📋 Записанный Telegram Chat ID: \`${registeredChatId}\``
-          : '⚠️ Telegram Chat ID еще не зарегистрирован. Отправьте сообщение боту с аккаунта, на который нужно получать уведомления.';
+          ? `📋 Записанный Telegram Chat ID: \`${registeredChatId}\`\n✅ Chat ID обновлен: \`${chatId}\``
+          : `✅ Telegram Chat ID зарегистрирован: \`${chatId}\``;
         
         console.log(`📤 Sending response to admin ${userId}: ${responseMessage}`);
         
         await bot!.sendMessage(
-          msg.chat.id.toString(),
+          chatId,
           responseMessage,
           { parse_mode: 'Markdown' }
         );
         
-        console.log(`✅ Admin ${userId} requested chat ID info. Registered: ${registeredChatId || 'none'}`);
+        console.log(`✅ Admin ${userId} chat ID saved: ${chatId}`);
       } catch (error) {
         console.error('❌ Error sending admin response:', error);
         if (error instanceof Error) {
