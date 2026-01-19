@@ -7,6 +7,7 @@ import { testTelegramConnection } from './services/telegram.js';
 import contactRoutes from './routes/contact.js';
 import { startWorker, stopWorker } from './workers/telegram-worker.js';
 import { getTelegramChatId } from './models/BotSettings.js';
+import logger, { apiLogger } from './utils/logger.js';
 
 // Load environment variables from project root
 // In Docker, variables are already set via docker-compose, dotenv won't override them
@@ -62,7 +63,7 @@ app.use(express.json({ limit: '1mb' })); // Limit request body size
 
 // Request logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
-  console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
+  apiLogger.info('Incoming request', { method: req.method, path: req.path, ip: req.ip });
   next();
 });
 
@@ -171,14 +172,14 @@ process.on('SIGINT', async () => {
 
 // Start server
 app.listen(PORT, async () => {
-  console.log(`🚀 Backend API server running on port ${PORT}`);
+  logger.info('Backend API server starting', { port: PORT });
   
   // Test database connection on startup
   const dbConnected = await testConnection();
   if (dbConnected) {
-    console.log('✅ Database connection verified');
+    logger.info('Database connection verified');
   } else {
-    console.warn('⚠️  Database connection failed - check DATABASE_PATH');
+    logger.warn('Database connection failed - check DATABASE_PATH');
   }
 
   // Test Telegram connection on startup (if token is set)
@@ -187,12 +188,12 @@ app.listen(PORT, async () => {
     if (telegramConnected) {
       // Start worker if Telegram is configured
       startWorker();
-      console.log('💡 Tip: Send a message to your Telegram bot to register your user ID');
+      logger.info('Telegram worker started - send a message to bot to register user ID');
     } else {
-      console.warn('⚠️  Telegram connection failed - worker will not start');
+      logger.warn('Telegram connection failed - worker will not start');
     }
   } else {
-    console.warn('⚠️  TELEGRAM_BOT_TOKEN not set - worker will not start');
+    logger.warn('TELEGRAM_BOT_TOKEN not set - worker will not start');
   }
 });
 
