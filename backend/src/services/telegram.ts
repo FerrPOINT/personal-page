@@ -4,6 +4,7 @@ import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { getTelegramChatId, setTelegramChatId } from '../models/BotSettings.js';
+import { logInfo, logError, logWarn } from '../utils/logger.js';
 
 // Load .env from project root
 // In Docker, variables are already set via docker-compose, dotenv won't override them
@@ -17,26 +18,6 @@ const TELEGRAM_USER_ID = process.env.TELEGRAM_USER_ID;
 // Create bot instance only if token is available (polling enabled to receive first message)
 let bot: TelegramBot | null = null;
 
-// Log buffer for diagnostics (last 50 log entries)
-const logBuffer: Array<{ timestamp: string; level: string; message: string }> = [];
-const MAX_LOG_ENTRIES = 50;
-
-function addLog(level: string, message: string): void {
-  logBuffer.push({
-    timestamp: new Date().toISOString(),
-    level,
-    message,
-  });
-  // Keep only last MAX_LOG_ENTRIES entries
-  if (logBuffer.length > MAX_LOG_ENTRIES) {
-    logBuffer.shift();
-  }
-}
-
-export function getTelegramLogs(): Array<{ timestamp: string; level: string; message: string }> {
-  return [...logBuffer];
-}
-
 if (TELEGRAM_BOT_TOKEN) {
   try {
     bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
@@ -45,26 +26,18 @@ if (TELEGRAM_BOT_TOKEN) {
     if (TELEGRAM_USER_ID && TELEGRAM_USER_ID.trim() !== '') {
       const userId = TELEGRAM_USER_ID.trim();
       setTelegramChatId(userId);
-      const msg = `✅ User ID loaded from environment, chat ID set: ${userId}`;
-      console.log(msg);
-      addLog('info', msg);
+      logInfo(`✅ User ID loaded from environment, chat ID set: ${userId}`);
     }
     
     // Always setup handler to capture messages (in case user ID changes or wasn't set)
     setupMessageHandler();
     
-    const initMsg = `✅ Telegram bot initialized. User ID: ${TELEGRAM_USER_ID || 'not set'}`;
-    console.log(initMsg);
-    addLog('info', initMsg);
+    logInfo(`✅ Telegram bot initialized. User ID: ${TELEGRAM_USER_ID || 'not set'}`);
   } catch (error: any) {
-    const errorMsg = `❌ Error initializing Telegram bot: ${error.message || error}`;
-    console.error(errorMsg);
-    addLog('error', errorMsg);
+    logError(`❌ Error initializing Telegram bot: ${error.message || error}`);
   }
 } else {
-  const warnMsg = '⚠️  TELEGRAM_BOT_TOKEN not set - Telegram service will not be available';
-  console.warn(warnMsg);
-  addLog('warn', warnMsg);
+  logWarn('⚠️  TELEGRAM_BOT_TOKEN not set - Telegram service will not be available');
 }
 
 export interface MessageData {

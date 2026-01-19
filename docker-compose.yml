@@ -40,6 +40,7 @@ services:
       - FRONTEND_URL=${FRONTEND_URL:-}
     volumes:
       - backend_data:/app/data
+      - backend_logs:/app/logs
     networks:
       - app-network
     healthcheck:
@@ -51,6 +52,7 @@ services:
 
 volumes:
   backend_data:
+  backend_logs:
 
 networks:
   app-network:
