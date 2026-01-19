@@ -7,6 +7,7 @@ import { testTelegramConnection } from './services/telegram.js';
 import contactRoutes from './routes/contact.js';
 import { startWorker, stopWorker } from './workers/telegram-worker.js';
 import { getTelegramChatId } from './models/BotSettings.js';
+import { getTelegramLogs } from './services/telegram.js';
 
 // Load environment variables from project root
 // In Docker, variables are already set via docker-compose, dotenv won't override them
@@ -77,6 +78,25 @@ app.get('/health', async (req: Request, res: Response) => {
   });
 });
 
+// Telegram logs endpoint
+app.get('/api/telegram/logs', async (req: Request, res: Response) => {
+  try {
+    const logs = getTelegramLogs();
+    res.json({
+      success: true,
+      logs,
+      count: logs.length,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Unknown error',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 // Telegram diagnostic endpoint
 app.get('/api/telegram/status', async (req: Request, res: Response) => {
   try {
@@ -92,14 +112,19 @@ app.get('/api/telegram/status', async (req: Request, res: Response) => {
     
     if (tokenSet) {
       try {
-        telegramConnected = await testTelegramConnection();
-        // Try to get bot info if connected
-        if (telegramConnected) {
-          // We can't directly access bot here, but testTelegramConnection already checked
-          botUsername = 'connected';
+        // Use detailed test function to get error information
+        const { testTelegramConnectionWithDetails } = await import('./services/telegram.js');
+        const testResult = await testTelegramConnectionWithDetails();
+        telegramConnected = testResult.connected;
+        botUsername = testResult.username || null;
+        if (!testResult.connected && testResult.error) {
+          error = testResult.error;
         }
       } catch (err: any) {
         error = err.message || err.toString();
+        if (err.response) {
+          error += ` (API: ${JSON.stringify(err.response)})`;
+        }
       }
     }
     
