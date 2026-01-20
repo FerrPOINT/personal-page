@@ -68,20 +68,38 @@ elif [ -f env.prod ]; then
     # Обновляем секреты из переменных окружения (если переданы через Jenkins)
     # BEST PRACTICE: Секреты передаются через переменные окружения, не через файлы
     if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ "$TELEGRAM_BOT_TOKEN" != "your_bot_token_here" ]; then
+        TOKEN_LENGTH=${#TELEGRAM_BOT_TOKEN}
+        TOKEN_PREFIX="${TELEGRAM_BOT_TOKEN:0:10}..."
+        echo "  🔐 Получен TELEGRAM_BOT_TOKEN из Jenkins (длина: ${TOKEN_LENGTH}, префикс: ${TOKEN_PREFIX})"
         if grep -q "^TELEGRAM_BOT_TOKEN=" .env 2>/dev/null; then
             sed -i "s|^TELEGRAM_BOT_TOKEN=.*|TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}|" .env
+            echo "  ✅ TELEGRAM_BOT_TOKEN обновлен в .env"
         else
             echo "TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}" >> .env
+            echo "  ✅ TELEGRAM_BOT_TOKEN добавлен в .env"
         fi
-        echo "  🔐 TELEGRAM_BOT_TOKEN обновлен из Jenkins Credentials"
+    else
+        if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
+            echo "  ⚠️  TELEGRAM_BOT_TOKEN не передан из Jenkins (пустая переменная)"
+        else
+            echo "  ⚠️  TELEGRAM_BOT_TOKEN содержит placeholder значение"
+        fi
     fi
     if [ -n "$TELEGRAM_USER_ID" ] && [ "$TELEGRAM_USER_ID" != "your_user_id_here" ]; then
+        echo "  🔐 Получен TELEGRAM_USER_ID из Jenkins: ${TELEGRAM_USER_ID}"
         if grep -q "^TELEGRAM_USER_ID=" .env 2>/dev/null; then
             sed -i "s|^TELEGRAM_USER_ID=.*|TELEGRAM_USER_ID=${TELEGRAM_USER_ID}|" .env
+            echo "  ✅ TELEGRAM_USER_ID обновлен в .env"
         else
             echo "TELEGRAM_USER_ID=${TELEGRAM_USER_ID}" >> .env
+            echo "  ✅ TELEGRAM_USER_ID добавлен в .env"
         fi
-        echo "  🔐 TELEGRAM_USER_ID обновлен из Jenkins Credentials"
+    else
+        if [ -z "$TELEGRAM_USER_ID" ]; then
+            echo "  ⚠️  TELEGRAM_USER_ID не передан из Jenkins (пустая переменная)"
+        else
+            echo "  ⚠️  TELEGRAM_USER_ID содержит placeholder значение"
+        fi
     fi
 elif [ -f env.local ]; then
     cp env.local .env
