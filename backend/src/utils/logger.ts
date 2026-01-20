@@ -46,10 +46,12 @@ const redactSensitiveData = winston.format((info) => {
     
     // Redact in message if it contains sensitive data
     if (typeof info.message === 'string') {
+      let message: string = info.message as string;
       sensitiveKeys.forEach(key => {
         const regex = new RegExp(`(${key}[=:]\\s*)([^\\s,}]+)`, 'gi');
-        info.message = info.message.replace(regex, `$1[REDACTED]`);
+        message = message.replace(regex, `$1[REDACTED]`);
       });
+      info.message = message;
     }
     
     // Redact all top-level sensitive fields
