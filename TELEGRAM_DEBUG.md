@@ -55,7 +55,7 @@
 3. Перейдите: **Manage Jenkins** → **Credentials** → **System** → **Global credentials (unrestricted)**
 4. Проверьте `telegram-bot-token`:
    - Должен быть с ID: `telegram-bot-token`
-   - Secret должен быть: `8243118630:AAF-_fBdgaHgclVab_7vS_X9k4oEZFpjkcM`
+   - Secret должен содержать ваш Telegram Bot Token (получите в @BotFather)
    - Если токен другой или отсутствует → обновите/создайте
 
 5. Проверьте `telegram-user-id`:
@@ -71,7 +71,7 @@ http://192.168.1.49:32768/job/personal-page-deploy/build
 
 В логах должно быть:
 ```
-🔐 Получен TELEGRAM_BOT_TOKEN из Jenkins (длина: 46, префикс: 8243118630:...)
+🔐 Получен TELEGRAM_BOT_TOKEN из Jenkins (длина: 46, префикс: [TOKEN_PREFIX]...)
 ✅ TELEGRAM_BOT_TOKEN обновлен в .env
 ```
 
@@ -98,7 +98,7 @@ docker compose logs --tail=200 backend | grep -i telegram
 
 **Ожидаемые логи при успешной инициализации:**
 ```
-[telegram] Initializing Telegram bot { tokenLength: 46, tokenPrefix: '8243118630:...', hasUserId: true }
+[telegram] Initializing Telegram bot { tokenLength: 46, tokenPrefix: '[TOKEN_PREFIX]...', hasUserId: true }
 [telegram] User ID loaded from environment { userId: '754334329' }
 [telegram] Telegram bot initialized successfully { userId: '754334329' }
 [telegram] Testing Telegram connection... { tokenLength: 46 }
@@ -120,7 +120,7 @@ grep TELEGRAM .env
 
 Должно быть:
 ```
-TELEGRAM_BOT_TOKEN=8243118630:AAF-_fBdgaHgclVab_7vS_X9k4oEZFpjkcM
+TELEGRAM_BOT_TOKEN=your_bot_token_here
 TELEGRAM_USER_ID=754334329
 ```
 
@@ -133,7 +133,7 @@ TELEGRAM_BOT_TOKEN=
 ### Шаг 5: Проверить доступность Telegram API
 
 ```bash
-curl -s https://api.telegram.org/bot8243118630:AAF-_fBdgaHgclVab_7vS_X9k4oEZFpjkcM/getMe
+curl -s https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getMe
 ```
 
 Должен вернуть JSON с информацией о боте:

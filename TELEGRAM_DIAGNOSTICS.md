@@ -35,7 +35,7 @@ https://azhukov-dev.ru/api/telegram/status
 1. Откройте Jenkins: http://192.168.1.49:32768/
 2. **Manage Jenkins** → **Credentials** → **System** → **Global credentials**
 3. Проверьте `telegram-bot-token`:
-   - Если нет → создайте (ID: `telegram-bot-token`, Secret: `8243118630:AAF-_fBdgaHgclVab_7vS_X9k4oEZFpjkcM`)
+   - Если нет → создайте (ID: `telegram-bot-token`, Secret: `<ваш_токен_из_BotFather>`)
    - Если есть → обновите Secret на новый токен
 4. Запустите build: http://192.168.1.49:32768/job/personal-page-deploy/build
 
@@ -111,7 +111,7 @@ docker logs personal-page-backend-1 --tail 100 | grep -i telegram
 
 ## 📝 Текущая конфигурация
 
-- **Токен**: `8243118630:AAF-_fBdgaHgclVab_7vS_X9k4oEZFpjkcM`
+- **Токен**: Хранится в Jenkins Credentials (ID: `telegram-bot-token`)
 - **User ID**: `754334329`
 - **Jenkins Credentials ID**: `telegram-bot-token` и `telegram-user-id`
 

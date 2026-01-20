@@ -51,7 +51,7 @@ withCredentials([string(credentialsId: 'telegram-bot-token', variable: 'TELEGRAM
 
 1. **telegram-bot-token** (Secret text)
    - ID: `telegram-bot-token`
-   - Значение: `8243118630:AAF-_fBdgaHgclVab_7vS_X9k4oEZFpjkcM`
+   - Значение: `<ваш_токен_из_BotFather>` (хранится в Jenkins, не в Git)
    - Используется в: `personal-page-deploy` pipeline
 
 2. **telegram-user-id** (Secret text)

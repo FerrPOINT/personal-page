@@ -1,7 +1,7 @@
 # 🔐 Создание Jenkins Credentials для нового Telegram токена
 
-## Новый токен
-**TELEGRAM_BOT_TOKEN**: `8243118630:AAF-_fBdgaHgclVab_7vS_X9k4oEZFpjkcM`
+## Настройка токена
+**TELEGRAM_BOT_TOKEN**: Получите токен в @BotFather в Telegram
 
 ## Шаг 1: Открыть Jenkins
 1. Откройте: http://192.168.1.49:32768/
@@ -12,7 +12,7 @@
 2. Нажмите **Add Credentials**
 3. Заполните:
    - **Kind**: `Secret text`
-   - **Secret**: `8243118630:AAF-_fBdgaHgclVab_7vS_X9k4oEZFpjkcM`
+   - **Secret**: `<ваш_токен_из_BotFather>`
    - **ID**: `telegram-bot-token` (ВАЖНО: именно такой ID!)
    - **Description**: `Telegram Bot Token for personal-page notifications`
 4. Нажмите **OK**
