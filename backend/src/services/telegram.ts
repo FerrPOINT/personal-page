@@ -20,6 +20,11 @@ let bot: TelegramBot | null = null;
 
 if (TELEGRAM_BOT_TOKEN) {
   try {
+    telegramLogger.info('Initializing Telegram bot', { 
+      tokenLength: TELEGRAM_BOT_TOKEN.length,
+      tokenPrefix: TELEGRAM_BOT_TOKEN.substring(0, 10) + '...',
+      hasUserId: !!TELEGRAM_USER_ID 
+    });
     bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
     
     // If user ID is provided in env, save it as chat ID (for private chats, user ID = chat ID)
@@ -32,9 +37,14 @@ if (TELEGRAM_BOT_TOKEN) {
     // Always setup handler to capture messages (in case user ID changes or wasn't set)
     setupMessageHandler();
     
-    telegramLogger.info('Telegram bot initialized', { userId: TELEGRAM_USER_ID || null });
+    telegramLogger.info('Telegram bot initialized successfully', { userId: TELEGRAM_USER_ID || null });
   } catch (error: any) {
-    telegramLogger.error('Error initializing Telegram bot', { error: error.message, stack: error.stack });
+    telegramLogger.error('Error initializing Telegram bot', { 
+      error: error.message, 
+      stack: error.stack,
+      response: error.response ? JSON.stringify(error.response) : null
+    });
+    bot = null; // Ensure bot is null on error
   }
 } else {
   telegramLogger.warn('TELEGRAM_BOT_TOKEN not set - Telegram service will not be available');
@@ -220,21 +230,38 @@ export async function testTelegramConnection(): Promise<boolean> {
  */
 export async function testTelegramConnectionWithDetails(): Promise<{ connected: boolean; username?: string; error?: string }> {
   if (!bot) {
-    return { connected: false, error: 'Bot is not initialized' };
+    const reason = !TELEGRAM_BOT_TOKEN 
+      ? 'TELEGRAM_BOT_TOKEN not set' 
+      : 'Bot instance is null (initialization failed)';
+    telegramLogger.warn('Bot is not initialized', { reason, hasToken: !!TELEGRAM_BOT_TOKEN, tokenLength: TELEGRAM_BOT_TOKEN?.length || 0 });
+    return { connected: false, error: `Bot is not initialized: ${reason}` };
   }
 
   try {
+    telegramLogger.info('Testing Telegram connection...', { tokenLength: TELEGRAM_BOT_TOKEN?.length || 0 });
     const botInfo = await bot.getMe();
     telegramLogger.info('Telegram bot connected', { username: botInfo.username, botId: botInfo.id });
     return { connected: true, username: botInfo.username };
   } catch (error: any) {
     let errorMessage = 'Unknown error';
     if (error.response) {
-      errorMessage = `Telegram API error: ${error.response.statusCode || 'unknown'} - ${error.response.body?.description || error.message || 'unknown error'}`;
+      const statusCode = error.response.statusCode || 'unknown';
+      const body = error.response.body || {};
+      const description = body.description || body.error_description || error.message || 'unknown error';
+      errorMessage = `Telegram API error: ${statusCode} - ${description}`;
+      telegramLogger.error('Telegram connection test failed', { 
+        error: errorMessage, 
+        statusCode,
+        description,
+        response: JSON.stringify(error.response.body || {}),
+        stack: error.stack 
+      });
     } else if (error.message) {
       errorMessage = error.message;
+      telegramLogger.error('Telegram connection test failed', { error: errorMessage, stack: error.stack });
+    } else {
+      telegramLogger.error('Telegram connection test failed', { error: JSON.stringify(error), stack: error.stack });
     }
-    telegramLogger.error('Telegram connection test failed', { error: errorMessage, response: error.response });
     return { connected: false, error: errorMessage };
   }
 }

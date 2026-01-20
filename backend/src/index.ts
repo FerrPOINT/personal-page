@@ -125,14 +125,16 @@ app.get('/api/telegram/status', async (req: Request, res: Response) => {
         const testResult = await testTelegramConnectionWithDetails();
         telegramConnected = testResult.connected;
         botUsername = testResult.username || null;
-        if (!testResult.connected && testResult.error) {
-          error = testResult.error;
+        // Always include error if connection failed
+        if (!testResult.connected) {
+          error = testResult.error || 'Connection test failed but no error message provided';
         }
       } catch (err: any) {
         error = err.message || err.toString();
         if (err.response) {
           error += ` (API: ${JSON.stringify(err.response)})`;
         }
+        logger.error('Error in Telegram status endpoint', { error: err.message, stack: err.stack });
       }
     }
     
