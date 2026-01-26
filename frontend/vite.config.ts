@@ -43,6 +43,13 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 8888,
         host: '0.0.0.0',
+        allowedHosts: [
+          'localhost',
+          '127.0.0.1',
+          'host.docker.internal',
+          'personal-page-frontend',
+          'frontend',
+        ],
         proxy: {
           '/api': {
             target: 'http://localhost:9000',

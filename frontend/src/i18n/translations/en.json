@@ -272,6 +272,14 @@
     "locationValue": "Novosibirsk, Russia (Remote/Relocation)",
     "github": "GitHub",
     "linkedin": "LinkedIn",
+    "telegram": {
+      "label": "Telegram",
+      "writeButton": "Write in Telegram",
+      "copyTooltip": "Copy username",
+      "copied": "Copied!",
+      "alsoWrite": "Also write in Telegram",
+      "shareMessage": "Name: {name}\nEmail: {email}\nMessage: {message}"
+    },
     "form": {
       "title": "Send a Message",
       "name": "Name",
