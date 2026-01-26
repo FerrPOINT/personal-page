@@ -272,6 +272,14 @@
     "locationValue": "Новосибирск, Россия (Удаленно/Релокация)",
     "github": "GitHub",
     "linkedin": "LinkedIn",
+    "telegram": {
+      "label": "Telegram",
+      "writeButton": "Написать в Telegram",
+      "copyTooltip": "Скопировать username",
+      "copied": "Скопировано!",
+      "alsoWrite": "Также написать в Telegram",
+      "shareMessage": "Имя: {name}\nEmail: {email}\nСообщение: {message}"
+    },
     "form": {
       "title": "Отправить сообщение",
       "name": "Имя",

@@ -47,7 +47,12 @@ router.post('/', contactLimiter, async (req: Request, res: Response) => {
     const message = await createMessage(formData);
 
     processMessage(message).catch(error => {
-      apiLogger.error('Error processing message immediately', { messageId: message.id, error: error.message, stack: error.stack });
+      apiLogger.error('Error processing message immediately', { 
+        requestId: req.requestId,
+        messageId: message.id, 
+        error: error.message, 
+        stack: error.stack 
+      });
     });
 
     // Return success response
@@ -60,7 +65,11 @@ router.post('/', contactLimiter, async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    apiLogger.error('Error creating message', { error: error.message, stack: error.stack });
+    apiLogger.error('Error creating message', { 
+      requestId: req.requestId,
+      error: error.message, 
+      stack: error.stack 
+    });
     return res.status(500).json({
       success: false,
       error: 'Internal server error',
