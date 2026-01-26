@@ -1,7 +1,7 @@
 # Список задач спринта 1
 
 ## Общая статистика
-- **Всего задач**: 3
+- **Всего задач**: 4
 - **В работе**: 0
 - **Готово**: 0
 - **Заблокировано**: 0
@@ -67,4 +67,27 @@
 - [ ] Проверить работу на всех секциях сайта
 
 **Теги**: frontend, i18n, localization, translation, ux, react, typescript
+
+### 004_telegram-contact-integration - Интеграция Telegram на форму обратной связи
+- **Статус**: В работе
+- **Приоритет**: Высокий
+- **Сложность**: 5/10
+- **Прогресс**: 95%
+
+**Описание**: Добавить современный компонент Telegram на форму обратной связи, позволяющий пользователям напрямую перекидывать сообщение в Telegram и сразу начинать общение через официальные Telegram API и deep links. Используются best practices 2026: Telegram Share Button, Deep Links, Web App API.
+
+**Подзадачи**:
+- [x] Изучить существующий компонент Contact.tsx
+- [x] Создать компонент TelegramContactButton.tsx
+- [x] Создать компонент TelegramShareButton.tsx
+- [x] Реализовать Telegram Share Button
+- [x] Реализовать Telegram Deep Link Button
+- [x] Интегрировать с Telegram Web App API
+- [x] Добавить стилизацию и анимации
+- [x] Интегрировать с i18n (русский/английский)
+- [x] Добавить TypeScript типы для Telegram Web App API
+- [x] Сборка проходит успешно
+- [ ] Протестировать в браузере на всех платформах (Desktop, Mobile, Web)
+
+**Теги**: frontend, telegram, contact-form, deep-links, web-app-api, ux, react, typescript, integration
 
