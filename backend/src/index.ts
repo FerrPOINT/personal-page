@@ -116,15 +116,26 @@ app.get('/api/telegram/status', async (req: Request, res: Response) => {
     
     let telegramConnected = false;
     let botUsername = null;
+    let userUsername = null;
     let error = null;
     
     if (tokenSet) {
       try {
         // Use detailed test function to get error information
-        const { testTelegramConnectionWithDetails } = await import('./services/telegram.js');
+        const { testTelegramConnectionWithDetails, getTelegramUsernameByUserId } = await import('./services/telegram.js');
         const testResult = await testTelegramConnectionWithDetails();
         telegramConnected = testResult.connected;
         botUsername = testResult.username || null;
+        
+        // Try to get user username by ID if user ID is set
+        if (telegramConnected && userIdSet && process.env.TELEGRAM_USER_ID) {
+          try {
+            userUsername = await getTelegramUsernameByUserId(process.env.TELEGRAM_USER_ID);
+          } catch (err: any) {
+            logger.warn('Could not get user username by ID', { error: err.message, userId: process.env.TELEGRAM_USER_ID });
+          }
+        }
+        
         // Always include error if connection failed
         if (!testResult.connected) {
           error = testResult.error || 'Connection test failed but no error message provided';
@@ -145,6 +156,7 @@ app.get('/api/telegram/status', async (req: Request, res: Response) => {
         tokenLength: tokenLength,
         userIdConfigured: userIdSet,
         userId: userIdSet ? process.env.TELEGRAM_USER_ID : null,
+        userUsername: userUsername,
         chatIdRegistered: chatIdRegistered,
         chatId: chatId,
         botConnected: telegramConnected,
@@ -156,6 +168,44 @@ app.get('/api/telegram/status', async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       success: false,
+      error: error.message || 'Unknown error',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// Telegram username endpoint
+app.get('/api/telegram/username', async (req: Request, res: Response) => {
+  try {
+    const { getTelegramUsernameByUserId } = await import('./services/telegram.js');
+    const userId = process.env.TELEGRAM_USER_ID;
+    
+    if (!userId) {
+      // Return default username even if userId is not configured
+      const defaultUsername = 'azhukov7';
+      return res.json({
+        success: true,
+        username: defaultUsername,
+        userId: null,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    
+    const username = await getTelegramUsernameByUserId(userId);
+    
+    res.json({
+      success: true,
+      username: username, // Function now always returns a string (never null)
+      userId: userId,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    // Return default username on error
+    const defaultUsername = 'azhukov7';
+    res.json({
+      success: true,
+      username: defaultUsername,
+      userId: process.env.TELEGRAM_USER_ID || null,
       error: error.message || 'Unknown error',
       timestamp: new Date().toISOString(),
     });

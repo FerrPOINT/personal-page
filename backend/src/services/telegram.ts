@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { getTelegramChatId, setTelegramChatId } from '../models/BotSettings.js';
+import { getTelegramChatId, setTelegramChatId, getTelegramUsername, setTelegramUsername } from '../models/BotSettings.js';
 import { telegramLogger } from '../utils/logger.js';
 
 // Load .env from project root
@@ -14,6 +14,7 @@ dotenv.config({ path: resolve(__dirname, '../../../.env') });
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_USER_ID = process.env.TELEGRAM_USER_ID;
+const TELEGRAM_USERNAME_ENV = process.env.TELEGRAM_USERNAME; // Optional: can be set manually
 
 // Create bot instance only if token is available (polling enabled to receive first message)
 let bot: TelegramBot | null = null;
@@ -81,25 +82,42 @@ function setupMessageHandler(): void {
     const isAdmin = TELEGRAM_USER_ID && TELEGRAM_USER_ID.trim() !== '' && userId === TELEGRAM_USER_ID.trim();
     
     if (isAdmin) {
-      // Admin: save chat ID if not already saved, then respond
+      // Admin: save chat ID and username if not already saved, then respond
       try {
         const registeredChatId = getTelegramChatId();
         const chatId = msg.chat.id.toString();
+        const username = msg.from?.username;
         
         if (!registeredChatId || registeredChatId !== chatId) {
           setTelegramChatId(chatId);
           telegramLogger.info('Saved chat ID for admin', { chatId, userId });
         }
         
-        const responseMessage = registeredChatId
+        // Save username if available and not already saved
+        if (username) {
+          const savedUsername = getTelegramUsername();
+          if (!savedUsername || savedUsername !== username) {
+            setTelegramUsername(username);
+            telegramLogger.info('Saved Telegram username for admin', { username, userId });
+          }
+        }
+        
+        let responseMessage = registeredChatId
           ? `📋 Записанный Telegram Chat ID: \`${registeredChatId}\`\n✅ Chat ID обновлен: \`${chatId}\``
           : `✅ Telegram Chat ID зарегистрирован: \`${chatId}\``;
         
-        telegramLogger.info('Sending response to admin', { userId, chatId });
+        if (username) {
+          const usernameMessage = getTelegramUsername()
+            ? `\n📝 Username обновлен: \`@${username}\``
+            : `\n📝 Username сохранен: \`@${username}\``;
+          responseMessage += usernameMessage;
+        }
+        
+        telegramLogger.info('Sending response to admin', { userId, chatId, username: username || null });
         
         await bot!.sendMessage(chatId, responseMessage, { parse_mode: 'Markdown' });
         
-        telegramLogger.info('Admin chat ID saved', { userId, chatId });
+        telegramLogger.info('Admin chat ID and username saved', { userId, chatId, username: username || null });
       } catch (error: any) {
         telegramLogger.error('Error sending admin response', { error: error.message, stack: error.stack, userId });
       }
@@ -264,5 +282,68 @@ export async function testTelegramConnectionWithDetails(): Promise<{ connected: 
     }
     return { connected: false, error: errorMessage };
   }
+}
+
+/**
+ * Get Telegram username by user ID
+ * First tries to get from saved settings, then env variable, then attempts API call
+ * @param userId - Telegram user ID
+ * @returns Promise<string | null> - username or null if not found/not available
+ */
+export async function getTelegramUsernameByUserId(userId: string): Promise<string> {
+  if (!userId || userId.trim() === '') {
+    telegramLogger.warn('User ID is empty - using default username');
+    const defaultUsername = 'azhukov7';
+    setTelegramUsername(defaultUsername);
+    return defaultUsername;
+  }
+
+  // First, try to get from saved settings (saved when admin sends a message)
+  const savedUsername = getTelegramUsername();
+  if (savedUsername) {
+    telegramLogger.info('Retrieved username from saved settings', { userId, username: savedUsername });
+    return savedUsername;
+  }
+
+  // Second, try to get from environment variable (manual setup)
+  if (TELEGRAM_USERNAME_ENV && TELEGRAM_USERNAME_ENV.trim() !== '') {
+    const envUsername = TELEGRAM_USERNAME_ENV.trim();
+    // Save it for future use
+    setTelegramUsername(envUsername);
+    telegramLogger.info('Retrieved username from environment variable and saved', { userId, username: envUsername });
+    return envUsername;
+  }
+
+  // Third, try to get from API if bot is connected (requires bot to be connected)
+  if (bot) {
+    try {
+      const chatInfo = await bot.getChat(userId);
+      const username = chatInfo.username || null;
+      if (username) {
+        // Save it for future use
+        setTelegramUsername(username);
+        telegramLogger.info('Retrieved and saved username from API', { userId, username });
+        return username;
+      } else {
+        telegramLogger.info('Retrieved chat info but username is not available', { userId });
+      }
+    } catch (error: any) {
+      telegramLogger.error('Error getting Telegram username by user ID from API', {
+        error: error.message,
+        stack: error.stack,
+        userId,
+      });
+      // Fall through to default
+    }
+  } else {
+    telegramLogger.warn('Telegram bot is not initialized - cannot get username from API');
+  }
+
+  // Fourth, use default username (azhukov7 - admin account)
+  const defaultUsername = 'azhukov7';
+  telegramLogger.info('Using default username', { userId, username: defaultUsername });
+  // Save default for future use
+  setTelegramUsername(defaultUsername);
+  return defaultUsername;
 }
 

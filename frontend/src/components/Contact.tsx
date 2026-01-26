@@ -1,8 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, Github, Linkedin, FileText, Printer, Download, Briefcase } from 'lucide-react';
+import { MapPin, Send, Github, Linkedin, FileText, Printer, Download, Briefcase, MessageCircle } from 'lucide-react';
 import Modal from './Modal';
+import TelegramContactButton from './TelegramContactButton';
+import EmailContactButton from './EmailContactButton';
+import PhoneContactButton from './PhoneContactButton';
+import TelegramShareButton from './TelegramShareButton';
 import { useLanguage } from '../i18n/hooks/useLanguage';
 import { getTranslatedExperience, getTranslatedSkills } from '../i18n/utils/getTranslatedData';
 import { ExperienceItem, TechSkill } from '../types';
@@ -19,6 +23,7 @@ const Contact: React.FC = () => {
   const [showResume, setShowResume] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [submitMessage, setSubmitMessage] = useState<string>('');
+  const [lastFormData, setLastFormData] = useState<FormData | null>(null);
   const messageContent = watch('message', '');
 
   const experienceItems = useMemo(() => getTranslatedExperience(language), [language]);
@@ -101,11 +106,14 @@ const Contact: React.FC = () => {
       if (result.success) {
         setSubmitStatus('success');
         setSubmitMessage(t('contact.form.success'));
+        // Save form data for Telegram share
+        setLastFormData(data);
         reset();
         // Clear success message after 5 seconds
         setTimeout(() => {
           setSubmitStatus('idle');
           setSubmitMessage('');
+          setLastFormData(null);
         }, 5000);
       } else {
         setSubmitStatus('error');
@@ -169,7 +177,8 @@ const Contact: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
+            animate={{ opacity: 1, x: 0 }}
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-8">{t('contact.title')}<br /> <span className="text-accent-cyan">{t('contact.titleScalable')}</span></h2>
             <p className="text-secondary text-lg mb-12">
@@ -177,26 +186,16 @@ const Contact: React.FC = () => {
             </p>
 
             <div className="space-y-6 mb-12">
-              <a href="mailto:ferruspoint@mail.ru" className="flex items-center group cursor-pointer">
-                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mr-4 group-hover:bg-accent-cyan/20 transition-colors">
-                  <Mail className="w-5 h-5 text-accent-cyan" />
-                </div>
-                <div>
-                  <p className="text-xs text-secondary uppercase tracking-wider">{t('contact.email')}</p>
-                  <p className="text-white font-medium hover:text-accent-cyan transition-colors">ferruspoint@mail.ru</p>
-                </div>
-              </a>
+              {/* Telegram Contact - moved to top */}
+              <TelegramContactButton username={import.meta.env.VITE_TELEGRAM_USERNAME || 'azhukov7'} />
 
-              <a href="tel:+79833209785" className="flex items-center group cursor-pointer">
-                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mr-4 group-hover:bg-accent-magenta/20 transition-colors">
-                  <Phone className="w-5 h-5 text-accent-magenta" />
-                </div>
-                <div>
-                  <p className="text-xs text-secondary uppercase tracking-wider">{t('contact.phone')}</p>
-                  <p className="text-white font-medium hover:text-accent-magenta transition-colors">+7 (983) 320-97-85</p>
-                </div>
-              </a>
+              {/* Email Contact */}
+              <EmailContactButton email="ferruspoint@mail.ru" />
 
+              {/* Phone Contact */}
+              <PhoneContactButton phone="+7 (983) 320-97-85" />
+
+              {/* Location Contact */}
               <a href="https://www.google.com/maps/search/?api=1&query=Novosibirsk,+Russia" target="_blank" rel="noopener noreferrer" className="flex items-center group cursor-pointer">
                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mr-4 group-hover:bg-white/20 transition-colors">
                   <MapPin className="w-5 h-5 text-white" />
@@ -266,8 +265,13 @@ const Contact: React.FC = () => {
               </div>
 
               {submitStatus === 'success' && (
-                <div className="p-4 bg-green-500/20 border border-green-500/50 rounded-lg text-green-400 text-sm">
-                  {submitMessage}
+                <div className="space-y-3">
+                  <div className="p-4 bg-green-500/20 border border-green-500/50 rounded-lg text-green-400 text-sm">
+                    {submitMessage}
+                  </div>
+                  {lastFormData && (
+                    <TelegramShareButton formData={lastFormData} />
+                  )}
                 </div>
               )}
 

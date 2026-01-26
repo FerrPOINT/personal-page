@@ -36,3 +36,17 @@ export function getTelegramChatId(): string | null {
 export function setTelegramChatId(chatId: string): void {
   setBotSetting('telegram_chat_id', chatId);
 }
+
+/**
+ * Get Telegram username from settings
+ */
+export function getTelegramUsername(): string | null {
+  return getBotSetting('telegram_username');
+}
+
+/**
+ * Set Telegram username in settings
+ */
+export function setTelegramUsername(username: string): void {
+  setBotSetting('telegram_username', username);
+}
