@@ -27,6 +27,7 @@ show_help() {
     echo "  ${GREEN}setup${NC}       - Настройка автоматической защиты от переполнения (требует root)"
     echo "  ${GREEN}cleanup${NC}     - Ручная очистка диска (требует root)"
     echo "  ${GREEN}status${NC}      - Проверка статуса мониторинга и cron задач"
+    echo "  ${GREEN}docker${NC}      - Детальный анализ Docker (образы, контейнеры, volumes)"
     echo "  ${GREEN}help${NC}        - Показать эту справку"
     echo ""
     echo "Примеры:"
@@ -190,6 +191,19 @@ case "${1:-help}" in
         ;;
     status)
         run_status
+        ;;
+    docker)
+        # Анализ Docker
+        if [ -f "$SCRIPT_DIR/docker-analysis.sh" ]; then
+            if [ "$EUID" -ne 0 ] && ! docker ps &> /dev/null; then
+                echo -e "${YELLOW}⚠️  Для анализа Docker могут потребоваться права root${NC}"
+                echo "Запустите: sudo $0 docker"
+            fi
+            "$SCRIPT_DIR/docker-analysis.sh"
+        else
+            echo -e "${RED}❌ Скрипт анализа Docker не найден${NC}"
+            exit 1
+        fi
         ;;
     help|--help|-h)
         show_help
