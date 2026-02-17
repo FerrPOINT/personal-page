@@ -67,16 +67,55 @@ find /var/log -type f -name "*.log.*" -mtime +30 -delete 2>/dev/null
 find /var/log -type f -name "*.gz" -mtime +30 -delete 2>/dev/null
 echo "✓ Старые логи очищены"
 
+# 2.1. Очистка Docker при setup (если установлен)
+if command -v docker &> /dev/null; then
+    echo -e "\n2.1. Очистка Docker..."
+    echo "   Удаление dangling образов..."
+    docker image prune -af 2>/dev/null || true
+    echo "   Удаление остановленных контейнеров..."
+    docker container prune -f 2>/dev/null || true
+    echo "   Очистка build cache..."
+    docker builder prune -af 2>/dev/null || true
+    echo "   Полная очистка системы..."
+    docker system prune -af 2>/dev/null || true
+    echo "✓ Docker очищен"
+fi
+
 # 3. Настройка очистки Docker (если установлен)
 echo -e "\n3. Настройка очистки Docker..."
 if command -v docker &> /dev/null; then
     # Создаем скрипт для очистки Docker
     cat > /usr/local/bin/docker-cleanup.sh << 'EOF'
 #!/bin/bash
-# Очистка неиспользуемых Docker ресурсов
-docker system prune -af --volumes --filter "until=168h" 2>/dev/null || true
+# Агрессивная очистка неиспользуемых Docker ресурсов
+
+echo "=== ОЧИСТКА DOCKER ==="
+echo "Размер до очистки:"
+docker system df 2>/dev/null || true
+echo ""
+
+echo "1. Удаление dangling образов (без тегов)..."
+docker image prune -af 2>/dev/null || true
+
+echo "2. Удаление остановленных контейнеров..."
+docker container prune -f 2>/dev/null || true
+
+echo "3. Удаление неиспользуемых volumes..."
+docker volume prune -f 2>/dev/null || true
+
+echo "4. Очистка build cache..."
+docker builder prune -af 2>/dev/null || true
+
+echo "5. Удаление неиспользуемых образов старше 7 дней..."
 docker image prune -af --filter "until=168h" 2>/dev/null || true
-docker volume prune -af 2>/dev/null || true
+
+echo "6. Полная очистка системы (кроме volumes с данными)..."
+docker system prune -af 2>/dev/null || true
+
+echo ""
+echo "Размер после очистки:"
+docker system df 2>/dev/null || true
+echo "✓ Очистка Docker завершена"
 EOF
     chmod +x /usr/local/bin/docker-cleanup.sh
     echo "✓ Скрипт очистки Docker создан"
@@ -133,7 +172,10 @@ if [ "$DISK_USAGE" -ge "$CRITICAL" ]; then
     
     # Очистка Docker (если установлен)
     if command -v docker &> /dev/null; then
-        docker system prune -af --volumes --filter "until=72h" 2>/dev/null || true
+        docker image prune -af 2>/dev/null || true
+        docker container prune -f 2>/dev/null || true
+        docker builder prune -af 2>/dev/null || true
+        docker system prune -af 2>/dev/null || true
     fi
     
     # Очистка временных файлов
@@ -210,7 +252,14 @@ echo "✓ Временные файлы очищены"
 
 if command -v docker &> /dev/null; then
     echo "3. Очистка Docker..."
-    docker system prune -af --volumes --filter "until=72h" 2>/dev/null || true
+    echo "   Удаление dangling образов..."
+    docker image prune -af 2>/dev/null || true
+    echo "   Удаление остановленных контейнеров..."
+    docker container prune -f 2>/dev/null || true
+    echo "   Очистка build cache..."
+    docker builder prune -af 2>/dev/null || true
+    echo "   Полная очистка системы..."
+    docker system prune -af 2>/dev/null || true
     echo "✓ Docker очищен"
 fi
 
