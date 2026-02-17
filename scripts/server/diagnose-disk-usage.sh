@@ -6,11 +6,23 @@ set +e  # Не прерывать выполнение при ошибках
 echo "=== ИСПОЛЬЗОВАНИЕ ДИСКА ==="
 df -h
 
-echo -e "\n=== ТОП-15 ПАПОК ПО РАЗМЕРУ ==="
-du -sh /* 2>/dev/null | sort -hr | head -15
+echo -e "\n=== ТОП-20 ПАПОК ПО РАЗМЕРУ (корневой уровень) ==="
+du -sh /* 2>/dev/null | sort -hr | head -20
+
+echo -e "\n=== ДЕТАЛЬНЫЙ РАЗМЕР ПАПОК В /var ==="
+du -sh /var/* 2>/dev/null | sort -hr | head -15
+
+echo -e "\n=== ДЕТАЛЬНЫЙ РАЗМЕР ПАПОК В /opt ==="
+du -sh /opt/* 2>/dev/null | sort -hr | head -15
+
+echo -e "\n=== ДЕТАЛЬНЫЙ РАЗМЕР ПАПОК В /usr ==="
+du -sh /usr/* 2>/dev/null | sort -hr | head -15
 
 echo -e "\n=== ЛОГИ (размер) ==="
-du -sh /var/log/* 2>/dev/null | sort -hr | head -10
+du -sh /var/log/* 2>/dev/null | sort -hr | head -20
+
+echo -e "\n=== САМЫЕ БОЛЬШИЕ ЛОГИ (>50MB) ==="
+find /var/log -type f -size +50M -exec ls -lh {} \; 2>/dev/null | awk '{print $5, $9}' | sort -hr | head -20
 
 echo -e "\n=== РАЗМЕР ЛОГОВ ПО ДАТАМ ==="
 find /var/log -type f -name "*.log" -exec ls -lh {} \; 2>/dev/null | awk '{print $5, $9}' | sort -hr | head -20
@@ -51,18 +63,38 @@ fi
 
 echo -e "\n=== КЭШИ ==="
 if [ -d /tmp ] && [ "$(ls -A /tmp 2>/dev/null)" ]; then
+    echo "Размер /tmp:"
+    du -sh /tmp 2>/dev/null
     du -sh /tmp/* 2>/dev/null | sort -hr | head -10 || echo "  /tmp пуст или недоступен"
 else
     echo "  /tmp пуст или недоступен"
 fi
 if [ -d /var/cache ] && [ "$(ls -A /var/cache 2>/dev/null)" ]; then
-    du -sh /var/cache/* 2>/dev/null | sort -hr | head -10 || echo "  /var/cache пуст или недоступен"
+    echo "Размер /var/cache:"
+    du -sh /var/cache 2>/dev/null
+    du -sh /var/cache/* 2>/dev/null | sort -hr | head -15 || echo "  /var/cache пуст или недоступен"
 else
     echo "  /var/cache пуст или недоступен"
 fi
 
+echo -e "\n=== РАЗМЕР DOCKER ДИРЕКТОРИИ ==="
+if [ -d /var/lib/docker ]; then
+    echo "Общий размер /var/lib/docker:"
+    du -sh /var/lib/docker 2>/dev/null
+    echo "Детальный размер поддиректорий:"
+    du -sh /var/lib/docker/* 2>/dev/null | sort -hr | head -10
+else
+    echo "  /var/lib/docker не найден"
+fi
+
 echo -e "\n=== БОЛЬШИЕ ФАЙЛЫ (>100MB) ==="
-find / -type f -size +100M -exec ls -lh {} \; 2>/dev/null | awk '{print $5, $9}' | head -20
+find / -type f -size +100M -exec ls -lh {} \; 2>/dev/null | awk '{print $5, $9}' | sort -hr | head -30
+
+echo -e "\n=== БОЛЬШИЕ ФАЙЛЫ (>500MB) ==="
+find / -type f -size +500M -exec ls -lh {} \; 2>/dev/null | awk '{print $5, $9}' | sort -hr | head -20
+
+echo -e "\n=== БОЛЬШИЕ ФАЙЛЫ (>1GB) ==="
+find / -type f -size +1G -exec ls -lh {} \; 2>/dev/null | awk '{print $5, $9}' | sort -hr
 
 echo -e "\n=== INODE USAGE ==="
 df -i
