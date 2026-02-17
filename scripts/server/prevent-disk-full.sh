@@ -69,14 +69,14 @@ echo "✓ Старые логи очищены"
 
 # 2.1. Очистка Docker при setup (если установлен)
 if command -v docker &> /dev/null; then
-    echo -e "\n2.1. Очистка Docker..."
-    echo "   Удаление dangling образов..."
-    docker image prune -af 2>/dev/null || true
-    echo "   Удаление остановленных контейнеров..."
+    echo -e "\n2.1. Очистка Docker (только неиспользуемые ресурсы)..."
+    echo "   Удаление dangling образов (неиспользуемые)..."
+    docker image prune -f 2>/dev/null || true
+    echo "   Удаление остановленных контейнеров (неиспользуемые)..."
     docker container prune -f 2>/dev/null || true
-    echo "   Очистка build cache..."
+    echo "   Очистка build cache (неиспользуемый кэш)..."
     docker builder prune -af 2>/dev/null || true
-    echo "   Полная очистка системы..."
+    echo "   Полная очистка неиспользуемых ресурсов (работающие контейнеры НЕ удаляются)..."
     docker system prune -af 2>/dev/null || true
     echo "✓ Docker очищен"
 fi
@@ -94,22 +94,22 @@ echo "Размер до очистки:"
 docker system df 2>/dev/null || true
 echo ""
 
-echo "1. Удаление dangling образов (без тегов)..."
-docker image prune -af 2>/dev/null || true
+echo "1. Удаление dangling образов (без тегов, неиспользуемые)..."
+docker image prune -f 2>/dev/null || true
 
-echo "2. Удаление остановленных контейнеров..."
+echo "2. Удаление остановленных контейнеров (неиспользуемые)..."
 docker container prune -f 2>/dev/null || true
 
-echo "3. Удаление неиспользуемых volumes..."
+echo "3. Удаление неиспользуемых volumes (dangling, не подключенные к контейнерам)..."
 docker volume prune -f 2>/dev/null || true
 
-echo "4. Очистка build cache..."
+echo "4. Очистка build cache (неиспользуемый кэш сборки)..."
 docker builder prune -af 2>/dev/null || true
 
-echo "5. Удаление неиспользуемых образов старше 7 дней..."
+echo "5. Удаление неиспользуемых образов старше 7 дней (не используются контейнерами)..."
 docker image prune -af --filter "until=168h" 2>/dev/null || true
 
-echo "6. Полная очистка системы (кроме volumes с данными)..."
+echo "6. Полная очистка неиспользуемых ресурсов (работающие контейнеры и их образы НЕ удаляются)..."
 docker system prune -af 2>/dev/null || true
 
 echo ""
@@ -172,7 +172,8 @@ if [ "$DISK_USAGE" -ge "$CRITICAL" ]; then
     
     # Очистка Docker (если установлен)
     if command -v docker &> /dev/null; then
-        docker image prune -af 2>/dev/null || true
+        # Только неиспользуемые ресурсы - работающие контейнеры и их образы НЕ удаляются
+        docker image prune -f 2>/dev/null || true
         docker container prune -f 2>/dev/null || true
         docker builder prune -af 2>/dev/null || true
         docker system prune -af 2>/dev/null || true
@@ -251,14 +252,14 @@ find /var/tmp -type f -mtime +3 -delete 2>/dev/null
 echo "✓ Временные файлы очищены"
 
 if command -v docker &> /dev/null; then
-    echo "3. Очистка Docker..."
-    echo "   Удаление dangling образов..."
-    docker image prune -af 2>/dev/null || true
-    echo "   Удаление остановленных контейнеров..."
+    echo "3. Очистка Docker (только неиспользуемые ресурсы)..."
+    echo "   Удаление dangling образов (неиспользуемые)..."
+    docker image prune -f 2>/dev/null || true
+    echo "   Удаление остановленных контейнеров (неиспользуемые)..."
     docker container prune -f 2>/dev/null || true
-    echo "   Очистка build cache..."
+    echo "   Очистка build cache (неиспользуемый кэш)..."
     docker builder prune -af 2>/dev/null || true
-    echo "   Полная очистка системы..."
+    echo "   Полная очистка неиспользуемых ресурсов (работающие контейнеры НЕ удаляются)..."
     docker system prune -af 2>/dev/null || true
     echo "✓ Docker очищен"
 fi
