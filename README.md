@@ -115,46 +115,52 @@ make dev-frontend
 
 ## 🏗️ System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        User Browser                          │
-└───────────────────────────┬─────────────────────────────────┘
-                             │
-                             │ HTTPS
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Nginx Reverse Proxy                       │
-│                  (SSL/TLS Termination)                      │
-└───────────────┬───────────────────────────────┬─────────────┘
-                │                               │
-                │ /                            │ /api
-                ▼                               ▼
-┌──────────────────────────┐      ┌──────────────────────────┐
-│   Frontend Container      │      │   Backend Container      │
-│   (React SPA)             │      │   (Express API)          │
-│                           │      │                           │
-│  • React 19.2             │      │  • Express 4.18           │
-│  • Vite 6.2               │      │  • TypeScript 5.3         │
-│  • Three.js 0.181         │      │  • SQLite (better-sqlite3)│
-│  • TailwindCSS 3.4        │      │  • Winston (Logging)      │
-│  • i18n (ru/en)           │      │  • Telegram Bot API       │
-│                           │      │                           │
-│  Port: 8888               │      │  Port: 9000               │
-└──────────────────────────┘      └───────────┬───────────────┘
-                                               │
-                                               │ SQLite
-                                               ▼
-                                    ┌──────────────────────────┐
-                                    │   Database Volume        │
-                                    │   ./data/database.db     │
-                                    └──────────────────────────┘
-                                               │
-                                               │ Background Worker
-                                               ▼
-                                    ┌──────────────────────────┐
-                                    │   Telegram Bot Service   │
-                                    │   (Notifications)        │
-                                    └──────────────────────────┘
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        Browser[User Browser]
+    end
+    
+    subgraph "Infrastructure Layer"
+        Nginx[Nginx Reverse Proxy<br/>SSL/TLS Termination<br/>Port: 80/443]
+    end
+    
+    subgraph "Application Layer"
+        Frontend[Frontend Container<br/>React 19.2 + Vite 6.2<br/>Three.js 0.181<br/>TailwindCSS 3.4<br/>i18n ru/en<br/>Port: 8888]
+        Backend[Backend Container<br/>Express 4.18<br/>TypeScript 5.3<br/>Port: 9000]
+    end
+    
+    subgraph "Data Layer"
+        Database[(SQLite Database<br/>better-sqlite3 9.2<br/>./data/database.db)]
+        Logs[Logs Volume<br/>Winston 3.19<br/>Daily Rotation]
+    end
+    
+    subgraph "External Services"
+        Telegram[Telegram Bot API<br/>node-telegram-bot-api<br/>Notifications]
+    end
+    
+    subgraph "CI/CD"
+        Jenkins[Jenkins Pipeline<br/>pollSCM: 10 min<br/>Auto Deploy]
+    end
+    
+    Browser -->|HTTPS| Nginx
+    Nginx -->|/| Frontend
+    Nginx -->|/api| Backend
+    Frontend -.->|API Calls| Backend
+    Backend --> Database
+    Backend --> Logs
+    Backend -->|Background Worker| Telegram
+    Jenkins -.->|Deploy| Frontend
+    Jenkins -.->|Deploy| Backend
+    
+    style Browser fill:#e1f5ff
+    style Nginx fill:#fff4e6
+    style Frontend fill:#e8f5e9
+    style Backend fill:#f3e5f5
+    style Database fill:#fff9c4
+    style Logs fill:#fff9c4
+    style Telegram fill:#ffebee
+    style Jenkins fill:#fce4ec
 ```
 
 ### Components
