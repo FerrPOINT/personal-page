@@ -3,11 +3,14 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19.2-blue)](https://react.dev/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-4.18-000000?logo=express&logoColor=white)](https://expressjs.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-Jenkins-orange)](https://www.jenkins.io/)
 [![Vite](https://img.shields.io/badge/Vite-6.2-646CFF)](https://vitejs.dev/)
-[![Three.js](https://img.shields.io/badge/Three.js-0.181-000000)](https://threejs.org/)
+[![Three.js](https://img.shields.io/badge/Three.js-0.181-FFFFFF?logo=threedotjs&logoColor=000000)](https://threejs.org/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC)](https://tailwindcss.com/)
+[![SQLite](https://img.shields.io/badge/SQLite-3.49-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![Vitest](https://img.shields.io/badge/Vitest-4.0-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
 [![Playwright](https://img.shields.io/badge/Playwright-1.58-45BA4B)](https://playwright.dev/)
 
 Senior Software Architect portfolio website with full internationalization (i18n), 3D graphics, automated CI/CD pipeline, and comprehensive testing.
