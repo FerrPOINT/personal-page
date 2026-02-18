@@ -153,14 +153,14 @@ graph TB
     Jenkins -.->|Deploy| Frontend
     Jenkins -.->|Deploy| Backend
     
-    style Browser fill:#e1f5ff
-    style Nginx fill:#fff4e6
-    style Frontend fill:#e8f5e9
-    style Backend fill:#f3e5f5
-    style Database fill:#fff9c4
-    style Logs fill:#fff9c4
-    style Telegram fill:#ffebee
-    style Jenkins fill:#fce4ec
+    style Browser fill:#4A90E2,stroke:#2E5C8A,stroke-width:2px,color:#FFFFFF
+    style Nginx fill:#F5A623,stroke:#B8751A,stroke-width:2px,color:#FFFFFF
+    style Frontend fill:#50C878,stroke:#2D8659,stroke-width:2px,color:#FFFFFF
+    style Backend fill:#9B59B6,stroke:#6C3483,stroke-width:2px,color:#FFFFFF
+    style Database fill:#FFD700,stroke:#B8860B,stroke-width:2px,color:#000000
+    style Logs fill:#FFA500,stroke:#CC7700,stroke-width:2px,color:#000000
+    style Telegram fill:#0088CC,stroke:#005580,stroke-width:2px,color:#FFFFFF
+    style Jenkins fill:#D24939,stroke:#8B2E1F,stroke-width:2px,color:#FFFFFF
 ```
 
 ### Components
