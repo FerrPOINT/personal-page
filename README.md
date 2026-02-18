@@ -5,8 +5,12 @@
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-Jenkins-orange)](https://www.jenkins.io/)
+[![Vite](https://img.shields.io/badge/Vite-6.2-646CFF)](https://vitejs.dev/)
+[![Three.js](https://img.shields.io/badge/Three.js-0.181-000000)](https://threejs.org/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC)](https://tailwindcss.com/)
+[![Playwright](https://img.shields.io/badge/Playwright-1.58-45BA4B)](https://playwright.dev/)
 
-Senior Software Architect portfolio website with full internationalization (i18n), 3D graphics, and automated CI/CD pipeline.
+Senior Software Architect portfolio website with full internationalization (i18n), 3D graphics, automated CI/CD pipeline, and comprehensive testing.
 
 ## ✨ Features
 
@@ -15,138 +19,45 @@ Senior Software Architect portfolio website with full internationalization (i18n
 - 📱 **Responsive Design**: Mobile-first approach with modern UI/UX
 - 🚀 **CI/CD Pipeline**: Automated deployment via Jenkins with pollSCM (10-minute intervals)
 - 🔒 **Security**: Rate limiting, CORS, input sanitization, Helmet.js protection
-- 📊 **Real-time Analytics**: Contact form with Telegram notifications
+- 📊 **Real-time Notifications**: Contact form with Telegram bot integration
 - 🐳 **Dockerized**: Full containerization with Docker Compose
 - ⚡ **Performance**: Optimized builds, code splitting, lazy loading
-
-## 🏗️ Project Structure
-
-```
-personal-page/
-├── frontend/                    # React frontend application
-│   ├── src/
-│   │   ├── components/         # React components
-│   │   │   ├── Hero.tsx        # Hero section with 3D background
-│   │   │   ├── Navbar.tsx      # Navigation with language switcher
-│   │   │   ├── Projects.tsx    # Featured projects showcase
-│   │   │   ├── Experience.tsx  # Professional experience
-│   │   │   ├── TechStack.tsx   # Technical skills visualization
-│   │   │   ├── Insights.tsx     # Blog posts/articles
-│   │   │   ├── Contact.tsx     # Contact form with resume
-│   │   │   └── LanguageSwitcher.tsx  # Language toggle component
-│   │   ├── i18n/               # Internationalization system
-│   │   │   ├── context/        # Language context provider
-│   │   │   ├── hooks/          # useLanguage hook
-│   │   │   ├── translations/   # Translation files (ru.json, en.json)
-│   │   │   └── utils/          # Language detection & utilities
-│   │   ├── constants/          # Application constants
-│   │   ├── types/              # TypeScript type definitions
-│   │   ├── App.tsx             # Main application component
-│   │   └── main.tsx            # Application entry point
-│   ├── public/                 # Static assets
-│   ├── Dockerfile              # Frontend Docker image
-│   ├── nginx.conf              # Nginx configuration
-│   └── package.json
-│
-├── backend/                    # Backend API + Worker
-│   ├── src/
-│   │   ├── routes/             # API routes
-│   │   │   └── contact.ts      # Contact form endpoint
-│   │   ├── services/           # Business logic
-│   │   │   ├── database.ts     # SQLite operations
-│   │   │   ├── telegram.ts     # Telegram bot service
-│   │   │   └── validation.ts  # Input validation
-│   │   ├── models/             # Data models
-│   │   │   ├── Message.ts      # Message model
-│   │   │   └── BotSettings.ts  # Bot settings model
-│   │   ├── workers/            # Background workers
-│   │   │   └── telegram-worker.ts  # Telegram notification worker
-│   │   └── index.ts            # Server entry point
-│   ├── db/
-│   │   ├── migrate.ts          # Migration runner
-│   │   └── migrations/         # Database migrations
-│   ├── Dockerfile              # Backend Docker image
-│   └── package.json
-│
-├── scripts/                    # Automation scripts
-│   ├── deploy.sh               # Deployment script
-│   ├── setup-jenkins-*.sh     # Jenkins setup scripts
-│   ├── setup-jenkins-timezone.sh  # Timezone configuration
-│   └── verify-*.sh            # Verification scripts
-│
-├── info/                       # Project documentation
-│   ├── deployment-guide.qmd   # Deployment instructions
-│   ├── jenkins-*.qmd          # Jenkins documentation
-│   └── sprint1/               # Sprint documentation
-│
-├── docker-compose.yml         # Docker Compose configuration
-├── Jenkinsfile                # CI/CD pipeline definition
-├── Makefile                   # Cross-platform build automation
-└── README.md                  # This file
-
-```
+- 🧪 **Testing**: E2E tests with Playwright, unit tests with Vitest
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- **Node.js**: v18+ (recommended v20+)
-- **npm**: v9+ or **yarn** v1.22+
+- **Node.js**: v20+
+- **npm**: v9+
 - **Docker**: v20+ and **Docker Compose** v2+ (for production)
 - **Git**: for repository management
 
 ### Development Setup
 
-#### 1. Clone Repository
-
 ```bash
-git clone <repository-url>
+# Clone repository
+git clone https://github.com/FerrPOINT/personal-page.git
 cd personal-page
-```
 
-#### 2. Environment Configuration
-
-```bash
-# Copy environment template
+# Setup environment
 make local
 
-# Or manually:
-cp env.local .env
-
-# Edit .env and fill in required values
-```
-
-#### 3. Install Dependencies
-
-```bash
+# Install dependencies
 make install
 
-# Or manually:
-cd backend && npm install
-cd ../frontend && npm install
-```
-
-#### 4. Database Migration
-
-```bash
+# Run database migrations
 make migrate
 
-# Or manually:
-cd backend && npm run migrate
-```
-
-#### 5. Start Development Servers
-
-**Option A: Docker (Recommended)**
-
-```bash
+# Start with Docker (recommended)
 make docker-build
+
 # Services available at:
 # - Frontend: http://localhost:8888
 # - Backend: http://localhost:9000
 ```
 
-**Option B: Local Development**
+### Local Development
 
 ```bash
 # Terminal 1: Backend
@@ -155,34 +66,26 @@ make dev-backend
 
 # Terminal 2: Frontend
 make dev-frontend
-# Frontend: http://localhost:5173 (or 8889 if 5173 is busy)
+# Frontend: http://localhost:5173
 ```
 
-### Production Build
-
-```bash
-# Build and start all services
-make docker-build
-
-# View logs
-make docker-logs
-
-# Stop services
-make docker-down
-```
-
-## 📦 Technologies
+## 📦 Tech Stack
 
 ### Frontend
 
 - **React 19.2** - Modern UI library with concurrent features
 - **TypeScript 5.8** - Type safety and developer experience
 - **Vite 6.2** - Next-generation build tool and dev server
-- **Three.js** - 3D graphics via @react-three/fiber
+- **Three.js 0.181** - 3D graphics via @react-three/fiber & @react-three/drei
 - **Framer Motion 12.23** - Smooth animations and transitions
 - **Recharts 3.5** - Data visualization and charts
-- **React Hook Form 7.67** - Form management
+- **React Hook Form 7.67** - Form management and validation
+- **TailwindCSS 3.4** - Utility-first CSS framework
+- **PostCSS** - CSS processing
 - **Lucide React** - Modern icon library
+- **Vitest 4.0** - Unit testing framework
+- **Testing Library** - React component testing
+- **Playwright 1.58** - E2E testing
 - **Nginx** - Production web server
 
 ### Backend
@@ -190,11 +93,17 @@ make docker-down
 - **Node.js 20+** - JavaScript runtime
 - **Express 4.18** - Web framework
 - **TypeScript 5.3** - Type safety
-- **SQLite** - Database (via better-sqlite3)
-- **Telegram Bot API** - Real-time notifications
+- **SQLite** - Database via better-sqlite3 9.2
+- **Telegram Bot API** - Real-time notifications via node-telegram-bot-api
+- **Winston 3.19** - Structured logging
+- **winston-daily-rotate-file** - Log rotation
 - **Helmet.js 7.1** - Security headers
 - **express-rate-limit 7.1** - Rate limiting protection
-- **CORS** - Cross-origin resource sharing
+- **CORS 2.8** - Cross-origin resource sharing
+- **UUID 13.0** - Unique identifier generation
+- **dotenv 16.3** - Environment variable management
+- **tsx 4.7** - TypeScript execution
+- **Vitest 4.0** - Testing framework
 
 ### DevOps & Infrastructure
 
@@ -202,42 +111,63 @@ make docker-down
 - **Jenkins** - CI/CD automation
 - **Nginx** - Reverse proxy and static file serving
 - **Git** - Version control
+- **Makefile** - Cross-platform build automation
 
-## 🌍 Internationalization (i18n)
+## 🏗️ System Architecture
 
-The application supports full internationalization with automatic language detection:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        User Browser                          │
+└───────────────────────────┬─────────────────────────────────┘
+                             │
+                             │ HTTPS
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Nginx Reverse Proxy                       │
+│                  (SSL/TLS Termination)                      │
+└───────────────┬───────────────────────────────┬─────────────┘
+                │                               │
+                │ /                            │ /api
+                ▼                               ▼
+┌──────────────────────────┐      ┌──────────────────────────┐
+│   Frontend Container      │      │   Backend Container      │
+│   (React SPA)             │      │   (Express API)          │
+│                           │      │                           │
+│  • React 19.2             │      │  • Express 4.18           │
+│  • Vite 6.2               │      │  • TypeScript 5.3         │
+│  • Three.js 0.181         │      │  • SQLite (better-sqlite3)│
+│  • TailwindCSS 3.4        │      │  • Winston (Logging)      │
+│  • i18n (ru/en)           │      │  • Telegram Bot API       │
+│                           │      │                           │
+│  Port: 8888               │      │  Port: 9000               │
+└──────────────────────────┘      └───────────┬───────────────┘
+                                               │
+                                               │ SQLite
+                                               ▼
+                                    ┌──────────────────────────┐
+                                    │   Database Volume        │
+                                    │   ./data/database.db     │
+                                    └──────────────────────────┘
+                                               │
+                                               │ Background Worker
+                                               ▼
+                                    ┌──────────────────────────┐
+                                    │   Telegram Bot Service   │
+                                    │   (Notifications)        │
+                                    └──────────────────────────┘
+```
 
-### Supported Languages
+### Components
 
-- **English (en)** - Default language
-- **Russian (ru)** - Full translation
-
-### Features
-
-- **Automatic Detection**: Detects browser language via `navigator.language`
-- **LocalStorage Persistence**: Saves user language preference
-- **Language Switcher**: Manual language toggle in navigation
-- **Dynamic Content**: All content (projects, experience, blog posts) is translatable
-- **Fallback Support**: Falls back to English if translation key is missing
-
-### Implementation
-
-- **Context-based**: React Context API for language state management
-- **Hook-based**: `useLanguage()` hook for easy access
-- **Type-safe**: TypeScript support for translation keys
-- **Performance**: `useCallback` optimization for translation function
-
-### Adding New Languages
-
-1. Create new translation file: `frontend/src/i18n/translations/{lang}.json`
-2. Add language to `Language` type in `languageDetector.ts`
-3. Update language switcher component
+- **Frontend**: React SPA with i18n, builds to static files, served via Nginx
+- **Backend**: Express API server with REST endpoints
+- **Database**: SQLite (file-based DB, persisted in Docker volume)
+- **Worker**: Background process for Telegram notifications
+- **CI/CD**: Jenkins pipeline with automated deployment (pollSCM every 10 minutes)
 
 ## 🔧 Configuration
 
 ### Environment Variables
-
-**Important**: Use a single `.env` file in the project root. Do not create `.env` files in `backend/` or `frontend/`.
 
 Create `.env` file in project root:
 
@@ -247,6 +177,7 @@ DATABASE_PATH=./data/database.db
 
 # Telegram Bot (optional - worker won't start without token)
 TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_USER_ID=your_user_id_here
 
 # Backend API Configuration
 API_PORT=9000
@@ -254,53 +185,24 @@ NODE_ENV=development
 FRONTEND_URL=http://localhost:8888,http://localhost:5173
 
 # Frontend API Configuration
-# VITE_API_URL not needed for production - uses relative path /api
 # For local dev: VITE_API_URL=http://localhost:9000/api
-# VITE_API_URL=http://localhost:9000/api
-
-# Gemini API (if needed)
-GEMINI_API_KEY=your_gemini_api_key_here
+# For production: not needed - uses relative path /api
+VITE_API_URL=http://localhost:9000/api
 ```
 
-**Notes**:
+**Notes:**
 - `.env` is in `.gitignore` and not committed to repository
 - Copy `env.local` to `.env` (or use `make local`)
 - Docker Compose automatically loads variables from root `.env`
-- For production: `VITE_API_URL` not needed - app uses relative path `/api`
-
-### Telegram Bot Setup
-
-1. **Get Bot Token**:
-   - Open Telegram, search for `@BotFather`
-   - Send `/newbot` command
-   - Follow instructions to create a bot
-   - Copy the token you receive
-
-2. **Register User ID** (automatic):
-   - Start backend server
-   - Send ANY message to your bot in Telegram
-   - Bot automatically saves your User ID
-   - You'll receive confirmation message
 
 ## 🏭 CI/CD Pipeline
 
 ### Jenkins Configuration
 
-The project includes automated CI/CD via Jenkins:
-
 - **Pipeline**: Defined in `Jenkinsfile`
 - **Trigger**: `pollSCM` every 10 minutes (checks for changes in main branch)
 - **Deployment**: Automated SSH deployment to production server
 - **Timezone**: Configured for Asia/Novosibirsk (UTC+7)
-
-### Jenkins Setup Scripts
-
-```bash
-# Setup Jenkins timezone
-./scripts/setup-jenkins-timezone.sh
-
-# Other setup scripts available in scripts/ directory
-```
 
 ### Pipeline Stages
 
@@ -310,10 +212,9 @@ The project includes automated CI/CD via Jenkins:
 
 ### Documentation
 
-- **Quick Start**: `info/jenkins-quickstart.qmd`
-- **Full Guide**: `info/jenkins-pipeline.qmd`
-- **Setup Guide**: `info/jenkins-cicd-setup-guide.qmd`
-- **Quick Reference**: `info/jenkins-quick-reference.qmd`
+- **Quick Start**: `info/jenkins/jenkins-quickstart.qmd`
+- **Full Guide**: `info/jenkins/pipeline.qmd`
+- **Setup Guide**: `info/jenkins/jenkins-cicd-setup-guide.qmd`
 
 ## 🔒 Security Features
 
@@ -332,13 +233,7 @@ The project includes automated CI/CD via Jenkins:
 - **XSS Protection**: React's built-in escaping
 - **HTTPS Ready**: Production-ready SSL/TLS configuration
 
-### Configuration
-
-- Set `FRONTEND_URL` in `.env` for CORS (comma-separated origins)
-- Rate limiting adjustable in `backend/src/routes/contact.ts`
-- Security headers configured via Helmet.js in `backend/src/index.ts`
-
-## 📝 Scripts
+## 📝 Available Commands
 
 ### Makefile Commands
 
@@ -362,6 +257,12 @@ make dev-frontend       # Start frontend in dev mode
 make build-backend      # Build backend
 make build-frontend     # Build frontend
 
+# Testing
+make test               # Run Playwright E2E tests
+npm test                # Run Playwright tests
+npm run test:ui         # Run tests with UI
+npm run test:headed     # Run tests in visible browser
+
 # Utilities
 make install            # Install dependencies for both projects
 make migrate            # Run database migrations
@@ -375,43 +276,14 @@ make help               # Show command help
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
+- `npm test` - Run Vitest unit tests
 
 **Backend:**
 - `npm run dev` - Start development server with hot reload
 - `npm run build` - Build TypeScript
 - `npm run start` - Start production server
 - `npm run migrate` - Run database migrations
-
-## 🏗️ Architecture
-
-### System Architecture
-
-```
-┌─────────────────┐         ┌─────────────────┐
-│   Frontend      │         │    Backend      │
-│   (React + Vite)│────────▶│  (Express API)  │
-│   Port: 8888    │  /api   │   Port: 9000    │
-│   i18n: ru/en   │         └────────┬────────┘
-└─────────────────┘                  │
-                                      │
-                              ┌───────▼────────┐
-                              │   SQLite DB    │
-                              │  (./data/*.db) │
-                              └────────┬───────┘
-                                       │
-                              ┌────────▼────────┐
-                              │ Telegram Worker │
-                              │  (Background)  │
-                              └─────────────────┘
-```
-
-### Components
-
-- **Frontend**: React SPA with i18n, builds to static files, served via Nginx
-- **Backend**: Express API server with REST endpoints
-- **Database**: SQLite (file-based DB, created automatically)
-- **Worker**: Background process for Telegram notifications
-- **CI/CD**: Jenkins pipeline with automated deployment
+- `npm test` - Run Vitest tests
 
 ## 📡 API Documentation
 
@@ -508,109 +380,47 @@ CREATE TABLE bot_settings (
 - Run: `npm run migrate` (in backend) or `make migrate`
 - Executed automatically on first startup
 
-## 🛠️ Development Guide
+## 🌍 Internationalization (i18n)
 
-### Development Workflow
+The application supports full internationalization with automatic language detection:
 
-#### 1. First Time Setup
+### Supported Languages
 
-```bash
-# Clone repository
-git clone <repository-url>
-cd personal-page
+- **English (en)** - Default language
+- **Russian (ru)** - Full translation
 
-# Setup environment
-make local
+### Features
 
-# Install dependencies
-make install
+- **Automatic Detection**: Detects browser language via `navigator.language`
+- **LocalStorage Persistence**: Saves user language preference
+- **Language Switcher**: Manual language toggle in navigation
+- **Dynamic Content**: All content (projects, experience, blog posts) is translatable
+- **Fallback Support**: Falls back to English if translation key is missing
 
-# Run migrations
-make migrate
+### Implementation
 
-# Start with Docker (recommended)
-make docker-build
+- **Context-based**: React Context API for language state management
+- **Hook-based**: `useLanguage()` hook for easy access
+- **Type-safe**: TypeScript support for translation keys
+- **Performance**: `useCallback` optimization for translation function
 
-# Or local development
-make dev-backend    # Terminal 1
-make dev-frontend   # Terminal 2
-```
+## 🧪 Testing
 
-#### 2. Local Development
-
-**Backend:**
-```bash
-cd backend
-npm run dev  # Hot reload with tsx watch
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm run dev  # Vite dev server (usually http://localhost:5173)
-```
-
-**Important for Local Dev:**
-- Backend: `http://localhost:9000`
-- Frontend: Set `VITE_API_URL=http://localhost:9000/api` in `.env`
-- CORS configured for `http://localhost:8888` and `http://localhost:5173`
-
-#### 3. Testing Changes
+### E2E Testing (Playwright)
 
 ```bash
-# Type checking
-cd frontend && npx tsc --noEmit
-cd backend && npx tsc --noEmit
-
-# Build verification
-cd frontend && npm run build
-cd backend && npm run build
+npm test              # Run all E2E tests
+npm run test:ui       # Run tests with UI
+npm run test:headed   # Run tests in visible browser
+npm run test:debug   # Run tests in debug mode
 ```
 
-### Code Structure
+### Unit Testing (Vitest)
 
-#### Frontend Structure
-
-```
-frontend/src/
-├── components/          # React components
-│   ├── Hero.tsx         # Hero with 3D background
-│   ├── Navbar.tsx       # Navigation with language switcher
-│   ├── Projects.tsx     # Projects showcase
-│   ├── Experience.tsx   # Professional experience
-│   ├── TechStack.tsx    # Skills visualization
-│   ├── Insights.tsx     # Blog/articles
-│   ├── Contact.tsx      # Contact form
-│   └── LanguageSwitcher.tsx  # Language toggle
-├── i18n/                # Internationalization
-│   ├── context/         # LanguageContext provider
-│   ├── hooks/           # useLanguage hook
-│   ├── translations/    # ru.json, en.json
-│   └── utils/           # Language detection
-├── constants/           # App constants
-├── types/               # TypeScript types
-├── App.tsx              # Main component
-└── main.tsx             # Entry point
-```
-
-#### Backend Structure
-
-```
-backend/src/
-├── index.ts             # Express server setup
-├── routes/
-│   └── contact.ts       # POST /api/contact endpoint
-├── services/
-│   ├── database.ts      # SQLite operations
-│   ├── telegram.ts     # Telegram bot service
-│   └── validation.ts   # Input validation
-├── models/
-│   ├── Message.ts       # Message model
-│   └── BotSettings.ts  # Bot settings model
-├── workers/
-│   └── telegram-worker.ts  # Background worker
-└── types/
-    └── telegram-bot-api.d.ts
+```bash
+cd frontend && npm test        # Run frontend unit tests
+cd backend && npm test         # Run backend unit tests
+cd frontend && npm run test:ui # Run tests with UI
 ```
 
 ## 🐛 Troubleshooting
@@ -618,7 +428,7 @@ backend/src/
 ### Backend Won't Start
 
 **Check:**
-1. Port 9000 not in use: `netstat -an | grep 9000` (Linux/Mac) or `netstat -an | findstr 9000` (Windows)
+1. Port 9000 not in use
 2. `.env` variables are correct
 3. Database created: check `./data/database.db`
 4. Dependencies installed: `cd backend && npm install`
@@ -638,7 +448,6 @@ npm run dev
 1. Backend running at `http://localhost:9000`
 2. `VITE_API_URL=http://localhost:9000/api` in `.env`
 3. CORS configured (check `FRONTEND_URL` in backend `.env`)
-4. Browser console for errors (F12)
 
 **Solution:**
 ```bash
@@ -649,23 +458,6 @@ curl http://localhost:9000/health
 curl -X POST http://localhost:9000/api/contact \
   -H "Content-Type: application/json" \
   -d '{"name":"Test","email":"test@test.com","message":"Test message"}'
-```
-
-### Telegram Bot Not Sending Messages
-
-**Check:**
-1. `TELEGRAM_BOT_TOKEN` set and valid
-2. Bot started and responding
-3. User ID registered (send message to bot)
-4. Backend logs show Telegram connection
-
-**Solution:**
-```bash
-# Test token
-curl "https://api.telegram.org/bot<YOUR_TOKEN>/getMe"
-
-# Check logs
-make docker-logs-backend
 ```
 
 ### Docker Containers Won't Start
@@ -681,24 +473,6 @@ make docker-build
 
 # Check ports
 docker ps
-netstat -an | grep 8888
-netstat -an | grep 9000
-```
-
-### i18n Issues
-
-**Check:**
-1. Translation files exist: `frontend/src/i18n/translations/ru.json`, `en.json`
-2. Language context provider wraps app in `App.tsx`
-3. Browser console for missing translation keys
-
-**Solution:**
-```bash
-# Verify translation files
-ls -la frontend/src/i18n/translations/
-
-# Check for missing keys
-cd frontend && npm run build
 ```
 
 ## 📊 Performance
@@ -729,25 +503,9 @@ cd frontend && npm run build
 ## 📚 Additional Resources
 
 - **Project Documentation**: `info/` directory
-- **Deployment Guide**: `info/deployment-guide.qmd`
+- **Deployment Guide**: `info/guides/deployment-guide.qmd`
 - **Sprints & Tasks**: `info/sprint1/`
-- **Jenkins Documentation**: `info/jenkins-*.qmd`
-- **API Examples**: See `backend/src/routes/contact.ts`
-
-## 🤝 Contributing
-
-1. Create feature branch: `git checkout -b feature/your-feature`
-2. Make changes and test thoroughly
-3. Ensure code passes type checking and linting
-4. Create commit with clear message
-5. Push and create Pull Request
-
-**Code Style:**
-- TypeScript strict mode
-- ESLint/Prettier (if configured)
-- Comments for complex logic
-- Naming: camelCase for variables, PascalCase for components/classes
-- Follow existing code patterns
+- **Jenkins Documentation**: `info/jenkins/`
 
 ## 📄 License
 
@@ -762,5 +520,5 @@ Private project - All rights reserved
 
 ---
 
-**Last Updated**: 2025-01-15
+**Last Updated**: 2026-02-18  
 **Version**: 1.0.0
