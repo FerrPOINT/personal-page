@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { getTelegramChatId, setTelegramChatId, getTelegramUsername, setTelegramUsername } from '../models/BotSettings.js';
 import { telegramLogger } from '../utils/logger.js';
+import { TelegramError, toAppError } from '../utils/errors.js';
 
 // Load .env from project root
 // In Docker, variables are already set via docker-compose, dotenv won't override them
@@ -15,6 +16,7 @@ dotenv.config({ path: resolve(__dirname, '../../../.env') });
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_USER_ID = process.env.TELEGRAM_USER_ID;
 const TELEGRAM_USERNAME_ENV = process.env.TELEGRAM_USERNAME; // Optional: can be set manually
+const TELEGRAM_DEFAULT_USERNAME = process.env.TELEGRAM_DEFAULT_USERNAME || 'azhukov7'; // Default username fallback
 
 // Create bot instance only if token is available (polling enabled to receive first message)
 let bot: TelegramBot | null = null;
@@ -22,8 +24,7 @@ let bot: TelegramBot | null = null;
 if (TELEGRAM_BOT_TOKEN) {
   try {
     telegramLogger.info('Initializing Telegram bot', { 
-      tokenLength: TELEGRAM_BOT_TOKEN.length,
-      tokenPrefix: TELEGRAM_BOT_TOKEN.substring(0, 10) + '...',
+      tokenConfigured: true,
       hasUserId: !!TELEGRAM_USER_ID 
     });
     bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
@@ -39,11 +40,14 @@ if (TELEGRAM_BOT_TOKEN) {
     setupMessageHandler();
     
     telegramLogger.info('Telegram bot initialized successfully', { userId: TELEGRAM_USER_ID || null });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const appError = toAppError(error);
     telegramLogger.error('Error initializing Telegram bot', { 
-      error: error.message, 
-      stack: error.stack,
-      response: error.response ? JSON.stringify(error.response) : null
+      error: appError.message, 
+      stack: appError.stack,
+      response: appError.cause && typeof appError.cause === 'object' && 'response' in appError.cause
+        ? JSON.stringify((appError.cause as { response?: unknown }).response)
+        : null
     });
     bot = null; // Ensure bot is null on error
   }
@@ -118,8 +122,9 @@ function setupMessageHandler(): void {
         await bot!.sendMessage(chatId, responseMessage, { parse_mode: 'Markdown' });
         
         telegramLogger.info('Admin chat ID and username saved', { userId, chatId, username: username || null });
-      } catch (error: any) {
-        telegramLogger.error('Error sending admin response', { error: error.message, stack: error.stack, userId });
+      } catch (error: unknown) {
+        const appError = toAppError(error);
+        telegramLogger.error('Error sending admin response', { error: appError.message, stack: appError.stack, userId });
       }
       return;
     }
@@ -138,14 +143,14 @@ function setupMessageHandler(): void {
  */
 export async function sendTelegramMessage(messageData: MessageData): Promise<boolean> {
   if (!bot) {
-    throw new Error('Telegram bot is not initialized. TELEGRAM_BOT_TOKEN is required.');
+    throw new TelegramError('Telegram bot is not initialized. TELEGRAM_BOT_TOKEN is required.');
   }
 
   // Get user ID from database (saved when user first messages the bot)
   const userId = getTelegramChatId();
 
   if (!userId) {
-    throw new Error('User ID is not set. Please send a message to the bot first to register your user ID.');
+    throw new TelegramError('User ID is not set. Please send a message to the bot first to register your user ID.');
   }
 
   try {
@@ -160,15 +165,21 @@ export async function sendTelegramMessage(messageData: MessageData): Promise<boo
 
     telegramLogger.info('Message sent to Telegram', { userId, email: messageData.email, messageId: messageData.name });
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const appError = toAppError(error);
+    const telegramResponse = appError.cause && typeof appError.cause === 'object' && 'response' in appError.cause
+      ? (appError.cause as { response?: unknown }).response
+      : undefined;
+    
     telegramLogger.error('Error sending message to Telegram', {
-      error: error.message,
-      stack: error.stack,
-      response: error.response,
+      error: appError.message,
+      stack: appError.stack,
+      response: telegramResponse,
       userId,
       email: messageData.email,
     });
-    throw error;
+    
+    throw new TelegramError(appError.message, telegramResponse);
   }
 }
 
@@ -200,28 +211,14 @@ ${escapeMarkdown(data.message)}`;
 }
 
 /**
- * Escape special Markdown characters
+ * Escape special Markdown characters for Telegram
+ * Optimized version using single regex pass instead of multiple replace calls
  * Note: Dot (.) is not escaped as it's a normal character in emails and text
  */
 function escapeMarkdown(text: string): string {
-  return text
-    .replace(/\_/g, '\\_')
-    .replace(/\*/g, '\\*')
-    .replace(/\[/g, '\\[')
-    .replace(/\]/g, '\\]')
-    .replace(/\(/g, '\\(')
-    .replace(/\)/g, '\\)')
-    .replace(/\~/g, '\\~')
-    .replace(/\`/g, '\\`')
-    .replace(/\>/g, '\\>')
-    .replace(/\#/g, '\\#')
-    .replace(/\+/g, '\\+')
-    .replace(/\-/g, '\\-')
-    .replace(/\=/g, '\\=')
-    .replace(/\|/g, '\\|')
-    .replace(/\{/g, '\\{')
-    .replace(/\}/g, '\\}')
-    .replace(/\!/g, '\\!');
+  // Single regex pass for all Markdown special characters
+  // This is more efficient than multiple replace() calls
+  return text.replace(/[_*\[\]()~`>#+\-=|{}!]/g, (char) => `\\${char}`);
 }
 
 /**
@@ -237,8 +234,9 @@ export async function testTelegramConnection(): Promise<boolean> {
     const botInfo = await bot.getMe();
     telegramLogger.info('Telegram bot connected', { username: botInfo.username, botId: botInfo.id });
     return true;
-  } catch (error: any) {
-    telegramLogger.error('Telegram connection test failed', { error: error.message, stack: error.stack });
+  } catch (error: unknown) {
+    const appError = toAppError(error);
+    telegramLogger.error('Telegram connection test failed', { error: appError.message, stack: appError.stack });
     return false;
   }
 }
@@ -251,35 +249,41 @@ export async function testTelegramConnectionWithDetails(): Promise<{ connected: 
     const reason = !TELEGRAM_BOT_TOKEN 
       ? 'TELEGRAM_BOT_TOKEN not set' 
       : 'Bot instance is null (initialization failed)';
-    telegramLogger.warn('Bot is not initialized', { reason, hasToken: !!TELEGRAM_BOT_TOKEN, tokenLength: TELEGRAM_BOT_TOKEN?.length || 0 });
+    telegramLogger.warn('Bot is not initialized', { reason, hasToken: !!TELEGRAM_BOT_TOKEN });
     return { connected: false, error: `Bot is not initialized: ${reason}` };
   }
 
   try {
-    telegramLogger.info('Testing Telegram connection...', { tokenLength: TELEGRAM_BOT_TOKEN?.length || 0 });
+    telegramLogger.info('Testing Telegram connection...');
     const botInfo = await bot.getMe();
     telegramLogger.info('Telegram bot connected', { username: botInfo.username, botId: botInfo.id });
     return { connected: true, username: botInfo.username };
-  } catch (error: any) {
-    let errorMessage = 'Unknown error';
-    if (error.response) {
-      const statusCode = error.response.statusCode || 'unknown';
-      const body = error.response.body || {};
-      const description = body.description || body.error_description || error.message || 'unknown error';
-      errorMessage = `Telegram API error: ${statusCode} - ${description}`;
-      telegramLogger.error('Telegram connection test failed', { 
-        error: errorMessage, 
-        statusCode,
-        description,
-        response: JSON.stringify(error.response.body || {}),
-        stack: error.stack 
-      });
-    } else if (error.message) {
-      errorMessage = error.message;
-      telegramLogger.error('Telegram connection test failed', { error: errorMessage, stack: error.stack });
+  } catch (error: unknown) {
+    const appError = toAppError(error);
+    let errorMessage = appError.message;
+    
+    // Try to extract Telegram API error details
+    if (appError.cause && typeof appError.cause === 'object' && 'response' in appError.cause) {
+      const response = (appError.cause as { response?: { statusCode?: number; body?: unknown } }).response;
+      if (response) {
+        const statusCode = response.statusCode || 'unknown';
+        const body = response.body && typeof response.body === 'object' ? response.body : {};
+        const description = 'description' in body ? String(body.description) 
+          : 'error_description' in body ? String(body.error_description)
+          : appError.message;
+        errorMessage = `Telegram API error: ${statusCode} - ${description}`;
+        telegramLogger.error('Telegram connection test failed', { 
+          error: errorMessage, 
+          statusCode,
+          description,
+          response: JSON.stringify(body),
+          stack: appError.stack 
+        });
+      }
     } else {
-      telegramLogger.error('Telegram connection test failed', { error: JSON.stringify(error), stack: error.stack });
+      telegramLogger.error('Telegram connection test failed', { error: errorMessage, stack: appError.stack });
     }
+    
     return { connected: false, error: errorMessage };
   }
 }
@@ -292,10 +296,9 @@ export async function testTelegramConnectionWithDetails(): Promise<{ connected: 
  */
 export async function getTelegramUsernameByUserId(userId: string): Promise<string> {
   if (!userId || userId.trim() === '') {
-    telegramLogger.warn('User ID is empty - using default username');
-    const defaultUsername = 'azhukov7';
-    setTelegramUsername(defaultUsername);
-    return defaultUsername;
+    telegramLogger.warn('User ID is empty - using default username', { defaultUsername: TELEGRAM_DEFAULT_USERNAME });
+    setTelegramUsername(TELEGRAM_DEFAULT_USERNAME);
+    return TELEGRAM_DEFAULT_USERNAME;
   }
 
   // First, try to get from saved settings (saved when admin sends a message)
@@ -327,10 +330,11 @@ export async function getTelegramUsernameByUserId(userId: string): Promise<strin
       } else {
         telegramLogger.info('Retrieved chat info but username is not available', { userId });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const appError = toAppError(error);
       telegramLogger.error('Error getting Telegram username by user ID from API', {
-        error: error.message,
-        stack: error.stack,
+        error: appError.message,
+        stack: appError.stack,
         userId,
       });
       // Fall through to default
@@ -339,11 +343,10 @@ export async function getTelegramUsernameByUserId(userId: string): Promise<strin
     telegramLogger.warn('Telegram bot is not initialized - cannot get username from API');
   }
 
-  // Fourth, use default username (azhukov7 - admin account)
-  const defaultUsername = 'azhukov7';
-  telegramLogger.info('Using default username', { userId, username: defaultUsername });
+  // Fourth, use default username from environment variable
+  telegramLogger.info('Using default username', { userId, username: TELEGRAM_DEFAULT_USERNAME });
   // Save default for future use
-  setTelegramUsername(defaultUsername);
-  return defaultUsername;
+  setTelegramUsername(TELEGRAM_DEFAULT_USERNAME);
+  return TELEGRAM_DEFAULT_USERNAME;
 }
 

@@ -4,6 +4,8 @@ import { createMessage } from '../models/Message.js';
 import { validateContactForm, sanitizeString } from '../services/validation.js';
 import { processMessage } from '../workers/telegram-worker.js';
 import { apiLogger } from '../utils/logger.js';
+import { retry } from '../utils/retry.js';
+import { isAppError, DuplicateError, toAppError } from '../utils/errors.js';
 
 const router = Router();
 
@@ -43,16 +45,47 @@ router.post('/', contactLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    // Create message in database
-    const message = await createMessage(formData);
+    // Create message in database (includes duplicate check)
+    let message;
+    try {
+      message = await createMessage(formData);
+    } catch (error: unknown) {
+      // Handle duplicate message error specifically
+      if (error instanceof DuplicateError) {
+        return res.status(error.statusCode).json({
+          success: false,
+          error: 'Duplicate message',
+          message: error.message,
+        });
+      }
+      // Re-throw other errors to be handled by global error handler
+      throw error;
+    }
 
-    processMessage(message).catch(error => {
-      apiLogger.error('Error processing message immediately', { 
+    // Process message with retry mechanism (fire-and-forget)
+    retry(
+      () => processMessage(message),
+      {
+        maxAttempts: 3,
+        delayMs: 1000,
+        backoffMultiplier: 2,
+        onRetry: (attempt, error) => {
+          apiLogger.warn('Retrying message processing', {
+            requestId: req.requestId,
+            messageId: message.id,
+            attempt,
+            error: error.message,
+          });
+        },
+      }
+    ).catch(error => {
+      apiLogger.error('Failed to process message after retries', {
         requestId: req.requestId,
-        messageId: message.id, 
-        error: error.message, 
-        stack: error.stack 
+        messageId: message.id,
+        error: error.message,
+        stack: error.stack,
       });
+      // Message will be processed by worker later
     });
 
     // Return success response
@@ -64,16 +97,23 @@ router.post('/', contactLimiter, async (req: Request, res: Response) => {
         status: message.status,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const appError = toAppError(error);
     apiLogger.error('Error creating message', { 
       requestId: req.requestId,
-      error: error.message, 
-      stack: error.stack 
+      error: appError.message,
+      code: appError.code,
+      stack: appError.stack 
     });
-    return res.status(500).json({
+    
+    // Return appropriate status code based on error type
+    const statusCode = isAppError(error) ? error.statusCode : 500;
+    return res.status(statusCode).json({
       success: false,
-      error: 'Internal server error',
-      message: 'Failed to save message',
+      error: isAppError(error) ? error.code : 'Internal server error',
+      message: process.env.NODE_ENV === 'production' 
+        ? 'Failed to save message' 
+        : appError.message,
     });
   }
 });

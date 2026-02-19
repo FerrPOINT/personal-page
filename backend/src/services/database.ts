@@ -1,5 +1,6 @@
 import Database, { type Database as DatabaseType } from 'better-sqlite3';
 import { dbLogger } from '../utils/logger.js';
+import { DatabaseError, toAppError } from '../utils/errors.js';
 import dotenv from 'dotenv';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
@@ -38,8 +39,9 @@ export async function testConnection(): Promise<boolean> {
   try {
     const result = db.prepare('SELECT 1 as test').get() as { test: number };
     return result.test === 1;
-  } catch (error: any) {
-    dbLogger.error('Database connection test failed', { error: error.message, stack: error.stack });
+  } catch (error: unknown) {
+    const appError = toAppError(error);
+    dbLogger.error('Database connection test failed', { error: appError.message, stack: appError.stack });
     return false;
   }
 }

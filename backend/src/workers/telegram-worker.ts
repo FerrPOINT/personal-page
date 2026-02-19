@@ -1,6 +1,7 @@
-import { findPendingOrFailed, updateMessageStatus } from '../models/Message.js';
+import { findPendingOrFailed, updateMessageStatus, deleteOldMessages, countOldMessages, type Message } from '../models/Message.js';
 import { sendTelegramMessage } from '../services/telegram.js';
 import { workerLogger } from '../utils/logger.js';
+import { toAppError } from '../utils/errors.js';
 import dotenv from 'dotenv';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
@@ -13,15 +14,18 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: resolve(__dirname, '../../../.env') });
 
 const WORKER_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const MESSAGE_RETENTION_DAYS = parseInt(process.env.MESSAGE_RETENTION_DAYS || '90', 10); // Default: 90 days
 
 let isRunning = false;
 let intervalId: NodeJS.Timeout | null = null;
+let cleanupIntervalId: NodeJS.Timeout | null = null;
 
 /**
  * Process a single message: send to Telegram and update status
  * Exported for immediate processing after message creation
  */
-export async function processMessage(message: any): Promise<void> {
+export async function processMessage(message: Message): Promise<void> {
   try {
     workerLogger.info('Processing message', { messageId: message.id, email: message.email });
 
@@ -39,11 +43,12 @@ export async function processMessage(message: any): Promise<void> {
     });
 
     workerLogger.info('Message sent successfully', { messageId: message.id });
-  } catch (error: any) {
-    workerLogger.error('Error processing message', { messageId: message.id, error: error.message, stack: error.stack });
+  } catch (error: unknown) {
+    const appError = toAppError(error);
+    workerLogger.error('Error processing message', { messageId: message.id, error: appError.message, stack: appError.stack });
 
     // Update status to 'failed' with error message
-    const errorMessage = error.message || error.toString();
+    const errorMessage = appError.message;
     await updateMessageStatus({
       id: message.id,
       status: 'failed',
@@ -81,10 +86,45 @@ async function processMessages(): Promise<void> {
     }
 
     workerLogger.info('Processed messages', { count: messages.length });
-  } catch (error: any) {
-    workerLogger.error('Error in worker process', { error: error.message, stack: error.stack });
+  } catch (error: unknown) {
+    const appError = toAppError(error);
+    workerLogger.error('Error in worker process', { error: appError.message, stack: appError.stack });
   } finally {
     isRunning = false;
+  }
+}
+
+/**
+ * Clean up old messages from database
+ * Runs periodically to prevent database growth
+ */
+async function cleanupOldMessages(): Promise<void> {
+  try {
+    workerLogger.info('Starting message cleanup', { retentionDays: MESSAGE_RETENTION_DAYS });
+    
+    // Count messages that will be deleted (for logging)
+    const countToDelete = await countOldMessages(MESSAGE_RETENTION_DAYS);
+    
+    if (countToDelete === 0) {
+      workerLogger.debug('No old messages to clean up');
+      return;
+    }
+
+    workerLogger.info('Found old messages to delete', { count: countToDelete, retentionDays: MESSAGE_RETENTION_DAYS });
+    
+    // Delete old messages
+    const deletedCount = await deleteOldMessages(MESSAGE_RETENTION_DAYS);
+    
+    workerLogger.info('Message cleanup completed', { 
+      deletedCount, 
+      retentionDays: MESSAGE_RETENTION_DAYS 
+    });
+  } catch (error: unknown) {
+    const appError = toAppError(error);
+    workerLogger.error('Error in message cleanup', { 
+      error: appError.message, 
+      stack: appError.stack 
+    });
   }
 }
 
@@ -109,7 +149,22 @@ export function startWorker(): void {
     });
   }, WORKER_INTERVAL_MS);
 
-  workerLogger.info('Worker started successfully');
+  // Start cleanup process (runs once per day)
+  cleanupOldMessages().catch(error => {
+    workerLogger.error('Error in initial cleanup run', { error: error.message, stack: error.stack });
+  });
+
+  cleanupIntervalId = setInterval(() => {
+    cleanupOldMessages().catch(error => {
+      workerLogger.error('Error in periodic cleanup run', { error: error.message, stack: error.stack });
+    });
+  }, CLEANUP_INTERVAL_MS);
+
+  workerLogger.info('Worker started successfully', { 
+    messageInterval: `${WORKER_INTERVAL_MS / 1000 / 60} minutes`,
+    cleanupInterval: `${CLEANUP_INTERVAL_MS / 1000 / 60 / 60} hours`,
+    retentionDays: MESSAGE_RETENTION_DAYS,
+  });
 }
 
 /**
@@ -124,6 +179,12 @@ export function stopWorker(): void {
   workerLogger.info('Stopping Telegram worker');
   clearInterval(intervalId);
   intervalId = null;
+  
+  if (cleanupIntervalId !== null) {
+    clearInterval(cleanupIntervalId);
+    cleanupIntervalId = null;
+  }
+  
   isRunning = false;
   workerLogger.info('Worker stopped');
 }
