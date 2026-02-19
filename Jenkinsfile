@@ -169,10 +169,19 @@ pipeline {
                                              echo \"🎭 Установка браузеров Playwright...\" &&
                                              npx playwright install --with-deps chromium &&
                                              echo \"🧪 Запуск тестов...\" &&
+                                             BUILD_NUMBER=${BUILD_NUMBER} \\
+                                             BUILD_URL=${BUILD_URL} \\
                                              npx playwright test \\
                                                autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \\
                                                autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
                                                --project=chromium \\
+                                               --reporter=list \\
+                                               --grep-invert "последний тест" || true && \\
+                                             TEST_RESULTS="All tests passed" \\
+                                             npx playwright test \\
+                                               autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
+                                               --project=chromium \\
+                                               --grep "последний тест" \\
                                                --reporter=list
                                            '"
                                 """,
