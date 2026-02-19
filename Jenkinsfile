@@ -16,8 +16,7 @@ pipeline {
         DEPLOY_PATH = '/opt/personal-page'
         
         // Production URL для тестирования после деплоя
-        // Формат: https://<subdomain>.myjino.ru или можно указать явно
-        PROD_URL = 'https://7eb10d5af2ad.myjino.ru'  // URL продакшн сервера для тестов
+        PROD_URL = 'https://azhukov-dev.ru'  // URL продакшн сервера для тестов
         
         // Docker Compose settings
         COMPOSE_PROJECT_NAME = 'personal-page'
@@ -122,9 +121,6 @@ pipeline {
                 script {
                     echo "🧪 Запуск тестов на продакшн сервере после деплоя..."
                     try {
-                        // Проверка наличия package.json
-                        sh 'test -f package.json && echo "✅ package.json найден" || (echo "❌ package.json не найден" && exit 1)'
-                        
                         // Проверка доступности продакшн сервера
                         try {
                             sh """
@@ -143,48 +139,52 @@ pipeline {
                         
                         // Запуск тестов на сервере деплоя через SSH
                         // Используем Docker контейнер с Node.js на сервере деплоя
-                        def testResult = sh(
-                            script: """
-                                echo "🧪 Запуск критичных тестов на продакшн сервере..."
-                                echo "🌐 Тестируем: ${PROD_URL}"
-                                echo "🐳 Используем Docker контейнер с Node.js на сервере деплоя"
-                                
-                                SSH_PORT_FLAG=""
-                                if [ "${DEPLOY_PORT}" != "22" ]; then
-                                    SSH_PORT_FLAG="-p ${DEPLOY_PORT}"
-                                fi
-                                
-                                ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" \${SSH_PORT_FLAG} ${DEPLOY_USER}@${DEPLOY_HOST} \\
-                                    "cd ${DEPLOY_PATH} && \\
-                                     docker run --rm \\
-                                       -v \$(pwd):/workspace \\
-                                       -w /workspace \\
-                                       -e CI=true \\
-                                       -e FRONTEND_URL=${PROD_URL} \\
-                                       -e PROD_URL=${PROD_URL} \\
-                                       --network host \\
-                                       mcr.microsoft.com/playwright:v1.48.0-focal \\
-                                       bash -c '
-                                         echo \"📦 Установка зависимостей...\" &&
-                                         npm ci --prefer-offline --no-audit &&
-                                         echo \"🎭 Установка браузеров Playwright...\" &&
-                                         npx playwright install --with-deps chromium &&
-                                         echo \"🧪 Запуск тестов...\" &&
-                                         npx playwright test \\
-                                           autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \\
-                                           autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
-                                           --project=chromium \\
-                                           --reporter=list
-                                       '"
-                            """,
-                            returnStatus: true
-                        )
-                        
-                        if (testResult != 0) {
-                            error("Тесты не выполнены: exit code ${testResult}")
+                        withCredentials([
+                            sshUserPrivateKey(credentialsId: 'jenkins-ssh-deploy-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
+                        ]) {
+                            def testResult = sh(
+                                script: """
+                                    echo "🧪 Запуск критичных тестов на продакшн сервере..."
+                                    echo "🌐 Тестируем: ${PROD_URL}"
+                                    echo "🐳 Используем Docker контейнер с Node.js на сервере деплоя"
+                                    
+                                    SSH_PORT_FLAG=""
+                                    if [ "${DEPLOY_PORT}" != "22" ]; then
+                                        SSH_PORT_FLAG="-p ${DEPLOY_PORT}"
+                                    fi
+                                    
+                                    ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" \${SSH_PORT_FLAG} ${DEPLOY_USER}@${DEPLOY_HOST} \\
+                                        "cd ${DEPLOY_PATH} && \\
+                                         docker run --rm \\
+                                           -v \$(pwd):/workspace \\
+                                           -w /workspace \\
+                                           -e CI=true \\
+                                           -e FRONTEND_URL=${PROD_URL} \\
+                                           -e PROD_URL=${PROD_URL} \\
+                                           --network host \\
+                                           mcr.microsoft.com/playwright:v1.48.0-focal \\
+                                           bash -c '
+                                             echo \"📦 Установка зависимостей...\" &&
+                                             npm ci --prefer-offline --no-audit &&
+                                             echo \"🎭 Установка браузеров Playwright...\" &&
+                                             npx playwright install --with-deps chromium &&
+                                             echo \"🧪 Запуск тестов...\" &&
+                                             npx playwright test \\
+                                               autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \\
+                                               autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
+                                               --project=chromium \\
+                                               --reporter=list
+                                           '"
+                                """,
+                                returnStatus: true
+                            )
+                            
+                            if (testResult != 0) {
+                                error("Тесты не выполнены: exit code ${testResult}")
+                            }
+                            
+                            echo "✅ Тесты завершены успешно"
                         }
-                        
-                        echo "✅ Тесты завершены успешно"
                     } catch (Exception e) {
                         echo "❌ Ошибка при запуске тестов: ${e.getMessage()}"
                         echo "⚠️  Тесты провалились после деплоя - требуется проверка"
