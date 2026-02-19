@@ -141,34 +141,41 @@ pipeline {
                             echo "⚠️  Проверка сервера пропущена: ${e.getMessage()}"
                         }
                         
-                        // Запуск тестов в Docker контейнере с Node.js
-                        // Используем официальный образ Node.js с Playwright
+                        // Запуск тестов на сервере деплоя через SSH
+                        // Используем Docker контейнер с Node.js на сервере деплоя
                         def testResult = sh(
                             script: """
                                 echo "🧪 Запуск критичных тестов на продакшн сервере..."
                                 echo "🌐 Тестируем: ${PROD_URL}"
-                                echo "🐳 Используем Docker контейнер с Node.js для тестов"
+                                echo "🐳 Используем Docker контейнер с Node.js на сервере деплоя"
                                 
-                                docker run --rm \\
-                                    -v \$(pwd):/workspace \\
-                                    -w /workspace \\
-                                    -e CI=true \\
-                                    -e FRONTEND_URL=${PROD_URL} \\
-                                    -e PROD_URL=${PROD_URL} \\
-                                    --network host \\
-                                    mcr.microsoft.com/playwright:v1.48.0-focal \\
-                                    bash -c "
-                                        echo '📦 Установка зависимостей...' &&
-                                        npm ci --prefer-offline --no-audit &&
-                                        echo '🎭 Установка браузеров Playwright...' &&
-                                        npx playwright install --with-deps chromium &&
-                                        echo '🧪 Запуск тестов...' &&
-                                        npx playwright test \\
-                                            autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \\
-                                            autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
-                                            --project=chromium \\
-                                            --reporter=list
-                                    "
+                                SSH_PORT_FLAG=""
+                                if [ "${DEPLOY_PORT}" != "22" ]; then
+                                    SSH_PORT_FLAG="-p ${DEPLOY_PORT}"
+                                fi
+                                
+                                ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" \${SSH_PORT_FLAG} ${DEPLOY_USER}@${DEPLOY_HOST} \\
+                                    "cd ${DEPLOY_PATH} && \\
+                                     docker run --rm \\
+                                       -v \$(pwd):/workspace \\
+                                       -w /workspace \\
+                                       -e CI=true \\
+                                       -e FRONTEND_URL=${PROD_URL} \\
+                                       -e PROD_URL=${PROD_URL} \\
+                                       --network host \\
+                                       mcr.microsoft.com/playwright:v1.48.0-focal \\
+                                       bash -c '
+                                         echo \"📦 Установка зависимостей...\" &&
+                                         npm ci --prefer-offline --no-audit &&
+                                         echo \"🎭 Установка браузеров Playwright...\" &&
+                                         npx playwright install --with-deps chromium &&
+                                         echo \"🧪 Запуск тестов...\" &&
+                                         npx playwright test \\
+                                           autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \\
+                                           autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
+                                           --project=chromium \\
+                                           --reporter=list
+                                       '"
                             """,
                             returnStatus: true
                         )
