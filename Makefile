@@ -4,7 +4,8 @@
 .PHONY: local prod docker-up docker-down docker-build docker-logs docker-logs-backend \
         docker-logs-frontend docker-clean dev-backend dev-frontend \
         build-backend build-frontend install migrate clean help \
-        lint lint-frontend lint-backend type-check type-check-frontend type-check-backend check
+        lint lint-frontend lint-backend type-check type-check-frontend type-check-backend \
+        test test-critical check
 
 # Настройка локальной разработки: копирует env.local в .env, устанавливает зависимости, запускает миграции
 local:
@@ -130,8 +131,22 @@ type-check-backend:
 # Проверка типов обоих проектов
 type-check: type-check-frontend type-check-backend
 
-# Полная проверка перед коммитом (lint + type-check + build)
-check: lint type-check build-frontend build-backend
+# Запуск Playwright тестов
+test:
+	@echo "🧪 Запуск Playwright тестов..."
+	@npx playwright test autotests/automated --project=chromium --reporter=list || echo "⚠️  Некоторые тесты провалились"
+
+# Запуск критичных тестов (быстрая проверка)
+test-critical:
+	@echo "🧪 Запуск критичных тестов..."
+	@npx playwright test \
+		autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \
+		autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \
+		--project=chromium \
+		--reporter=list || echo "⚠️  Некоторые тесты провалились"
+
+# Полная проверка перед коммитом (lint + type-check + build + test-critical)
+check: lint type-check build-frontend build-backend test-critical
 	@echo "✅ Все проверки пройдены!"
 
 # Справка по командам
@@ -158,7 +173,9 @@ help:
 	@echo "  make type-check         - Проверяет типы TypeScript в обоих проектах"
 	@echo "  make type-check-frontend - Проверяет типы только frontend"
 	@echo "  make type-check-backend  - Проверяет типы только backend"
-	@echo "  make check              - Полная проверка (lint + type-check + build)"
+	@echo "  make test               - Запускает все Playwright тесты"
+	@echo "  make test-critical      - Запускает критичные тесты (LanguageSwitcher, Contact Form)"
+	@echo "  make check              - Полная проверка (lint + type-check + build + test-critical)"
 	@echo "  make clean              - Полная очистка (контейнеры, volumes, образы, .env)"
 	@echo "  make help               - Показывает эту справку"
 

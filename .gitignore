@@ -5,3 +5,17 @@
 
 # Папка с документацией проекта
 info/
+
+# Playwright test results
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Test artifacts
+autotests/results/
+*.webm
+*.png
+*.jpg
+
+# Coverage reports
+coverage/

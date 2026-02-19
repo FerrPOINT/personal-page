@@ -38,6 +38,7 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - FRONTEND_URL=${FRONTEND_URL:-}
+      - MESSAGE_RETENTION_DAYS=${MESSAGE_RETENTION_DAYS:-90}
     volumes:
       - backend_data:/app/data
       - backend_logs:/app/logs

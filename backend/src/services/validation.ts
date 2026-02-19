@@ -1,3 +1,5 @@
+import { isEmail } from 'validator';
+
 export interface ValidationResult {
   valid: boolean;
   errors: string[];
@@ -51,12 +53,24 @@ export function validateContactForm(data: ContactFormData): ValidationResult {
 }
 
 /**
- * Validate email format
+ * Validate email format using validator.js library
+ * Uses RFC 5322 compliant validation with proper domain checking
  */
 function isValidEmail(email: string): boolean {
-  // RFC 5322 compliant email regex (simplified)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  // Normalize email: trim and convert to lowercase for validation
+  const normalizedEmail = email.trim().toLowerCase();
+  
+  // Use validator.js for robust email validation
+  // This checks:
+  // - Proper format according to RFC 5322
+  // - Valid domain structure (must have TLD)
+  // - No invalid characters
+  return isEmail(normalizedEmail, {
+    allow_utf8_local_part: true,
+    require_tld: true, // Require top-level domain (e.g., .com, .org)
+    allow_ip_domain: false, // Don't allow IP addresses as domains
+    domain_specific_validation: true, // Additional domain validation
+  });
 }
 
 /**

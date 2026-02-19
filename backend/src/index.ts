@@ -9,6 +9,7 @@ import { startWorker, stopWorker } from './workers/telegram-worker.js';
 import { getTelegramChatId } from './models/BotSettings.js';
 import logger, { apiLogger } from './utils/logger.js';
 import { requestIdMiddleware } from './middleware/requestId.js';
+import { isAppError, toAppError } from './utils/errors.js';
 
 // Load environment variables from project root
 // In Docker, variables are already set via docker-compose, dotenv won't override them
@@ -131,8 +132,9 @@ app.get('/api/telegram/status', async (req: Request, res: Response) => {
         if (telegramConnected && userIdSet && process.env.TELEGRAM_USER_ID) {
           try {
             userUsername = await getTelegramUsernameByUserId(process.env.TELEGRAM_USER_ID);
-          } catch (err: any) {
-            logger.warn('Could not get user username by ID', { error: err.message, userId: process.env.TELEGRAM_USER_ID });
+          } catch (err: unknown) {
+            const appError = toAppError(err);
+            logger.warn('Could not get user username by ID', { error: appError.message, userId: process.env.TELEGRAM_USER_ID });
           }
         }
         
@@ -140,12 +142,13 @@ app.get('/api/telegram/status', async (req: Request, res: Response) => {
         if (!testResult.connected) {
           error = testResult.error || 'Connection test failed but no error message provided';
         }
-      } catch (err: any) {
-        error = err.message || err.toString();
-        if (err.response) {
-          error += ` (API: ${JSON.stringify(err.response)})`;
+      } catch (err: unknown) {
+        const appError = toAppError(err);
+        error = appError.message;
+        if (appError.cause && typeof appError.cause === 'object' && 'response' in appError.cause) {
+          error += ` (API: ${JSON.stringify((appError.cause as { response?: unknown }).response)})`;
         }
-        logger.error('Error in Telegram status endpoint', { error: err.message, stack: err.stack });
+        logger.error('Error in Telegram status endpoint', { error: appError.message, stack: appError.stack });
       }
     }
     
@@ -165,10 +168,11 @@ app.get('/api/telegram/status', async (req: Request, res: Response) => {
       },
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const appError = toAppError(error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Unknown error',
+      error: appError.message,
       timestamp: new Date().toISOString(),
     });
   }
@@ -199,14 +203,15 @@ app.get('/api/telegram/username', async (req: Request, res: Response) => {
       userId: userId,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Return default username on error
-    const defaultUsername = 'azhukov7';
+    const appError = toAppError(error);
+    const defaultUsername = process.env.TELEGRAM_DEFAULT_USERNAME || 'azhukov7';
     res.json({
       success: true,
       username: defaultUsername,
       userId: process.env.TELEGRAM_USER_ID || null,
-      error: error.message || 'Unknown error',
+      error: appError.message,
       timestamp: new Date().toISOString(),
     });
   }
@@ -225,20 +230,56 @@ app.use((req: Request, res: Response) => {
 });
 
 // Error handler with request ID (best practice 2026)
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+  const appError = toAppError(err);
+  
   apiLogger.error('Unhandled error', {
     requestId: req.requestId,
-    error: err.message,
-    stack: err.stack,
+    error: appError.message,
+    code: appError.code,
+    stack: appError.stack,
     path: req.path,
     method: req.method,
     ip: req.ip,
   });
-  res.status(500).json({
+  
+  const statusCode = isAppError(err) ? err.statusCode : 500;
+  res.status(statusCode).json({
     success: false,
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'production' ? 'An unexpected error occurred' : err.message,
+    error: isAppError(err) ? err.code : 'Internal server error',
+    message: process.env.NODE_ENV === 'production' && !isAppError(err)
+      ? 'An unexpected error occurred'
+      : appError.message,
     requestId: req.requestId, // Include request ID in error response for debugging
+  });
+});
+
+// Handle unhandled promise rejections (critical for production)
+process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
+  logger.error('Unhandled Promise Rejection', {
+    reason: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined,
+    promise: promise.toString(),
+  });
+  
+  // In production, we might want to exit, but for now just log
+  // In development, this helps catch async errors
+  if (process.env.NODE_ENV === 'production') {
+    logger.error('Unhandled rejection in production - consider restarting');
+  }
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error: Error) => {
+  logger.error('Uncaught Exception', {
+    error: error.message,
+    stack: error.stack,
+  });
+  
+  // Close database and stop worker before exiting
+  stopWorker();
+  closeDatabase().finally(() => {
+    process.exit(1);
   });
 });
 
