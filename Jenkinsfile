@@ -165,7 +165,7 @@ pipeline {
                                            mcr.microsoft.com/playwright:v1.48.0-focal \\
                                            bash -c '
                                              echo \"📦 Установка зависимостей...\" &&
-                                             npm ci --prefer-offline --no-audit &&
+                                             npm install --prefer-offline --no-audit &&
                                              echo \"🎭 Установка браузеров Playwright...\" &&
                                              npx playwright install --with-deps chromium &&
                                              echo \"🧪 Запуск тестов...\" &&

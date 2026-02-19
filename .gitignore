@@ -29,3 +29,14 @@ coverage/
 .env.local
 .env.secrets
 jenkins-credentials.*
+
+# SSH keys and certificates
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+*.ppk
+*_rsa
+*_ed25519
+ssh_key*
+deploy_key*
