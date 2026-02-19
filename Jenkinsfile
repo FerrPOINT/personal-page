@@ -177,9 +177,9 @@ pipeline {
                                                --project=chromium \\
                                                --reporter=list \\
                                                --grep-invert \"последний тест\"; then
-                                               TEST_RESULTS=\"All tests passed\"
+                                               export TEST_RESULTS=\"All tests passed\"
                                              else
-                                               TEST_RESULTS=\"Some tests failed\"
+                                               export TEST_RESULTS=\"Some tests failed\"
                                              fi && \\
                                              echo \"📤 Отправка отчета в Telegram...\" &&
                                              npx playwright test \\
