@@ -171,14 +171,17 @@ pipeline {
                                              echo \"🎭 Установка браузеров Playwright...\" &&
                                              npx playwright install --with-deps chromium &&
                                              echo \"🧪 Запуск основных тестов...\" &&
-                                             npx playwright test \\
+                                             if npx playwright test \\
                                                autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \\
                                                autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
                                                --project=chromium \\
                                                --reporter=list \\
-                                               --grep-invert \"последний тест\" || TEST_RESULTS=\"Some tests failed\" && \\
+                                               --grep-invert \"последний тест\"; then
+                                               TEST_RESULTS=\"All tests passed\"
+                                             else
+                                               TEST_RESULTS=\"Some tests failed\"
+                                             fi && \\
                                              echo \"📤 Отправка отчета в Telegram...\" &&
-                                             TEST_RESULTS=\${TEST_RESULTS:-All tests passed} \\
                                              npx playwright test \\
                                                autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
                                                --project=chromium \\
