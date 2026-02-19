@@ -19,3 +19,13 @@ autotests/results/
 
 # Coverage reports
 coverage/
+
+# Secrets and credentials (NEVER commit these!)
+*.token
+*.secret
+*jenkins*.txt
+*credentials*.txt
+*secrets*.txt
+.env.local
+.env.secrets
+jenkins-credentials.*
