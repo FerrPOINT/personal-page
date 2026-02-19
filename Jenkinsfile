@@ -177,24 +177,33 @@ pipeline {
                         }
                         
                         // Запуск критичных тестов на продакшн сервере
-                        sh """
-                            echo "🧪 Запуск критичных тестов на продакшн сервере..."
-                            echo "🌐 Тестируем: ${PROD_URL}"
-                            
-                            if ! command -v npx &> /dev/null; then
-                                echo "❌ npx недоступен в Jenkins - тесты не могут быть запущены"
-                                echo "⚠️  Требуется установка Node.js в Jenkins контейнере"
-                                exit 0
-                            fi
-                            
-                            export CI=true
-                            export FRONTEND_URL=${PROD_URL}
-                            npx playwright test \
-                                autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \
-                                autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \
-                                --project=chromium \
-                                --reporter=list || echo "⚠️  Некоторые тесты провалились"
-                        """
+                        def testResult = sh(
+                            script: """
+                                echo "🧪 Запуск критичных тестов на продакшн сервере..."
+                                echo "🌐 Тестируем: ${PROD_URL}"
+                                
+                                if ! command -v npx &> /dev/null; then
+                                    echo "❌ npx недоступен в Jenkins - тесты не могут быть запущены"
+                                    echo "⚠️  Требуется установка Node.js в Jenkins контейнере"
+                                    exit 1
+                                fi
+                                
+                                export CI=true
+                                export FRONTEND_URL=${PROD_URL}
+                                npx playwright test \
+                                    autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \
+                                    autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \
+                                    --project=chromium \
+                                    --reporter=list
+                            """,
+                            returnStatus: true
+                        )
+                        
+                        if (testResult != 0) {
+                            error("Тесты не выполнены: exit code ${testResult}")
+                        }
+                        
+                        echo "✅ Тесты завершены успешно"
                         
                         echo "✅ Тесты завершены"
                     } catch (Exception e) {
