@@ -125,41 +125,6 @@ pipeline {
                         // Проверка наличия package.json
                         sh 'test -f package.json && echo "✅ package.json найден" || (echo "❌ package.json не найден" && exit 1)'
                         
-                        // Проверка наличия Node.js и npm
-                        sh '''
-                            if ! command -v node &> /dev/null; then
-                                echo "❌ Node.js не установлен в Jenkins"
-                                echo "⚠️  Тесты требуют Node.js - пропускаем установку зависимостей"
-                                exit 0
-                            fi
-                            if ! command -v npm &> /dev/null; then
-                                echo "❌ npm не установлен в Jenkins"
-                                echo "⚠️  Тесты требуют npm - пропускаем установку зависимостей"
-                                exit 0
-                            fi
-                        '''
-                        
-                        // Установка зависимостей для тестов (если Node.js доступен)
-                        sh '''
-                            if command -v npm &> /dev/null; then
-                                npm install || echo "⚠️  npm install завершился с предупреждениями"
-                            else
-                                echo "⚠️  npm недоступен, пропускаем установку зависимостей"
-                            fi
-                        '''
-                        
-                        // Проверка наличия playwright.config.ts
-                        sh 'test -f playwright.config.ts && echo "✅ playwright.config.ts найден" || echo "⚠️  playwright.config.ts не найден, используется конфигурация по умолчанию"'
-                        
-                        // Установка браузеров Playwright (если npm доступен)
-                        sh '''
-                            if command -v npx &> /dev/null; then
-                                npx playwright install --with-deps chromium || echo "⚠️  Playwright браузеры уже установлены"
-                            else
-                                echo "⚠️  npx недоступен, пропускаем установку браузеров Playwright"
-                            fi
-                        '''
-                        
                         // Проверка доступности продакшн сервера
                         try {
                             sh """
@@ -176,25 +141,34 @@ pipeline {
                             echo "⚠️  Проверка сервера пропущена: ${e.getMessage()}"
                         }
                         
-                        // Запуск критичных тестов на продакшн сервере
+                        // Запуск тестов в Docker контейнере с Node.js
+                        // Используем официальный образ Node.js с Playwright
                         def testResult = sh(
                             script: """
                                 echo "🧪 Запуск критичных тестов на продакшн сервере..."
                                 echo "🌐 Тестируем: ${PROD_URL}"
+                                echo "🐳 Используем Docker контейнер с Node.js для тестов"
                                 
-                                if ! command -v npx &> /dev/null; then
-                                    echo "❌ npx недоступен в Jenkins - тесты не могут быть запущены"
-                                    echo "⚠️  Требуется установка Node.js в Jenkins контейнере"
-                                    exit 1
-                                fi
-                                
-                                export CI=true
-                                export FRONTEND_URL=${PROD_URL}
-                                npx playwright test \
-                                    autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \
-                                    autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \
-                                    --project=chromium \
-                                    --reporter=list
+                                docker run --rm \\
+                                    -v \$(pwd):/workspace \\
+                                    -w /workspace \\
+                                    -e CI=true \\
+                                    -e FRONTEND_URL=${PROD_URL} \\
+                                    -e PROD_URL=${PROD_URL} \\
+                                    --network host \\
+                                    mcr.microsoft.com/playwright:v1.48.0-focal \\
+                                    bash -c "
+                                        echo '📦 Установка зависимостей...' &&
+                                        npm ci --prefer-offline --no-audit &&
+                                        echo '🎭 Установка браузеров Playwright...' &&
+                                        npx playwright install --with-deps chromium &&
+                                        echo '🧪 Запуск тестов...' &&
+                                        npx playwright test \\
+                                            autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \\
+                                            autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
+                                            --project=chromium \\
+                                            --reporter=list
+                                    "
                             """,
                             returnStatus: true
                         )
@@ -204,8 +178,6 @@ pipeline {
                         }
                         
                         echo "✅ Тесты завершены успешно"
-                        
-                        echo "✅ Тесты завершены"
                     } catch (Exception e) {
                         echo "❌ Ошибка при запуске тестов: ${e.getMessage()}"
                         echo "⚠️  Тесты провалились после деплоя - требуется проверка"
