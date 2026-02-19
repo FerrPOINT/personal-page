@@ -161,6 +161,8 @@ pipeline {
                                            -e CI=true \\
                                            -e FRONTEND_URL=${PROD_URL} \\
                                            -e PROD_URL=${PROD_URL} \\
+                                           -e BUILD_NUMBER=${BUILD_NUMBER} \\
+                                           -e BUILD_URL=${BUILD_URL} \\
                                            --network host \\
                                            mcr.microsoft.com/playwright:v1.48.0-focal \\
                                            bash -c '
@@ -168,20 +170,19 @@ pipeline {
                                              npm install --prefer-offline --no-audit &&
                                              echo \"🎭 Установка браузеров Playwright...\" &&
                                              npx playwright install --with-deps chromium &&
-                                             echo \"🧪 Запуск тестов...\" &&
-                                             BUILD_NUMBER=${BUILD_NUMBER} \\
-                                             BUILD_URL=${BUILD_URL} \\
+                                             echo \"🧪 Запуск основных тестов...\" &&
                                              npx playwright test \\
                                                autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \\
                                                autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
                                                --project=chromium \\
                                                --reporter=list \\
-                                               --grep-invert "последний тест" || true && \\
-                                             TEST_RESULTS="All tests passed" \\
+                                               --grep-invert \"последний тест\" || TEST_RESULTS=\"Some tests failed\" && \\
+                                             echo \"📤 Отправка отчета в Telegram...\" &&
+                                             TEST_RESULTS=\${TEST_RESULTS:-All tests passed} \\
                                              npx playwright test \\
                                                autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
                                                --project=chromium \\
-                                               --grep "последний тест" \\
+                                               --grep \"последний тест\" \\
                                                --reporter=list
                                            '"
                                 """,
