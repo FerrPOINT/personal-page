@@ -21,17 +21,11 @@ test.describe('Contact Form - Отправка сообщения', () => {
 
   // Этот тест должен быть последним - отправляет отчет в Telegram
   test('TC-001: Отправка отчета о тестах в Telegram (последний тест)', async ({ page }) => {
-    // Получаем информацию о тестах из переменных окружения
+    // Получаем номер сборки из переменных окружения
     const buildNumber = process.env.BUILD_NUMBER || 'unknown';
-    const buildUrl = process.env.BUILD_URL || 'N/A';
-    const testResults = process.env.TEST_RESULTS || 'Tests completed';
     
-    // Формируем отчет
-    const reportMessage = `🧪 Jenkins CI/CD Test Report
-Build: #${buildNumber}
-Status: ${testResults}
-URL: ${buildUrl}
-Time: ${new Date().toISOString()}`;
+    // Формируем простое сообщение
+    const reportMessage = `Сборка #${buildNumber} Новая версия приложения установлена и протестирована`;
 
     // Поиск полей формы
     const nameInput = page.locator('input[name="name"]').first();
