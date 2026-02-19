@@ -155,9 +155,8 @@ pipeline {
                                     
                                     ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" \${SSH_PORT_FLAG} ${DEPLOY_USER}@${DEPLOY_HOST} \\
                                         "cd ${DEPLOY_PATH} && \\
-                                         WORKSPACE=\$(pwd) && \\
                                          docker run --rm \\
-                                           -v \${WORKSPACE}:/workspace \\
+                                           -v ${DEPLOY_PATH}:/workspace \\
                                            -w /workspace \\
                                            -e CI=true \\
                                            -e FRONTEND_URL=${PROD_URL} \\
