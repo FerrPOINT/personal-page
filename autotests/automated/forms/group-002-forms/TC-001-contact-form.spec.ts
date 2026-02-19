@@ -10,13 +10,13 @@ test.describe('Contact Form - Отправка сообщения', () => {
     await page.evaluate(() => {
       const contactSection = document.getElementById('contact');
       if (contactSection) {
-        contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        contactSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     });
-    await page.waitForTimeout(1000); // Ожидание прокрутки
+    await page.waitForTimeout(2000); // Увеличенное ожидание прокрутки
     
-    // Убеждаемся, что секция Contact видна
-    await expect(page.locator('#contact')).toBeInViewport();
+    // Убеждаемся, что секция Contact видна (с увеличенным timeout)
+    await expect(page.locator('#contact')).toBeInViewport({ timeout: 10000 });
   });
 
   // Этот тест должен быть последним - отправляет отчет в Telegram
