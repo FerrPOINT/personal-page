@@ -184,9 +184,16 @@ Create `.env` file in project root:
 # Database (SQLite)
 DATABASE_PATH=./data/database.db
 
-# Telegram Bot (optional - worker won't start without token)
-TELEGRAM_BOT_TOKEN=your_bot_token_here
-TELEGRAM_USER_ID=your_user_id_here
+# Contact notifications
+CONTACT_NOTIFICATION_CHANNELS=email
+GMAIL_USER=your_gmail_address@gmail.com
+GMAIL_APP_PASSWORD=your_google_app_password
+CONTACT_EMAIL_TO=target_email@example.com
+
+# Jenkins credentials used by deployment
+# - gmail-user
+# - gmail-app-password
+# - contact-email-to
 
 # Backend API Configuration
 API_PORT=9000

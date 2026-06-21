@@ -152,6 +152,8 @@ const logger = winston.createLogger({
 
 // Create child loggers for different modules
 export const telegramLogger = logger.child({ module: 'telegram' });
+export const emailLogger = logger.child({ module: 'email' });
+export const notifyLogger = logger.child({ module: 'notify' });
 export const apiLogger = logger.child({ module: 'api' });
 export const dbLogger = logger.child({ module: 'database' });
 export const workerLogger = logger.child({ module: 'worker' });

@@ -1,5 +1,5 @@
 import { findPendingOrFailed, updateMessageStatus, deleteOldMessages, countOldMessages, type Message } from '../models/Message.js';
-import { sendTelegramMessage } from '../services/telegram.js';
+import { deliverContactNotifications } from '../services/contactDelivery.js';
 import { workerLogger } from '../utils/logger.js';
 import { toAppError } from '../utils/errors.js';
 import dotenv from 'dotenv';
@@ -22,14 +22,14 @@ let intervalId: NodeJS.Timeout | null = null;
 let cleanupIntervalId: NodeJS.Timeout | null = null;
 
 /**
- * Process a single message: send to Telegram and update status
+ * Process a single message: send via configured channels (Telegram / Gmail) and update status
  * Exported for immediate processing after message creation
  */
 export async function processMessage(message: Message): Promise<void> {
   try {
     workerLogger.info('Processing message', { messageId: message.id, email: message.email });
 
-    await sendTelegramMessage({
+    await deliverContactNotifications({
       name: message.name,
       email: message.email,
       message: message.message,
@@ -137,7 +137,7 @@ export function startWorker(): void {
     return;
   }
 
-  workerLogger.info('Starting Telegram worker', { intervalMinutes: WORKER_INTERVAL_MS / 1000 / 60 });
+  workerLogger.info('Starting contact notification worker', { intervalMinutes: WORKER_INTERVAL_MS / 1000 / 60 });
 
   processMessages().catch(error => {
     workerLogger.error('Error in initial worker run', { error: error.message, stack: error.stack });
@@ -176,7 +176,7 @@ export function stopWorker(): void {
     return;
   }
 
-  workerLogger.info('Stopping Telegram worker');
+  workerLogger.info('Stopping contact notification worker');
   clearInterval(intervalId);
   intervalId = null;
   
@@ -200,4 +200,3 @@ process.on('SIGINT', () => {
   stopWorker();
   process.exit(0);
 });
-

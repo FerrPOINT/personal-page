@@ -41,6 +41,23 @@ contains_placeholders() {
     grep -q "your_bot_token_here\|your_user_id_here" "$file" 2>/dev/null
 }
 
+upsert_env_var() {
+    local key="$1"
+    local value="$2"
+    local label="${3:-$1}"
+
+    if [ -z "$value" ]; then
+        echo "  ⚠️  ${label} не передан, оставляем текущее значение в .env"
+        return 0
+    fi
+
+    touch .env
+    grep -v "^${key}=" .env > .env.tmp || true
+    mv .env.tmp .env
+    printf '%s=%s\n' "$key" "$value" >> .env
+    echo "  ✅ ${label} обновлен в .env"
+}
+
 # Если .env уже существует и содержит реальные значения (не placeholder), не перезаписываем
 if [ -f .env ] && ! contains_placeholders .env; then
     echo "✅ .env уже существует с реальными значениями, сохраняем его"
@@ -144,6 +161,13 @@ elif [ -f env.local ]; then
 else
     echo "⚠️  env.prod и env.local не найдены, используем существующий .env"
 fi
+
+echo ""
+echo "📧 Настройка email-уведомлений формы контактов..."
+upsert_env_var "CONTACT_NOTIFICATION_CHANNELS" "${CONTACT_NOTIFICATION_CHANNELS:-email}" "CONTACT_NOTIFICATION_CHANNELS"
+upsert_env_var "GMAIL_USER" "$GMAIL_USER" "GMAIL_USER"
+upsert_env_var "GMAIL_APP_PASSWORD" "$GMAIL_APP_PASSWORD" "GMAIL_APP_PASSWORD"
+upsert_env_var "CONTACT_EMAIL_TO" "$CONTACT_EMAIL_TO" "CONTACT_EMAIL_TO"
 
 # Определение команды Docker Compose
 if command -v docker-compose &> /dev/null; then
@@ -309,4 +333,3 @@ if systemctl is-enabled personal-page.service > /dev/null 2>&1; then
     echo ""
     echo "ℹ️  Systemd сервис настроен для автозапуска (контейнеры уже работают)"
 fi
-

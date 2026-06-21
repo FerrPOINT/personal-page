@@ -64,30 +64,12 @@ pipeline {
                     
                     // Используем SSH для подключения к серверу и запуска скрипта деплоя
                     // BEST PRACTICE 2026: Используем Jenkins Credentials для секретов (не логируются)
-                    // Секреты опциональны - если не созданы в Jenkins, используются значения из .env на сервере
                     withCredentials([
                         sshUserPrivateKey(credentialsId: 'jenkins-ssh-deploy-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
+                        string(credentialsId: 'gmail-user', variable: 'GMAIL_USER'),
+                        string(credentialsId: 'gmail-app-password', variable: 'GMAIL_APP_PASSWORD'),
+                        string(credentialsId: 'contact-email-to', variable: 'CONTACT_EMAIL_TO'),
                     ]) {
-                        // Опциональные секреты (создайте в Jenkins UI: Manage Jenkins → Credentials, если нужны)
-                        // Если не созданы, deploy.sh использует существующий .env на сервере
-                        def telegramBotToken = ''
-                        def telegramUserId = ''
-                        
-                        try {
-                            withCredentials([string(credentialsId: 'telegram-bot-token', variable: 'TELEGRAM_BOT_TOKEN')]) {
-                                telegramBotToken = env.TELEGRAM_BOT_TOKEN ?: ''
-                            }
-                        } catch (Exception e) {
-                            echo "⚠️  telegram-bot-token credentials не найдены, используем .env на сервере"
-                        }
-                        
-                        try {
-                            withCredentials([string(credentialsId: 'telegram-user-id', variable: 'TELEGRAM_USER_ID')]) {
-                                telegramUserId = env.TELEGRAM_USER_ID ?: ''
-                            }
-                        } catch (Exception e) {
-                            echo "⚠️  telegram-user-id credentials не найдены, используем .env на сервере"
-                        }
                         // BEST PRACTICE 2026: Используем экранирование для предотвращения интерполяции секретов
                         // \$SSH_KEY - shell переменная (не интерполируется Groovy)
                         // Это предотвращает логирование секретов в Jenkins
@@ -107,8 +89,10 @@ pipeline {
                                  git fetch origin && \
                                  git checkout -f origin/main || git checkout -f origin/master && \
                                  chmod +x deploy.sh && \
-                                 TELEGRAM_BOT_TOKEN='${telegramBotToken ?: ''}' \
-                                 TELEGRAM_USER_ID='${telegramUserId ?: ''}' \
+                                 CONTACT_NOTIFICATION_CHANNELS='email' \
+                                 GMAIL_USER='\$GMAIL_USER' \
+                                 GMAIL_APP_PASSWORD='\$GMAIL_APP_PASSWORD' \
+                                 CONTACT_EMAIL_TO='\$CONTACT_EMAIL_TO' \
                                  bash deploy.sh"
                         """
                     }
@@ -171,21 +155,10 @@ pipeline {
                                              echo \"🎭 Установка браузеров Playwright...\" &&
                                              npx playwright install --with-deps chromium &&
                                              echo \"🧪 Запуск основных тестов...\" &&
-                                             if npx playwright test \\
+                                             npx playwright test \\
                                                autotests/automated/ui/group-001-ui-elements/TC-005-language-switcher.spec.ts \\
                                                autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
                                                --project=chromium \\
-                                               --reporter=list \\
-                                               --grep-invert \"последний тест\"; then
-                                               export TEST_RESULTS=\"All tests passed\"
-                                             else
-                                               export TEST_RESULTS=\"Some tests failed\"
-                                             fi && \\
-                                             echo \"📤 Отправка отчета в Telegram...\" &&
-                                             npx playwright test \\
-                                               autotests/automated/forms/group-002-forms/TC-001-contact-form.spec.ts \\
-                                               --project=chromium \\
-                                               --grep \"последний тест\" \\
                                                --reporter=list
                                            '"
                                 """,

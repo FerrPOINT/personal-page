@@ -1,15 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { MapPin, Send, Github, Linkedin, FileText, Printer, Download, Briefcase, MessageCircle } from 'lucide-react';
+import { MapPin, Send, FileText, Printer } from 'lucide-react';
 import Modal from './Modal';
-import TelegramContactButton from './TelegramContactButton';
 import EmailContactButton from './EmailContactButton';
 import PhoneContactButton from './PhoneContactButton';
-import TelegramShareButton from './TelegramShareButton';
 import { useLanguage } from '../i18n/hooks/useLanguage';
 import { getTranslatedExperience, getTranslatedSkills } from '../i18n/utils/getTranslatedData';
-import { ExperienceItem, TechSkill } from '../types';
 
 type FormData = {
   name: string;
@@ -23,7 +20,6 @@ const Contact: React.FC = () => {
   const [showResume, setShowResume] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [submitMessage, setSubmitMessage] = useState<string>('');
-  const [lastFormData, setLastFormData] = useState<FormData | null>(null);
   const messageContent = watch('message', '');
 
   const experienceItems = useMemo(() => getTranslatedExperience(language), [language]);
@@ -31,21 +27,19 @@ const Contact: React.FC = () => {
 
   const API_URL = import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim() !== '' ? import.meta.env.VITE_API_URL : '/api';
 
-  // Calculate message size in real-time
   const messageSize = messageContent ? new Blob([messageContent]).size : 0;
-  const maxSize = 100 * 1024; // 100KB
+  const maxSize = 100 * 1024;
   const sizeKB = (messageSize / 1024).toFixed(2);
   const maxSizeKB = (maxSize / 1024).toFixed(0);
-  const isSizeWarning = messageSize > maxSize * 0.8; // Warning at 80% of limit
+  const isSizeWarning = messageSize > maxSize * 0.8;
   const isSizeExceeded = messageSize > maxSize;
 
   const onSubmit = async (data: FormData) => {
     setSubmitStatus('idle');
     setSubmitMessage('');
 
-    // Validate message size on frontend (maximum 100KB)
     const messageSize = new Blob([data.message]).size;
-    const maxSize = 100 * 1024; // 100KB
+    const maxSize = 100 * 1024;
     if (messageSize > maxSize) {
       const sizeMB = (messageSize / (1024 * 1024)).toFixed(2);
       const maxMB = (maxSize / (1024 * 1024)).toFixed(2);
@@ -67,17 +61,14 @@ const Contact: React.FC = () => {
         }),
       });
 
-      // Check status BEFORE attempting to parse JSON
       if (!response.ok) {
         let errorMessage = t('contact.form.error');
-        
-        // Handle specific status codes
+
         switch (response.status) {
           case 413:
             errorMessage = t('contact.form.error413');
             break;
           case 400:
-            // Try to get validation error details
             try {
               const errorData = await response.json();
               errorMessage = errorData.error || errorData.details?.join(', ') || t('contact.form.error400');
@@ -100,20 +91,15 @@ const Contact: React.FC = () => {
         return;
       }
 
-      // If status OK, parse JSON
       const result = await response.json();
 
       if (result.success) {
         setSubmitStatus('success');
         setSubmitMessage(t('contact.form.success'));
-        // Save form data for Telegram share
-        setLastFormData(data);
         reset();
-        // Clear success message after 5 seconds
         setTimeout(() => {
           setSubmitStatus('idle');
           setSubmitMessage('');
-          setLastFormData(null);
         }, 5000);
       } else {
         setSubmitStatus('error');
@@ -122,8 +108,7 @@ const Contact: React.FC = () => {
     } catch (error) {
       console.error('Error submitting form:', error);
       setSubmitStatus('error');
-      
-      // More detailed network error handling
+
       if (error instanceof TypeError && error.message.includes('fetch')) {
         setSubmitMessage(t('contact.form.errorNetwork'));
       } else if (error instanceof SyntaxError) {
@@ -186,16 +171,10 @@ const Contact: React.FC = () => {
             </p>
 
             <div className="space-y-6 mb-12">
-              {/* Telegram Contact - moved to top */}
-              <TelegramContactButton username={import.meta.env.VITE_TELEGRAM_USERNAME || 'azhukov7'} />
-
-              {/* Email Contact */}
               <EmailContactButton email="ferruspoint@mail.ru" />
 
-              {/* Phone Contact */}
               <PhoneContactButton phone="+7 (983) 320-97-85" />
 
-              {/* Location Contact */}
               <a href="https://www.google.com/maps/search/?api=1&query=Novosibirsk,+Russia" target="_blank" rel="noopener noreferrer" className="flex items-center group cursor-pointer">
                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mr-4 group-hover:bg-white/20 transition-colors">
                   <MapPin className="w-5 h-5 text-white" />
@@ -218,7 +197,7 @@ const Contact: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Form */}
+          {/* Email Contact Form */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -265,13 +244,8 @@ const Contact: React.FC = () => {
               </div>
 
               {submitStatus === 'success' && (
-                <div className="space-y-3">
-                  <div className="p-4 bg-green-500/20 border border-green-500/50 rounded-lg text-green-400 text-sm">
-                    {submitMessage}
-                  </div>
-                  {lastFormData && (
-                    <TelegramShareButton formData={lastFormData} />
-                  )}
+                <div className="p-4 bg-green-500/20 border border-green-500/50 rounded-lg text-green-400 text-sm">
+                  {submitMessage}
                 </div>
               )}
 

@@ -75,6 +75,15 @@ export class TelegramError extends AppError {
 }
 
 /**
+ * Email / SMTP delivery error
+ */
+export class EmailError extends AppError {
+  constructor(message: string) {
+    super(message, 'EMAIL_ERROR', 500);
+  }
+}
+
+/**
  * Not found error
  */
 export class NotFoundError extends AppError {
