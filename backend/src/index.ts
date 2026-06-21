@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { testConnection, closeDatabase } from './services/database.js';
 import { testTelegramConnection } from './services/telegram.js';
+import { parseNotificationChannels } from './services/contactDelivery.js';
+import { isEmailNotificationConfigured } from './services/email.js';
 import contactRoutes from './routes/contact.js';
 import { startWorker, stopWorker } from './workers/telegram-worker.js';
 import { getTelegramChatId } from './models/BotSettings.js';
@@ -310,18 +312,34 @@ app.listen(PORT, async () => {
     logger.warn('Database connection failed - check DATABASE_PATH');
   }
 
-  // Test Telegram connection on startup (if token is set)
-  if (process.env.TELEGRAM_BOT_TOKEN) {
-    const telegramConnected = await testTelegramConnection();
-    if (telegramConnected) {
-      // Start worker if Telegram is configured
-      startWorker();
-      logger.info('Telegram worker started - send a message to bot to register user ID');
+  const notificationChannels = parseNotificationChannels();
+  const emailConfigured = notificationChannels.includes('email') && isEmailNotificationConfigured();
+  let telegramConnected = false;
+
+  if (notificationChannels.includes('telegram')) {
+    if (process.env.TELEGRAM_BOT_TOKEN) {
+      telegramConnected = await testTelegramConnection();
+      if (!telegramConnected) {
+        logger.warn('Telegram connection failed');
+      }
     } else {
-      logger.warn('Telegram connection failed - worker will not start');
+      logger.warn('TELEGRAM_BOT_TOKEN not set');
     }
+  }
+
+  if (emailConfigured || telegramConnected) {
+    startWorker();
+    logger.info('Contact notification worker started', {
+      channels: notificationChannels,
+      emailConfigured,
+      telegramConnected,
+    });
   } else {
-    logger.warn('TELEGRAM_BOT_TOKEN not set - worker will not start');
+    logger.warn('No contact notification channel configured - worker will not start', {
+      channels: notificationChannels,
+      emailConfigured,
+      telegramConnected,
+    });
   }
 });
 

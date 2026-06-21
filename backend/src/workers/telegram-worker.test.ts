@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as Message from '../models/Message.js';
-import * as Telegram from '../services/telegram.js';
+import * as ContactDelivery from '../services/contactDelivery.js';
 import { processMessage, startWorker, stopWorker } from './telegram-worker.js';
 
 // Mock dependencies
 vi.mock('../models/Message.js');
-vi.mock('../services/telegram.js');
+vi.mock('../services/contactDelivery.js');
 vi.mock('../utils/logger.js', () => ({
   workerLogger: {
     info: vi.fn(),
@@ -40,7 +40,7 @@ describe('Telegram Worker', () => {
         error_message: null,
       };
 
-      vi.mocked(Telegram.sendTelegramMessage).mockResolvedValue(true);
+      vi.mocked(ContactDelivery.deliverContactNotifications).mockResolvedValue(undefined);
       vi.mocked(Message.updateMessageStatus).mockResolvedValue({
         ...mockMessage,
         status: 'sent',
@@ -51,7 +51,7 @@ describe('Telegram Worker', () => {
       await processMessage(mockMessage);
 
       // Assert
-      expect(Telegram.sendTelegramMessage).toHaveBeenCalledWith({
+      expect(ContactDelivery.deliverContactNotifications).toHaveBeenCalledWith({
         name: 'Test User',
         email: 'test@example.com',
         message: 'Test message',
@@ -78,7 +78,7 @@ describe('Telegram Worker', () => {
       };
 
       const telegramError = new Error('Telegram API error');
-      vi.mocked(Telegram.sendTelegramMessage).mockRejectedValue(telegramError);
+      vi.mocked(ContactDelivery.deliverContactNotifications).mockRejectedValue(telegramError);
       vi.mocked(Message.updateMessageStatus).mockResolvedValue({
         ...mockMessage,
         status: 'failed',
@@ -89,7 +89,7 @@ describe('Telegram Worker', () => {
       await processMessage(mockMessage);
 
       // Assert
-      expect(Telegram.sendTelegramMessage).toHaveBeenCalled();
+      expect(ContactDelivery.deliverContactNotifications).toHaveBeenCalled();
       expect(Message.updateMessageStatus).toHaveBeenCalledWith({
         id: 'test-id',
         status: 'failed',
@@ -112,7 +112,7 @@ describe('Telegram Worker', () => {
 
       const longError = 'a'.repeat(600);
       const telegramError = new Error(longError);
-      vi.mocked(Telegram.sendTelegramMessage).mockRejectedValue(telegramError);
+      vi.mocked(ContactDelivery.deliverContactNotifications).mockRejectedValue(telegramError);
       vi.mocked(Message.updateMessageStatus).mockResolvedValue(mockMessage);
 
       // Execute
@@ -139,14 +139,14 @@ describe('Telegram Worker', () => {
         error_message: null,
       };
 
-      vi.mocked(Telegram.sendTelegramMessage).mockResolvedValue(true);
+      vi.mocked(ContactDelivery.deliverContactNotifications).mockResolvedValue(undefined);
       vi.mocked(Message.updateMessageStatus).mockResolvedValue(mockMessage);
 
       // Execute
       await processMessage(mockMessage);
 
       // Assert
-      expect(Telegram.sendTelegramMessage).toHaveBeenCalledWith(
+      expect(ContactDelivery.deliverContactNotifications).toHaveBeenCalledWith(
         expect.objectContaining({
           createdAt: expect.any(Date),
         })
@@ -166,7 +166,7 @@ describe('Telegram Worker', () => {
         error_message: null,
       };
 
-      vi.mocked(Telegram.sendTelegramMessage).mockRejectedValue(new Error('Error'));
+      vi.mocked(ContactDelivery.deliverContactNotifications).mockRejectedValue(new Error('Error'));
       vi.mocked(Message.updateMessageStatus).mockRejectedValue(new Error('DB Error'));
 
       // Execute & Assert - should not throw
@@ -191,7 +191,7 @@ describe('Telegram Worker', () => {
       ];
 
       vi.mocked(Message.findPendingOrFailed).mockResolvedValue(mockMessages);
-      vi.mocked(Telegram.sendTelegramMessage).mockResolvedValue(true);
+      vi.mocked(ContactDelivery.deliverContactNotifications).mockResolvedValue(undefined);
       vi.mocked(Message.updateMessageStatus).mockResolvedValue(mockMessages[0]);
 
       // Execute
@@ -202,7 +202,7 @@ describe('Telegram Worker', () => {
 
       // Assert
       expect(Message.findPendingOrFailed).toHaveBeenCalled();
-      expect(Telegram.sendTelegramMessage).toHaveBeenCalled();
+      expect(ContactDelivery.deliverContactNotifications).toHaveBeenCalled();
     });
 
     it('should not start worker if already running', () => {
@@ -282,7 +282,7 @@ describe('Telegram Worker', () => {
       ];
 
       vi.mocked(Message.findPendingOrFailed).mockResolvedValue(mockMessages);
-      vi.mocked(Telegram.sendTelegramMessage).mockResolvedValue(true);
+      vi.mocked(ContactDelivery.deliverContactNotifications).mockResolvedValue(undefined);
       vi.mocked(Message.updateMessageStatus).mockResolvedValue(mockMessages[0]);
 
       // Execute
@@ -290,7 +290,7 @@ describe('Telegram Worker', () => {
       await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
 
       // Assert
-      expect(Telegram.sendTelegramMessage).toHaveBeenCalledTimes(2);
+      expect(ContactDelivery.deliverContactNotifications).toHaveBeenCalledTimes(2);
     });
 
     it('should handle empty message list', async () => {
@@ -302,7 +302,7 @@ describe('Telegram Worker', () => {
       await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
 
       // Assert
-      expect(Telegram.sendTelegramMessage).not.toHaveBeenCalled();
+      expect(ContactDelivery.deliverContactNotifications).not.toHaveBeenCalled();
     });
   });
 });

@@ -2,6 +2,18 @@ import { test, expect } from '@playwright/test';
 
 test.describe('E2E - Полная навигация по странице', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/contact', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          message: 'Message saved successfully',
+          data: { id: 1, status: 'pending' },
+        }),
+      });
+    });
+
     await page.goto('http://localhost:8888');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000); // Дополнительное ожидание для загрузки React
@@ -64,7 +76,7 @@ test.describe('E2E - Полная навигация по странице', () 
     await emailInput.fill('e2e@example.com');
     await messageTextarea.fill('E2E test message');
     await submitButton.click();
-    await page.waitForTimeout(2000);
+    await expect(page.locator('#contact')).toContainText(/Thank you|Спасибо/i);
 
     // 10. Проверка отсутствия критических ошибок
     const consoleErrors: string[] = [];
