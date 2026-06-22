@@ -84,7 +84,7 @@ export const PROJECTS: Project[] = [
     categories: ['AI', 'DevOps', 'FullStack'],
     metrics: ['10+ Agents', 'RAG Integration', 'LangGraph'],
     stack: ['Python', 'LangChain', 'Docker', 'ChromaDB', 'Telegram API', 'Google APIs'],
-    imageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=800&auto=format&fit=crop'
+    imageUrl: '/assets/projects/multi-agent-ai-system.png'
   },
   {
     id: 'p2',
