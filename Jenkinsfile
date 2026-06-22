@@ -66,10 +66,35 @@ pipeline {
                     // BEST PRACTICE 2026: Используем Jenkins Credentials для секретов (не логируются)
                     withCredentials([
                         sshUserPrivateKey(credentialsId: 'jenkins-ssh-deploy-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
-                        string(credentialsId: 'gmail-user', variable: 'GMAIL_USER'),
-                        string(credentialsId: 'gmail-app-password', variable: 'GMAIL_APP_PASSWORD'),
-                        string(credentialsId: 'contact-email-to', variable: 'CONTACT_EMAIL_TO'),
                     ]) {
+                        def gmailUser = ''
+                        def gmailAppPassword = ''
+                        def contactEmailTo = ''
+
+                        try {
+                            withCredentials([string(credentialsId: 'gmail-user', variable: 'GMAIL_USER')]) {
+                                gmailUser = env.GMAIL_USER ?: ''
+                            }
+                        } catch (Exception e) {
+                            echo "⚠️  gmail-user credentials не найдены, используем .env на сервере"
+                        }
+
+                        try {
+                            withCredentials([string(credentialsId: 'gmail-app-password', variable: 'GMAIL_APP_PASSWORD')]) {
+                                gmailAppPassword = env.GMAIL_APP_PASSWORD ?: ''
+                            }
+                        } catch (Exception e) {
+                            echo "⚠️  gmail-app-password credentials не найдены, используем .env на сервере"
+                        }
+
+                        try {
+                            withCredentials([string(credentialsId: 'contact-email-to', variable: 'CONTACT_EMAIL_TO')]) {
+                                contactEmailTo = env.CONTACT_EMAIL_TO ?: ''
+                            }
+                        } catch (Exception e) {
+                            echo "⚠️  contact-email-to credentials не найдены, используем .env на сервере"
+                        }
+
                         // BEST PRACTICE 2026: Используем экранирование для предотвращения интерполяции секретов
                         // \$SSH_KEY - shell переменная (не интерполируется Groovy)
                         // Это предотвращает логирование секретов в Jenkins
@@ -90,9 +115,9 @@ pipeline {
                                  git checkout -f origin/main || git checkout -f origin/master && \
                                  chmod +x deploy.sh && \
                                  CONTACT_NOTIFICATION_CHANNELS='email' \
-                                 GMAIL_USER='\$GMAIL_USER' \
-                                 GMAIL_APP_PASSWORD='\$GMAIL_APP_PASSWORD' \
-                                 CONTACT_EMAIL_TO='\$CONTACT_EMAIL_TO' \
+                                 GMAIL_USER='${gmailUser ?: ''}' \
+                                 GMAIL_APP_PASSWORD='${gmailAppPassword ?: ''}' \
+                                 CONTACT_EMAIL_TO='${contactEmailTo ?: ''}' \
                                  bash deploy.sh"
                         """
                     }
