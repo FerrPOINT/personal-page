@@ -14,7 +14,7 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: resolve(__dirname, '../../../.env') });
 
 // Get database path from env or use default
-const DB_PATH = process.env.DATABASE_PATH || resolve(__dirname, '../../../data/database.db');
+const DB_PATH = process.env.DATABASE_PATH || resolve(process.cwd(), 'data/database.db');
 
 // Ensure data directory exists
 const dbDir = resolve(DB_PATH, '..');
@@ -37,8 +37,11 @@ export const db: DatabaseType = dbInstance;
 // Helper function to test connection
 export async function testConnection(): Promise<boolean> {
   try {
-    const result = db.prepare('SELECT 1 as test').get() as { test: number };
-    return result.test === 1;
+    const result = db.prepare(`
+      SELECT COUNT(*) AS count FROM sqlite_master
+      WHERE type = 'table' AND name IN ('messages', 'schema_migrations')
+    `).get() as { count: number };
+    return result.count === 2;
   } catch (error: unknown) {
     const appError = toAppError(error);
     dbLogger.error('Database connection test failed', { error: appError.message, stack: appError.stack });

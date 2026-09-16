@@ -1,45 +1,24 @@
-# Multi-stage build for backend
-FROM node:20-alpine AS builder
-
+FROM node:24.14.0-alpine3.23 AS builder
 WORKDIR /app
-
-# Install build dependencies for better-sqlite3
 RUN apk add --no-cache python3 make g++
-
-# Copy package files
-COPY package.json package-lock.json* ./
-
-# Install dependencies
+COPY package.json package-lock.json ./
 RUN npm ci
-
-# Copy source code
-COPY . .
-
-# Build TypeScript
+COPY tsconfig.json ./
+COPY src ./src
+COPY db ./db
 RUN npm run build
+RUN npm prune --omit=dev
 
-# Production stage
-FROM node:20-alpine
-
+FROM node:24.14.0-alpine3.23 AS runtime
+ENV NODE_ENV=production
 WORKDIR /app
-
-# Install runtime dependencies for better-sqlite3 and health checks
-RUN apk add --no-cache sqlite wget
-
-# Copy package files and install production dependencies only
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production
-
-# Copy built files from builder
-COPY --from=builder /app/dist ./dist
-
-# Copy migration files (SQL files need to be available)
-COPY --from=builder /app/db/migrations ./db/migrations
-COPY --from=builder /app/package.json ./
-
-# Expose port
+RUN apk add --no-cache sqlite-libs \
+    && mkdir -p /app/data /app/logs \
+    && chown -R node:node /app
+COPY package.json package-lock.json ./
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/dist ./dist
+COPY --from=builder --chown=node:node /app/db/migrations ./db/migrations
+USER node
 EXPOSE 9000
-
-# Run migrations on startup, then start the application
-CMD ["sh", "-c", "node dist/db/migrate.js && node dist/src/index.js"]
-
+CMD ["node", "dist/src/index.js"]

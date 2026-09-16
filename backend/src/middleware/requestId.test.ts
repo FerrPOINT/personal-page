@@ -32,7 +32,7 @@ describe('requestIdMiddleware', () => {
   });
 
   it('should use existing request ID from header', () => {
-    const existingId = 'existing-request-id-123';
+    const existingId = '123e4567-e89b-42d3-a456-426614174000';
     mockRequest.headers = { 'x-request-id': existingId };
 
     requestIdMiddleware(
@@ -44,6 +44,15 @@ describe('requestIdMiddleware', () => {
     expect(mockRequest.requestId).toBe(existingId);
     expect(mockResponse.setHeader).toHaveBeenCalledWith('X-Request-ID', existingId);
     expect(mockNext).toHaveBeenCalled();
+  });
+
+  it('should replace an invalid request ID header', () => {
+    mockRequest.headers = { 'x-request-id': 'not-a-safe-request-id' };
+
+    requestIdMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
+
+    expect(mockRequest.requestId).not.toBe('not-a-safe-request-id');
+    expect(mockRequest.requestId).toMatch(/^[0-9a-f-]{36}$/i);
   });
 
   it('should generate UUID format request ID', () => {

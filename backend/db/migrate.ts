@@ -1,74 +1,56 @@
 import Database from 'better-sqlite3';
-import { readFileSync } from 'fs';
-import { join, resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-// Get __dirname equivalent for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const currentDir = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: resolve(currentDir, '../../.env') });
 
-// Load .env from project root
-// In Docker, variables are already set via docker-compose, dotenv won't override them
-dotenv.config({ path: resolve(__dirname, '../.env') });
-
-// Get database path from env or use default
-const DB_PATH = process.env.DATABASE_PATH || resolve(__dirname, '../data/database.db');
-
-// Ensure data directory exists
-const dbDir = resolve(DB_PATH, '..');
-if (!existsSync(dbDir)) {
-  mkdirSync(dbDir, { recursive: true });
+function migrationsDirectory(): string {
+  const candidates = [join(currentDir, 'migrations'), join(currentDir, '../../db/migrations')];
+  const found = candidates.find(existsSync);
+  if (!found) throw new Error('Migration directory not found');
+  return found;
 }
 
-async function runMigration() {
-  const db = new Database(DB_PATH);
-
+export function runMigrations(databasePath = process.env.DATABASE_PATH || resolve(process.cwd(), 'data/database.db')): string[] {
+  mkdirSync(dirname(databasePath), { recursive: true });
+  const db = new Database(databasePath);
   try {
-    console.log('🔌 Connecting to database...');
-    console.log(`📁 Database path: ${DB_PATH}`);
-
-    // Enable foreign keys and WAL mode
     db.pragma('foreign_keys = ON');
     db.pragma('journal_mode = WAL');
+    db.exec(`CREATE TABLE IF NOT EXISTS schema_migrations (
+      version TEXT PRIMARY KEY,
+      applied_at TEXT NOT NULL
+    )`);
 
-    // Read migration file
-    // In production: __dirname is /app/dist/db, migrations are in /app/db/migrations
-    // In development: __dirname is dist/db, migrations are in db/migrations
-    const migrationPath = join(__dirname, '..', '..', 'db', 'migrations', '001_create_messages_table.sql');
-    const migrationSQL = readFileSync(migrationPath, 'utf-8');
+    const applied: string[] = [];
+    const files = readdirSync(migrationsDirectory()).filter((file) => file.endsWith('.sql')).sort();
+    const apply = db.transaction((version: string, sql: string) => {
+      db.exec(sql);
+      db.prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)')
+        .run(version, new Date().toISOString());
+    });
 
-    console.log('📝 Running migration: 001_create_messages_table.sql');
-
-    // Execute migration (SQLite can execute multiple statements)
-    db.exec(migrationSQL);
-
-    console.log('✅ Migration completed successfully');
-
-    // Verify tables exist
-    const tables = ['messages', 'bot_settings'];
-    for (const tableName of tables) {
-      const result = db
-        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
-        .get(tableName) as { name: string } | undefined;
-
-      if (result) {
-        console.log(`✅ Table "${tableName}" exists`);
-      } else {
-        console.error(`❌ Table "${tableName}" was not created`);
-        process.exit(1);
-      }
+    for (const file of files) {
+      const alreadyApplied = db.prepare('SELECT 1 FROM schema_migrations WHERE version = ?').get(file);
+      if (alreadyApplied) continue;
+      apply.immediate(file, readFileSync(join(migrationsDirectory(), file), 'utf8'));
+      applied.push(file);
     }
-
-    console.log('✅ All migrations completed successfully');
-  } catch (error) {
-    console.error('❌ Migration failed:', error);
-    process.exit(1);
+    return applied;
   } finally {
     db.close();
-    console.log('🔌 Database connection closed');
   }
 }
 
-runMigration();
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    const applied = runMigrations();
+    console.log(applied.length ? `Applied migrations: ${applied.join(', ')}` : 'Database schema is up to date');
+  } catch (error) {
+    console.error('Migration failed:', error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
+}

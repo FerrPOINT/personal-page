@@ -85,7 +85,7 @@ export const getTranslatedSkills = (language: Language): TechSkill[] => {
  * Получает маппинг категорий для отображения (для проектов и блога)
  */
 export const getCategoryMap = (language: Language, t: (key: string) => string): Record<string, string> => {
-  const categories = translations[language].projects?.categories || {};
+  const categories = (translations[language].projects?.categories || {}) as Record<string, string>;
   return {
     'AI': categories.ai || 'AI',
     'DevOps': categories.devops || 'DevOps',

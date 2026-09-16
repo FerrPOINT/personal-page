@@ -12,7 +12,7 @@ date: "2026-01-19"
 
 ## 🎯 Область покрытия
 - POST /api/contact - отправка формы контактов
-- GET /api/telegram/username - получение username Telegram
+- GET /live и GET /ready - внутренние проверки, недоступные через публичный Nginx
 - Валидация данных
 - Обработка ошибок
 

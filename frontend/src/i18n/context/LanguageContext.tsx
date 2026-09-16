@@ -67,6 +67,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   // Save language to localStorage when changed
   useEffect(() => {
     saveLanguage(language);
+    document.documentElement.lang = language;
     // Clear translation cache when language changes
     translationCache.clear();
   }, [language]);

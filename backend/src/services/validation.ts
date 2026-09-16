@@ -3,7 +3,7 @@ const { isEmail } = validator;
 
 export interface ValidationResult {
   valid: boolean;
-  errors: string[];
+  errors: Partial<Record<keyof ContactFormData, string>>;
 }
 
 export interface ContactFormData {
@@ -16,39 +16,39 @@ export interface ContactFormData {
  * Validate contact form data
  */
 export function validateContactForm(data: ContactFormData): ValidationResult {
-  const errors: string[] = [];
+  const errors: ValidationResult['errors'] = {};
 
   // Validate name
   if (!data.name || typeof data.name !== 'string') {
-    errors.push('Name is required');
+    errors.name = 'Укажите имя';
   } else if (data.name.trim().length === 0) {
-    errors.push('Name cannot be empty');
+    errors.name = 'Укажите имя';
   } else if (data.name.length > 255) {
-    errors.push('Name must be 255 characters or less');
+    errors.name = 'Имя должно быть не длиннее 255 символов';
   }
 
   // Validate email
   if (!data.email || typeof data.email !== 'string') {
-    errors.push('Email is required');
+    errors.email = 'Укажите email';
   } else if (data.email.trim().length === 0) {
-    errors.push('Email cannot be empty');
+    errors.email = 'Укажите email';
   } else if (data.email.length > 255) {
-    errors.push('Email must be 255 characters or less');
+    errors.email = 'Email должен быть не длиннее 255 символов';
   } else if (!isValidEmail(data.email)) {
-    errors.push('Email format is invalid');
+    errors.email = 'Некорректный email';
   }
 
   // Validate message
   if (!data.message || typeof data.message !== 'string') {
-    errors.push('Message is required');
+    errors.message = 'Введите сообщение';
   } else if (data.message.trim().length === 0) {
-    errors.push('Message cannot be empty');
+    errors.message = 'Введите сообщение';
   } else if (data.message.length > 5000) {
-    errors.push('Message must be 5000 characters or less');
+    errors.message = 'Сообщение должно быть не длиннее 5000 символов';
   }
 
   return {
-    valid: errors.length === 0,
+    valid: Object.keys(errors).length === 0,
     errors,
   };
 }

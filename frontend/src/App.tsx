@@ -1,20 +1,29 @@
-import React, { Suspense } from 'react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { LanguageProvider } from './i18n/context/LanguageContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Experience from './components/Experience';
 import Projects from './components/Projects';
-import TechStack from './components/TechStack';
 import Insights from './components/Insights';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 
-const LoadingFallback: React.FC = () => {
-  return (
-    <div className="h-screen w-full flex items-center justify-center bg-background text-white">
-      Loading 3D Assets...
-    </div>
-  );
+const TechStack = lazy(() => import('./components/TechStack'));
+
+const DeferredTechStack: React.FC = () => {
+  const boundary = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (!boundary.current) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setVisible(true); observer.disconnect(); }
+    }, { rootMargin: '400px' });
+    observer.observe(boundary.current);
+    return () => observer.disconnect();
+  }, []);
+  return <div ref={boundary}>{visible
+    ? <Suspense fallback={<div id="skills" className="min-h-[36rem] bg-surface" />}><TechStack /></Suspense>
+    : <div id="skills" className="min-h-[36rem] bg-surface" aria-hidden="true" />}</div>;
 };
 
 function App() {
@@ -24,13 +33,11 @@ function App() {
         <Navbar />
         
         <main className="flex flex-col w-full">
-          <Suspense fallback={<LoadingFallback />}>
-            <Hero />
-          </Suspense>
+          <Hero />
         
         <Experience />
         <Projects />
-        <TechStack />
+        <DeferredTechStack />
         <Insights />
         <Contact />
       </main>

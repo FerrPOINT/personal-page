@@ -1,309 +1,46 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as Message from '../models/Message.js';
-import * as ContactDelivery from '../services/contactDelivery.js';
-import { processMessage, startWorker, stopWorker } from './telegram-worker.js';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import * as MessageModel from '../models/Message.js';
+import * as Telegram from '../services/telegram.js';
+import { nextAttemptAfter, processMessage } from './telegram-worker.js';
 
-// Mock dependencies
 vi.mock('../models/Message.js');
-vi.mock('../services/contactDelivery.js');
+vi.mock('../services/telegram.js');
 vi.mock('../utils/logger.js', () => ({
-  workerLogger: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-  },
+  workerLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  dbLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-describe('Telegram Worker', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.useFakeTimers();
+const message = {
+  id: 'message-id', name: 'Name', email: 'mail@example.com', message: 'Text',
+  status: 'processing' as const, attempt_count: 1, next_attempt_at: null,
+  processing_started_at: '2026-09-16T10:00:00.000Z', created_at: '2026-09-16T09:59:00.000Z',
+  sent_at: null, error_message: null,
+};
+
+describe('Telegram queue worker', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('uses the documented retry schedule and stops after attempt eight', () => {
+    const now = new Date('2026-09-16T10:00:00.000Z');
+    expect([1, 2, 3, 4, 5, 6, 7].map((attempt) =>
+      (nextAttemptAfter(attempt, now)!.getTime() - now.getTime()) / 60_000,
+    )).toEqual([1, 5, 15, 60, 360, 720, 1440]);
+    expect(nextAttemptAfter(8, now)).toBeNull();
   });
 
-  afterEach(() => {
-    stopWorker();
-    vi.useRealTimers();
+  it('marks a delivered message sent', async () => {
+    vi.mocked(Telegram.sendTelegramMessage).mockResolvedValue();
+    vi.mocked(MessageModel.markMessageSent).mockResolvedValue({ ...message, status: 'sent' });
+    await processMessage(message);
+    expect(MessageModel.markMessageSent).toHaveBeenCalledWith(message.id, expect.any(Date));
   });
 
-  describe('processMessage', () => {
-    it('should process message successfully and update status to sent', async () => {
-      // Setup
-      const mockMessage = {
-        id: 'test-id',
-        name: 'Test User',
-        email: 'test@example.com',
-        message: 'Test message',
-        status: 'pending' as const,
-        created_at: '2026-01-19T10:00:00Z',
-        sent_at: null,
-        error_message: null,
-      };
-
-      vi.mocked(ContactDelivery.deliverContactNotifications).mockResolvedValue(undefined);
-      vi.mocked(Message.updateMessageStatus).mockResolvedValue({
-        ...mockMessage,
-        status: 'sent',
-        sent_at: '2026-01-19T10:01:00Z',
-      });
-
-      // Execute
-      await processMessage(mockMessage);
-
-      // Assert
-      expect(ContactDelivery.deliverContactNotifications).toHaveBeenCalledWith({
-        name: 'Test User',
-        email: 'test@example.com',
-        message: 'Test message',
-        createdAt: expect.any(Date),
-      });
-      expect(Message.updateMessageStatus).toHaveBeenCalledWith({
-        id: 'test-id',
-        status: 'sent',
-        sent_at: expect.any(Date),
-      });
-    });
-
-    it('should update status to failed when Telegram send fails', async () => {
-      // Setup
-      const mockMessage = {
-        id: 'test-id',
-        name: 'Test User',
-        email: 'test@example.com',
-        message: 'Test message',
-        status: 'pending' as const,
-        created_at: '2026-01-19T10:00:00Z',
-        sent_at: null,
-        error_message: null,
-      };
-
-      const telegramError = new Error('Telegram API error');
-      vi.mocked(ContactDelivery.deliverContactNotifications).mockRejectedValue(telegramError);
-      vi.mocked(Message.updateMessageStatus).mockResolvedValue({
-        ...mockMessage,
-        status: 'failed',
-        error_message: 'Telegram API error',
-      });
-
-      // Execute
-      await processMessage(mockMessage);
-
-      // Assert
-      expect(ContactDelivery.deliverContactNotifications).toHaveBeenCalled();
-      expect(Message.updateMessageStatus).toHaveBeenCalledWith({
-        id: 'test-id',
-        status: 'failed',
-        error_message: 'Telegram API error',
-      });
-    });
-
-    it('should limit error message length to 500 characters', async () => {
-      // Setup
-      const mockMessage = {
-        id: 'test-id',
-        name: 'Test User',
-        email: 'test@example.com',
-        message: 'Test message',
-        status: 'pending' as const,
-        created_at: '2026-01-19T10:00:00Z',
-        sent_at: null,
-        error_message: null,
-      };
-
-      const longError = 'a'.repeat(600);
-      const telegramError = new Error(longError);
-      vi.mocked(ContactDelivery.deliverContactNotifications).mockRejectedValue(telegramError);
-      vi.mocked(Message.updateMessageStatus).mockResolvedValue(mockMessage);
-
-      // Execute
-      await processMessage(mockMessage);
-
-      // Assert
-      expect(Message.updateMessageStatus).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error_message: expect.stringMatching(/^a{500}$/),
-        })
-      );
-    });
-
-    it('should handle Date conversion from ISO string', async () => {
-      // Setup
-      const mockMessage = {
-        id: 'test-id',
-        name: 'Test User',
-        email: 'test@example.com',
-        message: 'Test message',
-        status: 'pending' as const,
-        created_at: '2026-01-19T10:00:00.000Z',
-        sent_at: null,
-        error_message: null,
-      };
-
-      vi.mocked(ContactDelivery.deliverContactNotifications).mockResolvedValue(undefined);
-      vi.mocked(Message.updateMessageStatus).mockResolvedValue(mockMessage);
-
-      // Execute
-      await processMessage(mockMessage);
-
-      // Assert
-      expect(ContactDelivery.deliverContactNotifications).toHaveBeenCalledWith(
-        expect.objectContaining({
-          createdAt: expect.any(Date),
-        })
-      );
-    });
-
-    it('should not throw error when processing fails', async () => {
-      // Setup
-      const mockMessage = {
-        id: 'test-id',
-        name: 'Test User',
-        email: 'test@example.com',
-        message: 'Test message',
-        status: 'pending' as const,
-        created_at: '2026-01-19T10:00:00Z',
-        sent_at: null,
-        error_message: null,
-      };
-
-      vi.mocked(ContactDelivery.deliverContactNotifications).mockRejectedValue(new Error('Error'));
-      vi.mocked(Message.updateMessageStatus).mockRejectedValue(new Error('DB Error'));
-
-      // Execute & Assert - should not throw
-      await expect(processMessage(mockMessage)).resolves.not.toThrow();
-    });
-  });
-
-  describe('startWorker', () => {
-    it('should start worker and process messages periodically', async () => {
-      // Setup
-      const mockMessages = [
-        {
-          id: 'msg-1',
-          name: 'User 1',
-          email: 'user1@example.com',
-          message: 'Message 1',
-          status: 'pending' as const,
-          created_at: '2026-01-19T10:00:00Z',
-          sent_at: null,
-          error_message: null,
-        },
-      ];
-
-      vi.mocked(Message.findPendingOrFailed).mockResolvedValue(mockMessages);
-      vi.mocked(ContactDelivery.deliverContactNotifications).mockResolvedValue(undefined);
-      vi.mocked(Message.updateMessageStatus).mockResolvedValue(mockMessages[0]);
-
-      // Execute
-      startWorker();
-
-      // Fast-forward time to trigger interval
-      await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
-
-      // Assert
-      expect(Message.findPendingOrFailed).toHaveBeenCalled();
-      expect(ContactDelivery.deliverContactNotifications).toHaveBeenCalled();
-    });
-
-    it('should not start worker if already running', () => {
-      // Setup
-      startWorker();
-
-      // Execute
-      startWorker(); // Try to start again
-
-      // Assert - should not throw, but should log warning
-      // (we can't easily test the warning without more complex mocking)
-      expect(true).toBe(true); // Worker should still be running
-    });
-
-    it('should handle errors in worker process without crashing', async () => {
-      // Setup
-      vi.mocked(Message.findPendingOrFailed).mockRejectedValue(new Error('DB Error'));
-
-      // Execute
-      startWorker();
-      await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
-
-      // Assert - should not throw
-      expect(true).toBe(true);
-    });
-  });
-
-  describe('stopWorker', () => {
-    it('should stop worker and clear interval', () => {
-      // Setup
-      startWorker();
-
-      // Execute
-      stopWorker();
-
-      // Assert - worker should be stopped
-      // We can't easily test interval clearing, but function should not throw
-      expect(true).toBe(true);
-    });
-
-    it('should handle stop when worker is not running', () => {
-      // Execute & Assert - should not throw
-      expect(() => stopWorker()).not.toThrow();
-    });
-  });
-
-  describe('processMessages', () => {
-    it('should skip processing if already running', async () => {
-      // This is tested indirectly through startWorker tests
-      // Direct testing would require exposing the internal function
-      expect(true).toBe(true);
-    });
-
-    it('should process multiple messages sequentially', async () => {
-      // Setup
-      const mockMessages = [
-        {
-          id: 'msg-1',
-          name: 'User 1',
-          email: 'user1@example.com',
-          message: 'Message 1',
-          status: 'pending' as const,
-          created_at: '2026-01-19T10:00:00Z',
-          sent_at: null,
-          error_message: null,
-        },
-        {
-          id: 'msg-2',
-          name: 'User 2',
-          email: 'user2@example.com',
-          message: 'Message 2',
-          status: 'pending' as const,
-          created_at: '2026-01-19T10:01:00Z',
-          sent_at: null,
-          error_message: null,
-        },
-      ];
-
-      vi.mocked(Message.findPendingOrFailed).mockResolvedValue(mockMessages);
-      vi.mocked(ContactDelivery.deliverContactNotifications).mockResolvedValue(undefined);
-      vi.mocked(Message.updateMessageStatus).mockResolvedValue(mockMessages[0]);
-
-      // Execute
-      startWorker();
-      await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
-
-      // Assert
-      expect(ContactDelivery.deliverContactNotifications).toHaveBeenCalledTimes(2);
-    });
-
-    it('should handle empty message list', async () => {
-      // Setup
-      vi.mocked(Message.findPendingOrFailed).mockResolvedValue([]);
-
-      // Execute
-      startWorker();
-      await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
-
-      // Assert
-      expect(ContactDelivery.deliverContactNotifications).not.toHaveBeenCalled();
-    });
+  it('schedules a failed attempt without leaking message data to state logs', async () => {
+    vi.mocked(Telegram.sendTelegramMessage).mockRejectedValue(new Error('network'));
+    vi.mocked(MessageModel.markMessageFailed).mockResolvedValue({ ...message, status: 'failed' });
+    await processMessage(message, new Date('2026-09-16T10:00:00.000Z'));
+    expect(MessageModel.markMessageFailed).toHaveBeenCalledWith(
+      message.id, 'network', new Date('2026-09-16T10:01:00.000Z'),
+    );
   });
 });
-

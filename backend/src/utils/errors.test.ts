@@ -69,8 +69,8 @@ describe('Error classes', () => {
       
       expect(error.message).toBe('Duplicate message');
       expect(error.name).toBe('DuplicateError');
-      expect(error.code).toBe('DUPLICATE_ERROR');
-      expect(error.statusCode).toBe(429);
+      expect(error.code).toBe('DUPLICATE_MESSAGE');
+      expect(error.statusCode).toBe(409);
       expect(error).toBeInstanceOf(AppError);
     });
   });

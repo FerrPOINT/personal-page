@@ -1,0 +1,20 @@
+[Unit]
+Description=Personal page reverse SSH tunnel to Shkurtz
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=personal-page-tunnel
+EnvironmentFile=/etc/personal-page/tunnel.env
+ExecStart=/usr/bin/ssh -NT -p ${SHKURTZ_SSH_PORT} -i /etc/personal-page/shkurtz_ed25519 -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/etc/personal-page/known_hosts -R 127.0.0.1:18888:127.0.0.1:8888 -R 127.0.0.1:19000:127.0.0.1:9000 ${SHKURTZ_SSH_USER}@${SHKURTZ_HOST}
+Restart=always
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadOnlyPaths=/etc/personal-page
+
+[Install]
+WantedBy=multi-user.target

@@ -21,14 +21,19 @@ autotests/results/
 coverage/
 
 # Secrets and credentials (NEVER commit these!)
+.env*
+!.env.example
+env.local
+env.prod
+*.backup
+*.bak
 *.token
 *.secret
 *jenkins*.txt
 *credentials*.txt
 *secrets*.txt
-.env.local
-.env.secrets
 jenkins-credentials.*
+memory.json
 
 # SSH keys and certificates
 *.pem
@@ -40,3 +45,18 @@ id_ed25519*
 *_ed25519
 ssh_key*
 deploy_key*
+
+# Generated and local workspace files
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+logs/
+**/logs/
+.idea/
+.vscode/
+.pnpm-store/
+pnpm-lock.yaml
+tmp/
+temp/
+~/

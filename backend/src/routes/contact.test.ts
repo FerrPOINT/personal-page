@@ -1,274 +1,76 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
-import express, { Express } from 'express';
-import contactRoutes from './contact.js';
-import * as Message from '../models/Message.js';
-import * as Validation from '../services/validation.js';
-import * as Worker from '../workers/telegram-worker.js';
-import * as Retry from '../utils/retry.js';
+import { createApp } from '../index.js';
+import { db } from '../services/database.js';
 
-// Mock dependencies
-vi.mock('../models/Message.js');
-vi.mock('../services/validation.js');
-vi.mock('../workers/telegram-worker.js');
-vi.mock('../utils/retry.js');
-vi.mock('../utils/logger.js', () => ({
-  apiLogger: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+describe('POST /api/contact', () => {
+  const app = createApp();
+  beforeEach(() => db.prepare('DELETE FROM messages').run());
 
-describe('Contact Routes', () => {
-  let app: Express;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    app = express();
-    app.use(express.json());
-    
-    // Mock requestId middleware (must be before routes)
-    app.use((req: any, res, next) => {
-      req.requestId = 'test-request-id';
-      next();
+  it('returns 202 only after a pending row is stored', async () => {
+    const response = await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.1').send({
+      name: 'Алексей', email: 'alex@example.com', message: 'Сообщение',
     });
-    
-    // Mock retry to just call the function directly (no retry in tests)
-    vi.mocked(Retry.retry).mockImplementation(async (fn) => fn());
-    
-    app.use('/api/contact', contactRoutes);
+    expect(response.status).toBe(202);
+    expect(response.body).toMatchObject({ success: true, data: { status: 'pending' } });
+    expect(db.prepare('SELECT status FROM messages WHERE id = ?').get(response.body.data.id))
+      .toEqual({ status: 'pending' });
   });
 
-  describe('POST /api/contact', () => {
-    it('should create message successfully with valid data', async () => {
-      // Setup
-      const mockMessage = {
-        id: 'test-id',
-        name: 'Test User',
-        email: 'test@example.com',
-        message: 'Test message',
-        status: 'pending' as const,
-        created_at: '2026-01-19T10:00:00Z',
-        sent_at: null,
-        error_message: null,
-      };
+  it('returns structured 400 and field errors', async () => {
+    const response = await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.2').send({ name: '', email: 'bad', message: '' });
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({
+      success: false,
+      error: { code: 'VALIDATION_ERROR', fields: { email: 'Некорректный email' } },
+    });
+    expect(response.body.requestId).toBeTruthy();
+  });
 
-      vi.mocked(Validation.sanitizeString).mockImplementation((input) => input);
-      vi.mocked(Validation.validateContactForm).mockReturnValue({
-        valid: true,
-        errors: [],
+  it('returns 409 for a duplicate', async () => {
+    const body = { name: 'A', email: 'a@example.com', message: 'Same' };
+    expect((await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.3').send(body)).status).toBe(202);
+    const duplicate = await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.3').send(body);
+    expect(duplicate.status).toBe(409);
+    expect(duplicate.body.error.code).toBe('DUPLICATE_MESSAGE');
+  });
+
+  it('returns 413 for an oversized body', async () => {
+    const response = await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.4').send({
+      name: 'A', email: 'a@example.com', message: 'x'.repeat(70_000),
+    });
+    expect(response.status).toBe(413);
+    expect(response.body.error.code).toBe('PAYLOAD_TOO_LARGE');
+  });
+
+  it('returns structured 500 when SQLite cannot persist the message', async () => {
+    db.pragma('query_only = ON');
+    try {
+      const response = await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.6').send({
+        name: 'A', email: 'write-failure@example.com', message: 'Cannot write',
       });
-      vi.mocked(Message.createMessage).mockResolvedValue(mockMessage);
-      vi.mocked(Worker.processMessage).mockResolvedValue();
-
-      // Execute
-      const response = await request(app)
-        .post('/api/contact')
-        .send({
-          name: 'Test User',
-          email: 'test@example.com',
-          message: 'Test message',
-        })
-        .expect(200);
-
-      // Assert
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Message saved successfully');
-      expect(response.body.data.id).toBe('test-id');
-      expect(response.body.data.status).toBe('pending');
-      
-      expect(Validation.sanitizeString).toHaveBeenCalledTimes(3);
-      expect(Validation.validateContactForm).toHaveBeenCalled();
-      expect(Message.createMessage).toHaveBeenCalled();
-      expect(Retry.retry).toHaveBeenCalled();
-    });
-
-    it('should sanitize input data', async () => {
-      // Setup
-      const mockMessage = {
-        id: 'test-id',
-        name: 'Test User',
-        email: 'test@example.com',
-        message: 'Test message',
-        status: 'pending' as const,
-        created_at: '2026-01-19T10:00:00Z',
-        sent_at: null,
-        error_message: null,
-      };
-
-      vi.mocked(Validation.sanitizeString)
-        .mockReturnValueOnce('Test User')
-        .mockReturnValueOnce('test@example.com')
-        .mockReturnValueOnce('Test message');
-      vi.mocked(Validation.validateContactForm).mockReturnValue({
-        valid: true,
-        errors: [],
+      expect(response.status).toBe(500);
+      expect(response.body).toMatchObject({
+        success: false,
+        error: { code: 'DATABASE_ERROR' },
       });
-      vi.mocked(Message.createMessage).mockResolvedValue(mockMessage);
-      vi.mocked(Worker.processMessage).mockResolvedValue();
+      expect(response.body.requestId).toBeTruthy();
+    } finally {
+      db.pragma('query_only = OFF');
+    }
+  });
 
-      // Execute
-      await request(app)
-        .post('/api/contact')
-        .send({
-          name: '<script>alert("xss")</script>Test User',
-          email: 'test@example.com',
-          message: 'Test message',
-        })
-        .expect(200);
-
-      // Assert
-      expect(Validation.sanitizeString).toHaveBeenCalledWith('<script>alert("xss")</script>Test User');
-    });
-
-    it('should return 400 when validation fails', async () => {
-      // Setup
-      vi.mocked(Validation.sanitizeString).mockImplementation((input) => input);
-      vi.mocked(Validation.validateContactForm).mockReturnValue({
-        valid: false,
-        errors: ['Email is required', 'Message must be at least 10 characters'],
+  it('returns 429 after five submissions from one client', async () => {
+    for (let i = 0; i < 5; i += 1) {
+      const result = await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.5').send({
+        name: 'A', email: `a${i}@example.com`, message: `Message ${i}`,
       });
-
-      // Execute
-      const response = await request(app)
-        .post('/api/contact')
-        .send({
-          name: 'Test User',
-          email: '',
-          message: 'Short',
-        })
-        .expect(400);
-
-      // Assert
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Validation failed');
-      expect(response.body.details).toEqual([
-        'Email is required',
-        'Message must be at least 10 characters',
-      ]);
-      
-      expect(Message.createMessage).not.toHaveBeenCalled();
+      expect(result.status).toBe(202);
+    }
+    const limited = await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.5').send({
+      name: 'A', email: 'last@example.com', message: 'Last',
     });
-
-    it('should return 400 when email format is invalid', async () => {
-      // Setup
-      vi.mocked(Validation.sanitizeString).mockImplementation((input) => input);
-      vi.mocked(Validation.validateContactForm).mockReturnValue({
-        valid: false,
-        errors: ['Email format is invalid'],
-      });
-
-      // Execute
-      const response = await request(app)
-        .post('/api/contact')
-        .send({
-          name: 'Test User',
-          email: 'invalid-email',
-          message: 'Test message',
-        })
-        .expect(400);
-
-      // Assert
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Validation failed');
-      expect(response.body.details).toContain('Email format is invalid');
-    });
-
-    it('should return 500 when database error occurs', async () => {
-      // Setup
-      vi.mocked(Validation.sanitizeString).mockImplementation((input) => input);
-      vi.mocked(Validation.validateContactForm).mockReturnValue({
-        valid: true,
-        errors: [],
-      });
-      vi.mocked(Message.createMessage).mockRejectedValue(new Error('Database error'));
-
-      // Execute
-      const response = await request(app)
-        .post('/api/contact')
-        .send({
-          name: 'Test User',
-          email: 'test@example.com',
-          message: 'Test message',
-        })
-        .expect(500);
-
-      // Assert
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Internal server error');
-      expect(response.body.message).toBe('Failed to save message');
-    });
-
-    it('should handle missing fields gracefully', async () => {
-      // Setup
-      vi.mocked(Validation.sanitizeString).mockReturnValue('');
-      vi.mocked(Validation.validateContactForm).mockReturnValue({
-        valid: false,
-        errors: ['Name is required', 'Email is required', 'Message is required'],
-      });
-
-      // Execute
-      const response = await request(app)
-        .post('/api/contact')
-        .send({})
-        .expect(400);
-
-      // Assert
-      expect(response.body.success).toBe(false);
-      expect(response.body.details.length).toBeGreaterThan(0);
-    });
-
-    it('should handle processMessage errors without failing request', async () => {
-      // Setup
-      const mockMessage = {
-        id: 'test-id',
-        name: 'Test User',
-        email: 'test@example.com',
-        message: 'Test message',
-        status: 'pending' as const,
-        created_at: '2026-01-19T10:00:00Z',
-        sent_at: null,
-        error_message: null,
-      };
-
-      vi.mocked(Validation.sanitizeString).mockImplementation((input) => input);
-      vi.mocked(Validation.validateContactForm).mockReturnValue({
-        valid: true,
-        errors: [],
-      });
-      vi.mocked(Message.createMessage).mockResolvedValue(mockMessage);
-      vi.mocked(Worker.processMessage).mockRejectedValue(new Error('Telegram error'));
-
-      // Execute - should still return 200 because processMessage is fire-and-forget
-      const response = await request(app)
-        .post('/api/contact')
-        .send({
-          name: 'Test User',
-          email: 'test@example.com',
-          message: 'Test message',
-        })
-        .expect(200);
-
-      // Assert
-      expect(response.body.success).toBe(true);
-      expect(Retry.retry).toHaveBeenCalled();
-    });
-
-    it('should apply rate limiting', async () => {
-      // This test would require mocking express-rate-limit
-      // For now, we just verify the route exists
-      const response = await request(app)
-        .post('/api/contact')
-        .send({
-          name: 'Test User',
-          email: 'test@example.com',
-          message: 'Test message',
-        });
-
-      // Rate limiting is applied via middleware, so we just check route exists
-      expect([200, 400, 429, 500]).toContain(response.status);
-    });
+    expect(limited.status).toBe(429);
+    expect(limited.body.error.code).toBe('RATE_LIMITED');
   });
 });
-

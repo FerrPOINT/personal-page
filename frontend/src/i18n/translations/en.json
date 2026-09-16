@@ -21,7 +21,9 @@
     "skills": "Skills",
     "insights": "Insights",
     "contact": "Contact",
-    "letsTalk": "Let's Talk"
+    "letsTalk": "Let's Talk",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "hero": {
     "badge": "Open for New Opportunities",
@@ -295,7 +297,7 @@
       "sizeWarning": " (warning)",
       "submit": "Send Message",
       "sending": "Sending...",
-      "success": "Thank you! Your message has been sent successfully.",
+      "success": "Your message was accepted and will be delivered",
       "error": "Failed to send message. Please try again.",
       "errorNetwork": "Network error: Unable to connect to the server. Please check your internet connection and try again.",
       "errorInvalidResponse": "Server returned invalid response. Please try again or contact support.",
@@ -305,6 +307,8 @@
       "error400": "Invalid request data. Please check your input.",
       "error500": "Server error. Please try again later.",
       "error503": "Service temporarily unavailable. Please try again later.",
+      "error429": "Too many requests. Please try again later.",
+      "errorTimeout": "The server did not respond in time. Check your connection and try again.",
       "errorStatus": "Request failed with status {status}. Please try again."
     },
     "resume": {

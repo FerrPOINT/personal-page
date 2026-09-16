@@ -5,8 +5,10 @@ import { MapPin, Send, FileText, Printer } from 'lucide-react';
 import Modal from './Modal';
 import EmailContactButton from './EmailContactButton';
 import PhoneContactButton from './PhoneContactButton';
+import TelegramContactButton from './TelegramContactButton';
 import { useLanguage } from '../i18n/hooks/useLanguage';
 import { getTranslatedExperience, getTranslatedSkills } from '../i18n/utils/getTranslatedData';
+import { ContactApiError, submitContact } from '../api/contact';
 
 type FormData = {
   name: string;
@@ -25,97 +27,28 @@ const Contact: React.FC = () => {
   const experienceItems = useMemo(() => getTranslatedExperience(language), [language]);
   const skills = useMemo(() => getTranslatedSkills(language), [language]);
 
-  const API_URL = import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim() !== '' ? import.meta.env.VITE_API_URL : '/api';
-
-  const messageSize = messageContent ? new Blob([messageContent]).size : 0;
-  const maxSize = 100 * 1024;
-  const sizeKB = (messageSize / 1024).toFixed(2);
-  const maxSizeKB = (maxSize / 1024).toFixed(0);
-  const isSizeWarning = messageSize > maxSize * 0.8;
-  const isSizeExceeded = messageSize > maxSize;
+  const messageLength = messageContent.length;
+  const isSizeWarning = messageLength > 4000;
+  const isSizeExceeded = messageLength > 5000;
 
   const onSubmit = async (data: FormData) => {
     setSubmitStatus('idle');
     setSubmitMessage('');
 
-    const messageSize = new Blob([data.message]).size;
-    const maxSize = 100 * 1024;
-    if (messageSize > maxSize) {
-      const sizeMB = (messageSize / (1024 * 1024)).toFixed(2);
-      const maxMB = (maxSize / (1024 * 1024)).toFixed(2);
-      setSubmitStatus('error');
-      setSubmitMessage(t('contact.form.errorTooLarge', { size: sizeMB, max: maxMB }));
-      return;
-    }
-
     try {
-      const response = await fetch(`${API_URL}/contact`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          message: data.message,
-        }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = t('contact.form.error');
-
-        switch (response.status) {
-          case 413:
-            errorMessage = t('contact.form.error413');
-            break;
-          case 400:
-            try {
-              const errorData = await response.json();
-              errorMessage = errorData.error || errorData.details?.join(', ') || t('contact.form.error400');
-            } catch {
-              errorMessage = t('contact.form.error400');
-            }
-            break;
-          case 500:
-            errorMessage = t('contact.form.error500');
-            break;
-          case 503:
-            errorMessage = t('contact.form.error503');
-            break;
-          default:
-            errorMessage = t('contact.form.errorStatus', { status: response.status.toString() });
-        }
-
-        setSubmitStatus('error');
-        setSubmitMessage(errorMessage);
-        return;
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        setSubmitStatus('success');
-        setSubmitMessage(t('contact.form.success'));
-        reset();
-        setTimeout(() => {
-          setSubmitStatus('idle');
-          setSubmitMessage('');
-        }, 5000);
-      } else {
-        setSubmitStatus('error');
-        setSubmitMessage(result.error || result.details?.join(', ') || t('contact.form.error'));
-      }
+      await submitContact(data);
+      setSubmitStatus('success');
+      setSubmitMessage(t('contact.form.success'));
+      reset();
     } catch (error) {
-      console.error('Error submitting form:', error);
       setSubmitStatus('error');
-
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        setSubmitMessage(t('contact.form.errorNetwork'));
-      } else if (error instanceof SyntaxError) {
-        setSubmitMessage(t('contact.form.errorInvalidResponse'));
-      } else {
-        setSubmitMessage(t('contact.form.errorUnknown'));
-      }
+      if (!(error instanceof ContactApiError)) return setSubmitMessage(t('contact.form.errorUnknown'));
+      if (error.status === 400 || error.status === 409) setSubmitMessage(error.message);
+      else if (error.status === 413) setSubmitMessage(t('contact.form.error413'));
+      else if (error.status === 429) setSubmitMessage(t('contact.form.error429'));
+      else if (error.status === 500) setSubmitMessage(t('contact.form.error500'));
+      else if (error.message === 'REQUEST_TIMEOUT') setSubmitMessage(t('contact.form.errorTimeout'));
+      else setSubmitMessage(t('contact.form.errorNetwork'));
     }
   };
 
@@ -175,6 +108,8 @@ const Contact: React.FC = () => {
 
               <PhoneContactButton phone="+7 (983) 320-97-85" />
 
+              <TelegramContactButton username="azhukov7" />
+
               <a href="https://www.google.com/maps/search/?api=1&query=Novosibirsk,+Russia" target="_blank" rel="noopener noreferrer" className="flex items-center group cursor-pointer">
                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mr-4 group-hover:bg-white/20 transition-colors">
                   <MapPin className="w-5 h-5 text-white" />
@@ -206,43 +141,49 @@ const Contact: React.FC = () => {
           >
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">{t('contact.form.name')}</label>
+                <label htmlFor="contact-name" className="block text-sm font-medium text-secondary mb-2">{t('contact.form.name')}</label>
                 <input
-                  {...register("name", { required: true })}
+                  id="contact-name" type="text" autoComplete="name" maxLength={255}
+                  aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? 'contact-name-error' : undefined}
+                  {...register("name", { required: true, maxLength: 255 })}
                   className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-colors"
                   placeholder={t('contact.form.namePlaceholder')}
                 />
-                {errors.name && <span className="text-red-500 text-xs mt-1">{t('contact.form.nameRequired')}</span>}
+                {errors.name && <span id="contact-name-error" className="text-red-500 text-xs mt-1">{t('contact.form.nameRequired')}</span>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">{t('contact.form.email')}</label>
+                <label htmlFor="contact-email" className="block text-sm font-medium text-secondary mb-2">{t('contact.form.email')}</label>
                 <input
+                  id="contact-email" type="email" autoComplete="email" maxLength={255}
+                  aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'contact-email-error' : undefined}
                   {...register("email", { required: true, pattern: /^\S+@\S+$/i })}
                   className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-colors"
                   placeholder={t('contact.form.emailPlaceholder')}
                 />
-                {errors.email && <span className="text-red-500 text-xs mt-1">{t('contact.form.emailRequired')}</span>}
+                {errors.email && <span id="contact-email-error" className="text-red-500 text-xs mt-1">{t('contact.form.emailRequired')}</span>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary mb-2">{t('contact.form.message')}</label>
+                <label htmlFor="contact-message" className="block text-sm font-medium text-secondary mb-2">{t('contact.form.message')}</label>
                 <textarea
-                  {...register("message", { required: true })}
+                  id="contact-message" autoComplete="off" maxLength={5000}
+                  aria-invalid={Boolean(errors.message)}
+                  aria-describedby={errors.message ? 'contact-message-error contact-message-help' : 'contact-message-help'}
+                  {...register("message", { required: true, maxLength: 5000 })}
                   rows={4}
                   className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-colors"
                   placeholder={t('contact.form.messagePlaceholder')}
                 />
                 <div className="flex justify-between items-center mt-1">
-                  {errors.message && <span className="text-red-500 text-xs">{t('contact.form.messageRequired')}</span>}
+                  {errors.message && <span id="contact-message-error" className="text-red-500 text-xs">{t('contact.form.messageRequired')}</span>}
                   <span className={`text-xs ml-auto ${isSizeExceeded ? 'text-red-500' : isSizeWarning ? 'text-yellow-500' : 'text-secondary'}`}>
-                    {sizeKB} KB / {maxSizeKB} KB
-                    {isSizeExceeded && t('contact.form.sizeExceeded')}
-                    {isSizeWarning && !isSizeExceeded && t('contact.form.sizeWarning')}
+                    <span id="contact-message-help">{messageLength} / 5000</span>
                   </span>
                 </div>
               </div>
 
+              <div aria-live="polite" aria-atomic="true">
               {submitStatus === 'success' && (
                 <div className="p-4 bg-green-500/20 border border-green-500/50 rounded-lg text-green-400 text-sm">
                   {submitMessage}
@@ -254,6 +195,7 @@ const Contact: React.FC = () => {
                   {submitMessage}
                 </div>
               )}
+              </div>
 
               <button
                 type="submit"

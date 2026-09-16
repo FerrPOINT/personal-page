@@ -85,7 +85,10 @@ const Navbar: React.FC = () => {
           <div className="md:hidden flex items-center gap-3">
             <LanguageSwitcher />
             <button
+              type="button"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? t('navbar.closeMenu') : t('navbar.openMenu')}
+              aria-expanded={isOpen}
               className="text-gray-300 hover:text-white focus:outline-none"
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

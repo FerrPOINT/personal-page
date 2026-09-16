@@ -1,13 +1,18 @@
+import { randomUUID } from 'node:crypto';
 import { db } from '../services/database.js';
-import { randomUUID } from 'crypto';
-import { DatabaseError, NotFoundError, DuplicateError } from '../utils/errors.js';
+import { DatabaseError, DuplicateError, NotFoundError } from '../utils/errors.js';
+
+export type MessageStatus = 'pending' | 'processing' | 'sent' | 'failed' | 'dead';
 
 export interface Message {
   id: string;
   name: string;
   email: string;
   message: string;
-  status: 'pending' | 'sent' | 'failed';
+  status: MessageStatus;
+  attempt_count: number;
+  next_attempt_at: string | null;
+  processing_started_at: string | null;
   created_at: string;
   sent_at: string | null;
   error_message: string | null;
@@ -19,183 +24,115 @@ export interface CreateMessageInput {
   message: string;
 }
 
-export interface UpdateMessageStatusInput {
-  id: string;
-  status: 'sent' | 'failed';
-  sent_at?: Date;
-  error_message?: string;
+const selectColumns = `
+  id, name, email, message, status, attempt_count, next_attempt_at,
+  processing_started_at, created_at, sent_at, error_message
+`;
+
+function getMessageByIdSync(id: string): Message | null {
+  return (db.prepare(`SELECT ${selectColumns} FROM messages WHERE id = ?`).get(id) as Message | undefined) ?? null;
 }
 
-/**
- * Check if a duplicate message exists within the time window
- * Prevents spam by detecting identical messages from same email within short time
- * 
- * @param email - Email address
- * @param message - Message content
- * @param timeWindowMinutes - Time window in minutes (default: 5)
- * @returns true if duplicate found, false otherwise
- */
-export async function checkDuplicateMessage(
-  email: string,
-  message: string,
-  timeWindowMinutes: number = 5
-): Promise<boolean> {
-  const cutoffTime = new Date();
-  cutoffTime.setMinutes(cutoffTime.getMinutes() - timeWindowMinutes);
-  const cutoffTimeISO = cutoffTime.toISOString();
-
-  const stmt = db.prepare(`
-    SELECT COUNT(*) as count
-    FROM messages
-    WHERE email = ?
-      AND message = ?
-      AND created_at > ?
-  `);
-
-  const result = stmt.get(email, message, cutoffTimeISO) as { count: number } | undefined;
-  return (result?.count || 0) > 0;
-}
-
-/**
- * Create a new message in the database
- * Checks for duplicates before creating
- */
-export async function createMessage(input: CreateMessageInput): Promise<Message> {
-  // Check for duplicate message (same email + message within 5 minutes)
-  const isDuplicate = await checkDuplicateMessage(input.email, input.message, 5);
-  if (isDuplicate) {
-    throw new DuplicateError('Duplicate message detected. Please wait before sending the same message again.');
-  }
-
-  const id = randomUUID();
-  const createdAt = new Date().toISOString();
-
-  const stmt = db.prepare(`
-    INSERT INTO messages (id, name, email, message, status, created_at)
-    VALUES (?, ?, ?, ?, 'pending', ?)
-  `);
-
-  stmt.run(id, input.name, input.email, input.message, createdAt);
-
-  const message = await getMessageById(id);
-  if (!message) {
-    throw new DatabaseError('Failed to create message');
-  }
-  return message;
-}
-
-/**
- * Find messages with status 'pending' or 'failed' (for worker processing)
- * Returns messages ordered by created_at (oldest first)
- */
-export async function findPendingOrFailed(limit: number = 10): Promise<Message[]> {
-  const stmt = db.prepare(`
-    SELECT id, name, email, message, status, created_at, sent_at, error_message
-    FROM messages
-    WHERE status IN ('pending', 'failed')
-    ORDER BY created_at ASC
-    LIMIT ?
-  `);
-
-  return stmt.all(limit) as Message[];
-}
-
-/**
- * Update message status
- */
-export async function updateMessageStatus(input: UpdateMessageStatusInput): Promise<Message> {
-  const updates: string[] = [];
-  const values: (string | Date)[] = [];
-
-  updates.push('status = ?');
-  values.push(input.status);
-
-  if (input.sent_at !== undefined) {
-    updates.push('sent_at = ?');
-    values.push(input.sent_at.toISOString());
-  }
-
-  if (input.error_message !== undefined) {
-    updates.push('error_message = ?');
-    values.push(input.error_message);
-  }
-
-  values.push(input.id);
-
-  const stmt = db.prepare(`
-    UPDATE messages
-    SET ${updates.join(', ')}
-    WHERE id = ?
-  `);
-
-  stmt.run(...values);
-
-  const message = await getMessageById(input.id);
-  if (!message) {
-    throw new NotFoundError(`Message with id ${input.id} not found`);
-  }
-
-  return message;
-}
-
-/**
- * Get message by ID
- */
 export async function getMessageById(id: string): Promise<Message | null> {
-  const stmt = db.prepare(`
-    SELECT id, name, email, message, status, created_at, sent_at, error_message
-    FROM messages
-    WHERE id = ?
-  `);
-
-  return (stmt.get(id) as Message) || null;
+  return getMessageByIdSync(id);
 }
 
-/**
- * Delete old messages from the database
- * Deletes messages older than specified number of days
- * Only deletes messages with status 'sent' (keeps pending and failed for retry)
- * 
- * @param daysOld - Number of days old messages should be (default: 90)
- * @returns Number of deleted messages
- */
-export async function deleteOldMessages(daysOld: number = 90): Promise<number> {
-  // Calculate cutoff date
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-  const cutoffDateISO = cutoffDate.toISOString();
+/** Creates a message and checks duplicates under the same immediate lock. */
+export async function createMessage(input: CreateMessageInput): Promise<Message> {
+  const insert = db.transaction((data: CreateMessageInput) => {
+    const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const duplicate = db.prepare(`
+      SELECT 1 FROM messages
+      WHERE email = ? AND message = ? AND created_at > ?
+      LIMIT 1
+    `).get(data.email, data.message, cutoff);
+    if (duplicate) {
+      throw new DuplicateError('Такое сообщение уже принято. Повторите попытку через пять минут.');
+    }
 
-  // Delete only sent messages older than cutoff date
-  // Keep pending and failed messages for retry/processing
-  const stmt = db.prepare(`
-    DELETE FROM messages
-    WHERE status = 'sent' 
-      AND created_at < ?
-  `);
+    const id = randomUUID();
+    const createdAt = new Date().toISOString();
+    db.prepare(`
+      INSERT INTO messages (
+        id, name, email, message, status, attempt_count, next_attempt_at,
+        processing_started_at, created_at, sent_at, error_message
+      ) VALUES (?, ?, ?, ?, 'pending', 0, ?, NULL, ?, NULL, NULL)
+    `).run(id, data.name, data.email, data.message, createdAt, createdAt);
 
-  const result = stmt.run(cutoffDateISO);
-  return result.changes || 0;
+    const created = getMessageByIdSync(id);
+    if (!created) throw new DatabaseError('Не удалось сохранить сообщение');
+    return created;
+  });
+
+  try {
+    return insert.immediate(input);
+  } catch (error) {
+    if (error instanceof DuplicateError || error instanceof DatabaseError) throw error;
+    throw new DatabaseError('Не удалось сохранить сообщение', error instanceof Error ? error : undefined);
+  }
 }
 
-/**
- * Get count of old messages that would be deleted
- * Useful for monitoring and logging before actual deletion
- * 
- * @param daysOld - Number of days old messages should be (default: 90)
- * @returns Count of messages that would be deleted
- */
-export async function countOldMessages(daysOld: number = 90): Promise<number> {
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-  const cutoffDateISO = cutoffDate.toISOString();
+/** Claims one due message and recovers stale leases atomically. */
+export async function claimNextMessage(now = new Date()): Promise<Message | null> {
+  const claim = db.transaction((claimTime: Date) => {
+    const nowIso = claimTime.toISOString();
+    const staleBefore = new Date(claimTime.getTime() - 10 * 60 * 1000).toISOString();
+    db.prepare(`
+      UPDATE messages
+      SET status = 'failed', processing_started_at = NULL, next_attempt_at = ?
+      WHERE status = 'processing' AND processing_started_at <= ?
+    `).run(nowIso, staleBefore);
 
-  const stmt = db.prepare(`
-    SELECT COUNT(*) as count
-    FROM messages
-    WHERE status = 'sent' 
-      AND created_at < ?
-  `);
+    const candidate = db.prepare(`
+      SELECT id FROM messages
+      WHERE status IN ('pending', 'failed')
+        AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
+      ORDER BY created_at ASC
+      LIMIT 1
+    `).get(nowIso) as { id: string } | undefined;
+    if (!candidate) return null;
 
-  const result = stmt.get(cutoffDateISO) as { count: number } | undefined;
-  return result?.count || 0;
+    const result = db.prepare(`
+      UPDATE messages
+      SET status = 'processing', attempt_count = attempt_count + 1,
+          processing_started_at = ?, next_attempt_at = NULL
+      WHERE id = ? AND status IN ('pending', 'failed')
+    `).run(nowIso, candidate.id);
+    return result.changes === 1 ? getMessageByIdSync(candidate.id) : null;
+  });
+  return claim.immediate(now);
+}
+
+export async function markMessageSent(id: string, sentAt = new Date()): Promise<Message> {
+  const result = db.prepare(`
+    UPDATE messages
+    SET status = 'sent', sent_at = ?, processing_started_at = NULL,
+        next_attempt_at = NULL, error_message = NULL
+    WHERE id = ? AND status = 'processing'
+  `).run(sentAt.toISOString(), id);
+  if (result.changes !== 1) throw new NotFoundError(`Processing message ${id} not found`);
+  return getMessageByIdSync(id)!;
+}
+
+export async function markMessageFailed(id: string, errorMessage: string, nextAttemptAt: Date | null): Promise<Message> {
+  const status: MessageStatus = nextAttemptAt ? 'failed' : 'dead';
+  const result = db.prepare(`
+    UPDATE messages
+    SET status = ?, next_attempt_at = ?, processing_started_at = NULL,
+        error_message = ?
+    WHERE id = ? AND status = 'processing'
+  `).run(status, nextAttemptAt?.toISOString() ?? null, errorMessage.slice(0, 500), id);
+  if (result.changes !== 1) throw new NotFoundError(`Processing message ${id} not found`);
+  return getMessageByIdSync(id)!;
+}
+
+export async function replayDeadMessage(id: string): Promise<Message> {
+  const result = db.prepare(`
+    UPDATE messages
+    SET status = 'pending', attempt_count = 0, next_attempt_at = ?,
+        processing_started_at = NULL, sent_at = NULL, error_message = NULL
+    WHERE id = ? AND status = 'dead'
+  `).run(new Date().toISOString(), id);
+  if (result.changes !== 1) throw new NotFoundError(`Dead message ${id} not found`);
+  return getMessageByIdSync(id)!;
 }

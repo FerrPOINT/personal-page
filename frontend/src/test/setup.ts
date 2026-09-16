@@ -2,6 +2,17 @@ import '@testing-library/jest-dom';
 import { expect, afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
+class IntersectionObserverMock implements IntersectionObserver {
+  readonly root = null;
+  readonly rootMargin = '0px';
+  readonly thresholds = [0];
+  disconnect = vi.fn();
+  observe = vi.fn();
+  takeRecords = vi.fn(() => []);
+  unobserve = vi.fn();
+}
+Object.defineProperty(globalThis, 'IntersectionObserver', { configurable: true, value: IntersectionObserverMock });
+
 // Cleanup after each test
 afterEach(() => {
   cleanup();

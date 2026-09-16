@@ -46,7 +46,7 @@ export class ValidationError extends AppError {
  */
 export class DuplicateError extends AppError {
   constructor(message: string) {
-    super(message, 'DUPLICATE_ERROR', 429);
+    super(message, 'DUPLICATE_MESSAGE', 409);
   }
 }
 
@@ -71,15 +71,6 @@ export class TelegramError extends AppError {
   constructor(message: string, telegramResponse?: unknown) {
     super(message, 'TELEGRAM_ERROR', 500);
     this.telegramResponse = telegramResponse;
-  }
-}
-
-/**
- * Email / SMTP delivery error
- */
-export class EmailError extends AppError {
-  constructor(message: string) {
-    super(message, 'EMAIL_ERROR', 500);
   }
 }
 
@@ -120,4 +111,3 @@ export function toAppError(error: unknown): AppError {
 
   return new AppError(String(error), 'INTERNAL_ERROR', 500);
 }
-

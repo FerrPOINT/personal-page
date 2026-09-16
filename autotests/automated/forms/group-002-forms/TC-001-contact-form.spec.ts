@@ -24,7 +24,7 @@ test.describe('Contact Form - email delivery', () => {
     await expect(page.locator('#contact')).toBeInViewport({ timeout: 10000 });
   });
 
-  test('TC-001: sends contact form through API for email notification', async ({ page }) => {
+  test('TC-001: durably accepts contact form for Telegram delivery', async ({ page }) => {
     const nameInput = page.locator('input[name="name"]').first();
     const emailInput = page.locator('input[name="email"], input[type="email"]').first();
     const messageTextarea = page.locator('textarea[name="message"]').first();
@@ -34,8 +34,8 @@ test.describe('Contact Form - email delivery', () => {
     await expect(emailInput).toBeVisible();
     await expect(messageTextarea).toBeVisible();
 
-    await nameInput.fill('Jenkins CI/CD');
-    await emailInput.fill('jenkins@ci-cd.local');
+    await nameInput.fill('Release canary');
+    await emailInput.fill('canary@example.com');
     await messageTextarea.fill('New application version was installed and tested');
 
     await submitButton.click();

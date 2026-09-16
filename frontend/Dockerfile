@@ -1,41 +1,15 @@
-# Multi-stage build for production
-FROM node:20-alpine AS builder
-
+FROM node:24.14.0-alpine3.23 AS builder
 WORKDIR /app
-
-# Copy package files
-COPY package.json package-lock.json* ./
-
-# Install dependencies
+COPY package.json package-lock.json ./
 RUN npm ci
-
-# Copy source code
 COPY . .
-
-# Build arguments (for Vite environment variables)
-ARG VITE_API_URL
-
-# Set environment variables for build
+ARG VITE_API_URL=
 ENV VITE_API_URL=${VITE_API_URL}
-
-# Build the application
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
-
-# Install wget for health checks
-RUN apk add --no-cache wget
-
-# Copy built files from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port
-EXPOSE 80
-
-# Start nginx
+FROM nginxinc/nginx-unprivileged:1.31.5-alpine3.24
+COPY --from=builder --chown=101:101 /app/dist /usr/share/nginx/html
+COPY --chown=101:101 nginx.conf /etc/nginx/conf.d/default.conf
+USER 101
+EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
-

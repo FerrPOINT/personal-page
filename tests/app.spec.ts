@@ -40,7 +40,7 @@ test.describe('Personal Page Application', () => {
   });
 
   test('should check backend health endpoint', async ({ request }) => {
-    const response = await request.get('http://localhost:9000/health');
+    const response = await request.get('http://localhost:9000/ready');
     expect(response.ok()).toBeTruthy();
     
     const data = await response.json();

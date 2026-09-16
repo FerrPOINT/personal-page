@@ -1,55 +1,65 @@
 services:
   frontend:
+    image: personal-page-frontend:${IMAGE_TAG:?set IMAGE_TAG to the exact commit SHA}
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=${VITE_API_URL:-}
-    container_name: personal-page-frontend
+        VITE_API_URL: ""
     ports:
-      - "8888:80"
-    restart: always
-    env_file:
-      - .env
-    environment:
-      - NODE_ENV=production
+      - "127.0.0.1:8888:8080"
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:size=16m,mode=1777
     networks:
       - app-network
     depends_on:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080/"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
       start_period: 10s
 
   backend:
+    image: personal-page-backend:${IMAGE_TAG:?set IMAGE_TAG to the exact commit SHA}
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: personal-page-backend
     ports:
-      - "9000:9000"
-    restart: always
+      - "127.0.0.1:9000:9000"
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     env_file:
       - .env
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - FRONTEND_URL=${FRONTEND_URL:-}
-      - MESSAGE_RETENTION_DAYS=${MESSAGE_RETENTION_DAYS:-90}
+      NODE_ENV: production
+      API_PORT: "9000"
+      DATABASE_PATH: /app/data/database.db
     volumes:
       - backend_data:/app/data
       - backend_logs:/app/logs
+    tmpfs:
+      - /tmp:size=16m,mode=1777
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9000/health"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
-      start_period: 40s
+      start_period: 15s
 
 volumes:
   backend_data:

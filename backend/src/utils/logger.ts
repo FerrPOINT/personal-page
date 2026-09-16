@@ -7,7 +7,7 @@ import { existsSync, mkdirSync } from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const LOG_DIR = resolve(__dirname, '../../logs');
+const LOG_DIR = process.env.LOG_DIR || resolve(process.cwd(), 'logs');
 
 // Ensure log directory exists
 if (!existsSync(LOG_DIR)) {
@@ -152,8 +152,6 @@ const logger = winston.createLogger({
 
 // Create child loggers for different modules
 export const telegramLogger = logger.child({ module: 'telegram' });
-export const emailLogger = logger.child({ module: 'email' });
-export const notifyLogger = logger.child({ module: 'notify' });
 export const apiLogger = logger.child({ module: 'api' });
 export const dbLogger = logger.child({ module: 'database' });
 export const workerLogger = logger.child({ module: 'worker' });

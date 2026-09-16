@@ -1,59 +1,4 @@
-import TelegramBot, { TelegramMessage } from 'node-telegram-bot-api';
-import dotenv from 'dotenv';
-import { resolve } from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import { getTelegramChatId, setTelegramChatId, getTelegramUsername, setTelegramUsername } from '../models/BotSettings.js';
-import { telegramLogger } from '../utils/logger.js';
-import { TelegramError, toAppError } from '../utils/errors.js';
-
-// Load .env from project root
-// In Docker, variables are already set via docker-compose, dotenv won't override them
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-dotenv.config({ path: resolve(__dirname, '../../../.env') });
-
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_USER_ID = process.env.TELEGRAM_USER_ID;
-const TELEGRAM_USERNAME_ENV = process.env.TELEGRAM_USERNAME; // Optional: can be set manually
-const TELEGRAM_DEFAULT_USERNAME = process.env.TELEGRAM_DEFAULT_USERNAME || 'azhukov7'; // Default username fallback
-
-// Create bot instance only if token is available (polling enabled to receive first message)
-let bot: TelegramBot | null = null;
-
-if (TELEGRAM_BOT_TOKEN) {
-  try {
-    telegramLogger.info('Initializing Telegram bot', { 
-      tokenConfigured: true,
-      hasUserId: !!TELEGRAM_USER_ID 
-    });
-    bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
-    
-    // If user ID is provided in env, save it as chat ID (for private chats, user ID = chat ID)
-    if (TELEGRAM_USER_ID && TELEGRAM_USER_ID.trim() !== '') {
-      const userId = TELEGRAM_USER_ID.trim();
-      setTelegramChatId(userId);
-      telegramLogger.info('User ID loaded from environment', { userId });
-    }
-    
-    // Always setup handler to capture messages (in case user ID changes or wasn't set)
-    setupMessageHandler();
-    
-    telegramLogger.info('Telegram bot initialized successfully', { userId: TELEGRAM_USER_ID || null });
-  } catch (error: unknown) {
-    const appError = toAppError(error);
-    telegramLogger.error('Error initializing Telegram bot', { 
-      error: appError.message, 
-      stack: appError.stack,
-      response: appError.cause && typeof appError.cause === 'object' && 'response' in appError.cause
-        ? JSON.stringify((appError.cause as { response?: unknown }).response)
-        : null
-    });
-    bot = null; // Ensure bot is null on error
-  }
-} else {
-  telegramLogger.warn('TELEGRAM_BOT_TOKEN not set - Telegram service will not be available');
-}
+import { TelegramError } from '../utils/errors.js';
 
 export interface MessageData {
   name: string;
@@ -62,291 +7,55 @@ export interface MessageData {
   createdAt: Date;
 }
 
-/**
- * Setup message handler to capture first message and save user ID
- * When user sends first message, bot saves their user ID for future notifications
- * Admin can check registered Telegram ID by sending any message
- */
-function setupMessageHandler(): void {
-  if (!bot) {
-    return;
-  }
+const TELEGRAM_TIMEOUT_MS = 5_000;
 
-  bot.on('message', async (msg: TelegramMessage) => {
-    // Get user ID from message (msg.from.id is the actual user ID)
-    const userId = msg.from?.id?.toString();
-    if (!userId) {
-      telegramLogger.warn('Received message without user ID');
-      return;
-    }
-    
-    telegramLogger.info('Received message', { userId, hasConfiguredUserId: !!TELEGRAM_USER_ID });
-    
-    // Check if sender is the configured user (admin check)
-    const isAdmin = TELEGRAM_USER_ID && TELEGRAM_USER_ID.trim() !== '' && userId === TELEGRAM_USER_ID.trim();
-    
-    if (isAdmin) {
-      // Admin: save chat ID and username if not already saved, then respond
-      try {
-        const registeredChatId = getTelegramChatId();
-        const chatId = msg.chat.id.toString();
-        const username = msg.from?.username;
-        
-        if (!registeredChatId || registeredChatId !== chatId) {
-          setTelegramChatId(chatId);
-          telegramLogger.info('Saved chat ID for admin', { chatId, userId });
-        }
-        
-        // Save username if available and not already saved
-        if (username) {
-          const savedUsername = getTelegramUsername();
-          if (!savedUsername || savedUsername !== username) {
-            setTelegramUsername(username);
-            telegramLogger.info('Saved Telegram username for admin', { username, userId });
-          }
-        }
-        
-        let responseMessage = registeredChatId
-          ? `📋 Записанный Telegram Chat ID: \`${registeredChatId}\`\n✅ Chat ID обновлен: \`${chatId}\``
-          : `✅ Telegram Chat ID зарегистрирован: \`${chatId}\``;
-        
-        if (username) {
-          const usernameMessage = getTelegramUsername()
-            ? `\n📝 Username обновлен: \`@${username}\``
-            : `\n📝 Username сохранен: \`@${username}\``;
-          responseMessage += usernameMessage;
-        }
-        
-        telegramLogger.info('Sending response to admin', { userId, chatId, username: username || null });
-        
-        await bot!.sendMessage(chatId, responseMessage, { parse_mode: 'Markdown' });
-        
-        telegramLogger.info('Admin chat ID and username saved', { userId, chatId, username: username || null });
-      } catch (error: unknown) {
-        const appError = toAppError(error);
-        telegramLogger.error('Error sending admin response', { error: appError.message, stack: appError.stack, userId });
-      }
-      return;
-    }
-    
-    telegramLogger.info('Message from non-admin user ignored', { userId, configuredUserId: TELEGRAM_USER_ID || null });
-    return;
-  });
-
-  telegramLogger.info('Telegram bot message handler setup complete');
+export function getTelegramConfig(): { token: string; chatId: string } | null {
+  const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
+  const chatId = process.env.TELEGRAM_CHAT_ID?.trim();
+  if (!token || !chatId || !/^\d+:[A-Za-z0-9_-]+$/.test(token) || !/^-?\d+$/.test(chatId)) return null;
+  return { token, chatId };
 }
 
-/**
- * Send contact form message to Telegram
- * @param messageData - Contact form data
- * @returns Promise<boolean> - true if sent successfully
- */
-export async function sendTelegramMessage(messageData: MessageData): Promise<boolean> {
-  if (!bot) {
-    throw new TelegramError('Telegram bot is not initialized. TELEGRAM_BOT_TOKEN is required.');
-  }
+export function assertTelegramConfig(): { token: string; chatId: string } {
+  const config = getTelegramConfig();
+  if (!config) throw new Error('Required configuration is missing or invalid: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set');
+  return config;
+}
 
-  // Get user ID from database (saved when user first messages the bot)
-  const userId = getTelegramChatId();
+export function escapeTelegramHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
-  if (!userId) {
-    throw new TelegramError('User ID is not set. Please send a message to the bot first to register your user ID.');
-  }
+export function formatTelegramMessage(data: MessageData): string {
+  return [
+    '<b>Новое сообщение с azhukov-dev.ru</b>', '',
+    `<b>Имя:</b> ${escapeTelegramHtml(data.name)}`,
+    `<b>Email:</b> ${escapeTelegramHtml(data.email)}`,
+    `<b>Время:</b> ${escapeTelegramHtml(data.createdAt.toISOString())}`, '',
+    '<b>Сообщение:</b>', escapeTelegramHtml(data.message),
+  ].join('\n');
+}
 
+export async function sendTelegramMessage(data: MessageData): Promise<void> {
+  const { token, chatId } = assertTelegramConfig();
+  let response: Response;
   try {
-    // Format message in Markdown
-    const formattedMessage = formatMessage(messageData);
-
-    // Send message to Telegram (to the user who first messaged the bot)
-    await bot.sendMessage(userId, formattedMessage, {
-      parse_mode: 'Markdown',
-      disable_web_page_preview: true,
+    response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: formatTelegramMessage(data), parse_mode: 'HTML' }),
+      signal: AbortSignal.timeout(TELEGRAM_TIMEOUT_MS),
     });
-
-    telegramLogger.info('Message sent to Telegram', { userId, email: messageData.email, messageId: messageData.name });
-    return true;
-  } catch (error: unknown) {
-    const appError = toAppError(error);
-    const telegramResponse = appError.cause && typeof appError.cause === 'object' && 'response' in appError.cause
-      ? (appError.cause as { response?: unknown }).response
-      : undefined;
-    
-    telegramLogger.error('Error sending message to Telegram', {
-      error: appError.message,
-      stack: appError.stack,
-      response: telegramResponse,
-      userId,
-      email: messageData.email,
-    });
-    
-    throw new TelegramError(appError.message, telegramResponse);
+  } catch (error) {
+    throw new TelegramError(error instanceof Error && error.name === 'TimeoutError'
+      ? 'Telegram request timed out' : 'Telegram request failed');
   }
-}
-
-/**
- * Format message data into Markdown for Telegram
- */
-function formatMessage(data: MessageData): string {
-  // Handle both Date objects and ISO strings
-  const dateObj = data.createdAt instanceof Date 
-    ? data.createdAt 
-    : new Date(data.createdAt);
-  
-  const date = dateObj.toLocaleString('ru-RU', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-
-  return `📧 *Новое сообщение из формы контактов*
-
-👤 *Имя:* ${escapeMarkdown(data.name)}
-📮 *Email:* ${escapeMarkdown(data.email)}
-📅 *Дата:* ${date}
-
-💬 *Сообщение:*
-${escapeMarkdown(data.message)}`;
-}
-
-/**
- * Escape special Markdown characters for Telegram
- * Optimized version using single regex pass instead of multiple replace calls
- * Note: Dot (.) is not escaped as it's a normal character in emails and text
- */
-function escapeMarkdown(text: string): string {
-  // Single regex pass for all Markdown special characters
-  // This is more efficient than multiple replace() calls
-  return text.replace(/[_*\[\]()~`>#+\-=|{}!]/g, (char) => `\\${char}`);
-}
-
-/**
- * Test Telegram connection
- */
-export async function testTelegramConnection(): Promise<boolean> {
-  if (!bot) {
-    telegramLogger.warn('Telegram bot is not initialized');
-    return false;
-  }
-
-  try {
-    const botInfo = await bot.getMe();
-    telegramLogger.info('Telegram bot connected', { username: botInfo.username, botId: botInfo.id });
-    return true;
-  } catch (error: unknown) {
-    const appError = toAppError(error);
-    telegramLogger.error('Telegram connection test failed', { error: appError.message, stack: appError.stack });
-    return false;
-  }
-}
-
-/**
- * Test Telegram connection with detailed error information
- */
-export async function testTelegramConnectionWithDetails(): Promise<{ connected: boolean; username?: string; error?: string }> {
-  if (!bot) {
-    const reason = !TELEGRAM_BOT_TOKEN 
-      ? 'TELEGRAM_BOT_TOKEN not set' 
-      : 'Bot instance is null (initialization failed)';
-    telegramLogger.warn('Bot is not initialized', { reason, hasToken: !!TELEGRAM_BOT_TOKEN });
-    return { connected: false, error: `Bot is not initialized: ${reason}` };
-  }
-
-  try {
-    telegramLogger.info('Testing Telegram connection...');
-    const botInfo = await bot.getMe();
-    telegramLogger.info('Telegram bot connected', { username: botInfo.username, botId: botInfo.id });
-    return { connected: true, username: botInfo.username };
-  } catch (error: unknown) {
-    const appError = toAppError(error);
-    let errorMessage = appError.message;
-    
-    // Try to extract Telegram API error details
-    if (appError.cause && typeof appError.cause === 'object' && 'response' in appError.cause) {
-      const response = (appError.cause as { response?: { statusCode?: number; body?: unknown } }).response;
-      if (response) {
-        const statusCode = response.statusCode || 'unknown';
-        const body = response.body && typeof response.body === 'object' ? response.body : {};
-        const description = 'description' in body ? String(body.description) 
-          : 'error_description' in body ? String(body.error_description)
-          : appError.message;
-        errorMessage = `Telegram API error: ${statusCode} - ${description}`;
-        telegramLogger.error('Telegram connection test failed', { 
-          error: errorMessage, 
-          statusCode,
-          description,
-          response: JSON.stringify(body),
-          stack: appError.stack 
-        });
-      }
-    } else {
-      telegramLogger.error('Telegram connection test failed', { error: errorMessage, stack: appError.stack });
-    }
-    
-    return { connected: false, error: errorMessage };
-  }
-}
-
-/**
- * Get Telegram username by user ID
- * First tries to get from saved settings, then env variable, then attempts API call
- * @param userId - Telegram user ID
- * @returns Promise<string | null> - username or null if not found/not available
- */
-export async function getTelegramUsernameByUserId(userId: string): Promise<string> {
-  if (!userId || userId.trim() === '') {
-    telegramLogger.warn('User ID is empty - using default username', { defaultUsername: TELEGRAM_DEFAULT_USERNAME });
-    setTelegramUsername(TELEGRAM_DEFAULT_USERNAME);
-    return TELEGRAM_DEFAULT_USERNAME;
-  }
-
-  // First, try to get from saved settings (saved when admin sends a message)
-  const savedUsername = getTelegramUsername();
-  if (savedUsername) {
-    telegramLogger.info('Retrieved username from saved settings', { userId, username: savedUsername });
-    return savedUsername;
-  }
-
-  // Second, try to get from environment variable (manual setup)
-  if (TELEGRAM_USERNAME_ENV && TELEGRAM_USERNAME_ENV.trim() !== '') {
-    const envUsername = TELEGRAM_USERNAME_ENV.trim();
-    // Save it for future use
-    setTelegramUsername(envUsername);
-    telegramLogger.info('Retrieved username from environment variable and saved', { userId, username: envUsername });
-    return envUsername;
-  }
-
-  // Third, try to get from API if bot is connected (requires bot to be connected)
-  if (bot) {
+  if (!response.ok) {
+    let description = `HTTP ${response.status}`;
     try {
-      const chatInfo = await bot.getChat(userId);
-      const username = chatInfo.username || null;
-      if (username) {
-        // Save it for future use
-        setTelegramUsername(username);
-        telegramLogger.info('Retrieved and saved username from API', { userId, username });
-        return username;
-      } else {
-        telegramLogger.info('Retrieved chat info but username is not available', { userId });
-      }
-    } catch (error: unknown) {
-      const appError = toAppError(error);
-      telegramLogger.error('Error getting Telegram username by user ID from API', {
-        error: appError.message,
-        stack: appError.stack,
-        userId,
-      });
-      // Fall through to default
-    }
-  } else {
-    telegramLogger.warn('Telegram bot is not initialized - cannot get username from API');
+      const body = await response.json() as { description?: string };
+      if (body.description) description = body.description;
+    } catch { /* Keep the status-only error. */ }
+    throw new TelegramError(`Telegram API rejected the message: ${description}`);
   }
-
-  // Fourth, use default username from environment variable
-  telegramLogger.info('Using default username', { userId, username: TELEGRAM_DEFAULT_USERNAME });
-  // Save default for future use
-  setTelegramUsername(TELEGRAM_DEFAULT_USERNAME);
-  return TELEGRAM_DEFAULT_USERNAME;
 }
-
