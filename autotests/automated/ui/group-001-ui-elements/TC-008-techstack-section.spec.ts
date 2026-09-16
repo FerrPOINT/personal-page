@@ -19,7 +19,7 @@ test.describe('TechStack - Секция технологий', () => {
 
     // Проверка заголовка секции
     const heading = techstackSection.locator('h2, heading').first();
-    await expect(heading).toContainText(/Tech Stack|Навыки/i);
+    await expect(heading).toContainText(/Technical Expertise|Техническая экспертиза/i);
 
     // Проверка наличия графика (Recharts компонент)
     const chart = techstackSection.locator('[role="application"]').first();

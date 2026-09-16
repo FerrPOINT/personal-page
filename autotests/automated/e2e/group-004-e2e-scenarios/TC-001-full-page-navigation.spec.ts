@@ -4,12 +4,11 @@ test.describe('E2E - Полная навигация по странице', () 
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/contact', async (route) => {
       await route.fulfill({
-        status: 200,
+        status: 202,
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          message: 'Message saved successfully',
-          data: { id: 1, status: 'pending' },
+          data: { id: 'e2e-message-id', status: 'pending' },
         }),
       });
     });
@@ -28,7 +27,7 @@ test.describe('E2E - Полная навигация по странице', () 
     const languageButton = page.locator('button[aria-label*="Switch"], button[aria-label*="Переключить"], button:has-text("EN"), button:has-text("RU")').first();
     await languageButton.click();
     await page.waitForTimeout(500);
-    await expect(page.locator('nav')).toContainText('А. ЖУКОВ АРХИТЕКТОР');
+    await expect(page.locator('nav')).toContainText(/А\.\s*ЖУКОВ\s*АРХИТЕКТОР/i);
 
     // 3. Навигация к Experience
     const experienceLink = page.locator('a[href="#experience"], nav a:has-text("Опыт")').first();
@@ -76,7 +75,7 @@ test.describe('E2E - Полная навигация по странице', () 
     await emailInput.fill('e2e@example.com');
     await messageTextarea.fill('E2E test message');
     await submitButton.click();
-    await expect(page.locator('#contact')).toContainText(/Thank you|Спасибо/i);
+    await expect(page.locator('#contact')).toContainText(/Сообщение принято и будет доставлено/i);
 
     // 10. Проверка отсутствия критических ошибок
     const consoleErrors: string[] = [];

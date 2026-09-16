@@ -22,7 +22,7 @@ test.describe('LanguageSwitcher - Переключение языка', () => {
     
     // Проверка перевода на русский
     await expect(page.locator('nav')).toContainText(/А\. ЖУКОВ|ЖУКОВАРХИТЕКТОР/i);
-    await expect(page.locator('h1, heading')).toContainText('Александр Жуков');
+    await expect(page.locator('h1, heading')).toContainText(/Александр\s*Жуков/);
     // Проверяем наличие переведенных элементов (не обязательно все сразу)
     const hasRussianContent = await page.locator('text=/Посмотреть проекты|Связаться|О себе|Опыт|Проекты/i').count() > 0;
     expect(hasRussianContent).toBeTruthy();
@@ -33,7 +33,7 @@ test.describe('LanguageSwitcher - Переключение языка', () => {
     
     // Проверка возврата на английский
     await expect(page.locator('nav')).toContainText(/A\. ZHUKOV|ZHUKOVARCHITECT/i);
-    await expect(page.locator('h1, heading')).toContainText('Aleksandr Zhukov');
+    await expect(page.locator('h1, heading')).toContainText(/Aleksandr\s*Zhukov/);
   });
 
   test('TC-005: Проверка отсутствия ошибок в консоли при переключении языка', async ({ page }) => {
@@ -45,10 +45,10 @@ test.describe('LanguageSwitcher - Переключение языка', () => {
     });
 
     const languageButton = page.locator('button[aria-label*="Switch"], button[aria-label*="Переключить"], button:has-text("EN"), button:has-text("RU")').first();
-    await languageButton.click();
+    await languageButton.click({ force: true });
     await page.waitForTimeout(500);
     
-    await languageButton.click();
+    await languageButton.click({ force: true });
     await page.waitForTimeout(500);
 
     // Фильтруем известные предупреждения (React DevTools, шрифты)

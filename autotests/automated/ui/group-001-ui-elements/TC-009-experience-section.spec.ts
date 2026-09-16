@@ -22,7 +22,7 @@ test.describe('Experience - Секция опыта работы', () => {
     await expect(heading).toContainText(/Experience|Опыт|Professional Journey/i);
 
     // Проверка наличия карточек опыта
-    const experienceCards = experienceSection.locator('article, [class*="card"], [class*="experience"]');
+    const experienceCards = experienceSection.locator('h3');
     const cardCount = await experienceCards.count();
     expect(cardCount).toBeGreaterThan(0);
   });

@@ -44,8 +44,11 @@ test.describe('Personal Page Application', () => {
     expect(response.ok()).toBeTruthy();
     
     const data = await response.json();
-    expect(data).toHaveProperty('status', 'ok');
-    expect(data).toHaveProperty('service', 'personal-page-backend');
+    expect(data).toEqual({
+      status: 'ready',
+      database: true,
+      telegram: true,
+    });
   });
 
   test('should check frontend is accessible', async ({ page }) => {

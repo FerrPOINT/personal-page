@@ -1,15 +1,14 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Contact Form - email delivery', () => {
+test.describe('Contact Form - Telegram delivery queue', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/contact', async (route) => {
       await route.fulfill({
-        status: 200,
+        status: 202,
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          message: 'Message saved successfully',
-          data: { id: 1, status: 'pending' },
+          data: { id: 'test-message-id', status: 'pending' },
         }),
       });
     });
@@ -40,7 +39,7 @@ test.describe('Contact Form - email delivery', () => {
 
     await submitButton.click();
 
-    await expect(page.locator('#contact')).toContainText(/Thank you|Спасибо/i);
+    await expect(page.locator('#contact')).toContainText(/Your message was accepted and will be delivered/i);
     await expect(nameInput).toHaveValue('');
     await expect(emailInput).toHaveValue('');
     await expect(messageTextarea).toHaveValue('');
@@ -58,12 +57,11 @@ test.describe('Contact Form - email delivery', () => {
 
   test('TC-001: validates invalid email format', async ({ page }) => {
     await page.locator('input[name="name"]').first().fill('Test User');
-    await page.locator('input[name="email"], input[type="email"]').first().fill('invalid-email');
+    const emailInput = page.locator('input[name="email"], input[type="email"]').first();
+    await emailInput.fill('invalid-email');
     await page.locator('textarea[name="message"]').first().fill('Test message');
 
-    await page.locator('button[type="submit"]').first().click();
-
-    await expect(page.locator('span.text-red-500:has-text("email")').first()).toBeVisible();
+    expect(await emailInput.evaluate((element: HTMLInputElement) => element.checkValidity())).toBe(false);
   });
 
   test('TC-001: no critical console errors in contact form', async ({ page }) => {

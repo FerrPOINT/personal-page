@@ -24,11 +24,7 @@ test.describe('Projects - Фильтрация проектов', () => {
     await aiButton.click();
     await page.waitForTimeout(500);
 
-    // Проверка, что отображаются только проекты с категорией AI
-    // (визуально список проектов должен измениться)
-    const projectCards = page.locator('section#projects article, section#projects > div > div > div').filter({ hasText: /AI|ИИ/i });
-    const projectCount = await projectCards.count();
-    expect(projectCount).toBeGreaterThan(0);
+    await expect(page.locator('section#projects h3')).toHaveCount(2);
   });
 
   test('TC-001: Фильтрация проектов по категории DevOps', async ({ page }) => {
@@ -38,9 +34,7 @@ test.describe('Projects - Фильтрация проектов', () => {
     await devopsButton.click();
     await page.waitForTimeout(500);
 
-    const projectCards = page.locator('section#projects article').filter({ hasText: /DevOps|DevOp/i });
-    const projectCount = await projectCards.count();
-    expect(projectCount).toBeGreaterThan(0);
+    await expect(page.locator('section#projects h3')).toHaveCount(4);
   });
 
   test('TC-001: Фильтрация проектов по категории FullStack', async ({ page }) => {
@@ -50,9 +44,7 @@ test.describe('Projects - Фильтрация проектов', () => {
     await fullstackButton.click();
     await page.waitForTimeout(500);
 
-    const projectCards = page.locator('section#projects article').filter({ hasText: /FullStack/i });
-    const projectCount = await projectCards.count();
-    expect(projectCount).toBeGreaterThan(0);
+    await expect(page.locator('section#projects h3')).toHaveCount(4);
   });
 
   test('TC-001: Возврат к фильтру All показывает все проекты', async ({ page }) => {
@@ -68,9 +60,7 @@ test.describe('Projects - Фильтрация проектов', () => {
     await page.waitForTimeout(500);
 
     // Проверка, что все проекты видны
-    const allProjectCards = page.locator('section#projects article');
-    const allProjectCount = await allProjectCards.count();
-    expect(allProjectCount).toBeGreaterThan(0);
+    await expect(page.locator('section#projects h3')).toHaveCount(4);
   });
 });
 
