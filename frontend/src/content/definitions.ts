@@ -15,6 +15,10 @@ import fintech800Avif from '../assets/projects/fintech-crypto-800.avif';
 import fintech1600Avif from '../assets/projects/fintech-crypto-1600.avif';
 import fintech800Webp from '../assets/projects/fintech-crypto-800.webp';
 import fintech1600Webp from '../assets/projects/fintech-crypto-1600.webp';
+import pdlc800Avif from '../assets/projects/pdlc-platform-800.avif';
+import pdlc1600Avif from '../assets/projects/pdlc-platform-1600.avif';
+import pdlc800Webp from '../assets/projects/pdlc-platform-800.webp';
+import pdlc1600Webp from '../assets/projects/pdlc-platform-1600.webp';
 
 export const PROJECT_DEFINITIONS = [
   {
@@ -457,6 +461,162 @@ export const PROJECT_DEFINITIONS = [
           },
           {
             "value": "Kafka"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "pdlc-platform",
+    "order": 5,
+    "categories": [
+      "ai",
+      "devops",
+      "fullstack"
+    ],
+    "stack": [
+      "Rust",
+      "Python",
+      "Axum",
+      "FastAPI",
+      "React 19",
+      "PostgreSQL",
+      "OpenAPI",
+      "Docker"
+    ],
+    "links": [
+      {
+        "label": {
+          "ru": "Task Tracker",
+          "en": "Task Tracker"
+        },
+        "href": "https://github.com/FerrPOINT/task-tracker"
+      },
+      {
+        "label": {
+          "ru": "Project Workflow",
+          "en": "Project Workflow"
+        },
+        "href": "https://github.com/FerrPOINT/project-workflow"
+      },
+      {
+        "label": {
+          "ru": "Fleet Control",
+          "en": "Fleet Control"
+        },
+        "href": "https://github.com/FerrPOINT/fleet-control"
+      },
+      {
+        "label": {
+          "ru": "Forge CI/CD",
+          "en": "Forge CI/CD"
+        },
+        "href": "https://github.com/FerrPOINT/CI-CD"
+      },
+      {
+        "label": {
+          "ru": "Wiki / Evidence",
+          "en": "Wiki / Evidence"
+        },
+        "href": "https://github.com/FerrPOINT/wiki"
+      },
+      {
+        "label": {
+          "ru": "Admin Panel",
+          "en": "Admin Panel"
+        },
+        "href": "https://github.com/FerrPOINT/admin-panel"
+      }
+    ],
+    "media": [
+      {
+        "kind": "cover",
+        "avif": {
+          "small": pdlc800Avif,
+          "large": pdlc1600Avif
+        },
+        "webp": {
+          "small": pdlc800Webp,
+          "large": pdlc1600Webp
+        },
+        "alt": {
+          "ru": "Панель управления полным циклом разработки с фазами, workflow, CI, evidence и релизными проверками",
+          "en": "Full development lifecycle control center with phases, workflows, CI, evidence, and release checks"
+        }
+      }
+    ],
+    "locales": {
+      "ru": {
+        "title": "PDLC-платформа полного цикла разработки",
+        "role": "Architect / FullStack",
+        "summary": "Единый контур от планирования задачи и работы AI-агентов до проверяемого релиза и аудита.",
+        "context": "Развиваю набор self-hosted сервисов Base Platform, которые закрывают полный цикл разработки продукта. Task Tracker отвечает за проекты, backlog, sprint и kanban; Project Workflow ведёт задачу по фазам с обязательными checks, evidence и supervisor gate; Fleet Control управляет изолированными AI-агентами и их сессиями; Wiki хранит требования, решения и доказательства; Forge CI/CD связывает Git push с pipeline, approvals, artifacts, environments и rollback; Admin Panel управляет каталогом и общими настройками платформы.",
+        "contribution": [
+          "Спроектировал границы сервисов и единый путь задачи от требования до релиза.",
+          "Реализовал рабочие web-интерфейсы, API/CLI-контракты и PostgreSQL-модели для основных контуров платформы.",
+          "Связал workflow, выполнение AI-агентами, evidence и релизные проверки через устойчивые идентификаторы и аудит."
+        ],
+        "challenges": [
+          "Сохранить трассируемость между задачей, фазой workflow, агентской сессией, commit, pipeline и evidence.",
+          "Изолировать runtime и секреты агентов, сохранив управляемость и наблюдаемость.",
+          "Развести источники истины между сервисами без дублирования изменяемого состояния."
+        ],
+        "decisions": [
+          "Task Tracker владеет планированием, Project Workflow — фазами, Fleet Control — runtime агентов, Wiki — знаниями и evidence, Forge — Git и CI/CD.",
+          "Append-only история используется для решений supervisor, проверок, approval и аудита.",
+          "OpenAPI и CLI образуют стабильную границу для автоматизации и интеграции агентов."
+        ],
+        "results": [
+          "Собран сквозной контур Discover → Plan → Build → Verify → Release → Operate.",
+          "Проверки, evidence и решения сохраняются рядом с контекстом задачи и релиза.",
+          "Каждый сервис можно развивать и развёртывать независимо, сохраняя общий жизненный цикл."
+        ],
+        "metrics": [
+          {
+            "value": "6 Services"
+          },
+          {
+            "value": "End-to-End PDLC"
+          },
+          {
+            "value": "OpenAPI + CLI"
+          }
+        ]
+      },
+      "en": {
+        "title": "Full-Cycle PDLC Platform",
+        "role": "Architect / FullStack",
+        "summary": "One governed path from task planning and AI-agent execution to verifiable release and audit.",
+        "context": "I am building a set of self-hosted Base Platform services that cover the full product development lifecycle. Task Tracker owns projects, backlog, sprints, and kanban; Project Workflow moves work through phases with mandatory checks, evidence, and a supervisor gate; Fleet Control manages isolated AI agents and sessions; Wiki stores requirements, decisions, and evidence; Forge CI/CD connects Git pushes to pipelines, approvals, artifacts, environments, and rollback; Admin Panel manages the platform catalog and shared settings.",
+        "contribution": [
+          "Designed service boundaries and one traceable path from requirement to release.",
+          "Implemented working web surfaces, API/CLI contracts, and PostgreSQL models across the core platform services.",
+          "Connected workflows, AI-agent execution, evidence, and release checks through durable identifiers and audit history."
+        ],
+        "challenges": [
+          "Preserving traceability across a work item, workflow phase, agent session, commit, pipeline, and evidence.",
+          "Isolating agent runtimes and secrets while keeping them manageable and observable.",
+          "Separating sources of truth across services without duplicating mutable state."
+        ],
+        "decisions": [
+          "Task Tracker owns planning, Project Workflow owns phases, Fleet Control owns agent runtimes, Wiki owns knowledge and evidence, and Forge owns Git and CI/CD.",
+          "Append-only history records supervisor decisions, checks, approvals, and audit events.",
+          "OpenAPI and CLI contracts provide stable boundaries for automation and agent integration."
+        ],
+        "results": [
+          "Established an end-to-end Discover → Plan → Build → Verify → Release → Operate path.",
+          "Checks, evidence, and decisions stay attached to the relevant task and release context.",
+          "Each service can evolve and deploy independently while preserving the shared lifecycle."
+        ],
+        "metrics": [
+          {
+            "value": "6 Services"
+          },
+          {
+            "value": "End-to-End PDLC"
+          },
+          {
+            "value": "OpenAPI + CLI"
           }
         ]
       }

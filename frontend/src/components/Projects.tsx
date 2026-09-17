@@ -245,7 +245,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, language, categoryLa
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.3 }}
-      className={`group relative bg-surface border rounded-xl overflow-hidden transition-all duration-300 flex flex-col h-full ${
+      className={`group relative bg-surface border rounded-xl overflow-hidden transition-all duration-300 flex flex-col h-full md:last:odd:col-span-2 md:last:odd:w-[calc(50%-1rem)] md:last:odd:justify-self-center ${
         cyan
           ? 'border-white/10 hover:border-accent-cyan/40 hover:shadow-[0_0_40px_rgba(0,217,255,0.2)]'
           : 'border-white/10 hover:border-accent-magenta/40 hover:shadow-[0_0_40px_rgba(255,0,255,0.2)]'

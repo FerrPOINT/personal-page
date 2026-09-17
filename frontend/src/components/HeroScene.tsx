@@ -5,6 +5,20 @@ import * as THREE from 'three';
 
 type PlanetData = readonly [distance: number, speed: number, size: number, color: string, label: string];
 
+function Sun() {
+  return <group>
+    <mesh>
+      <sphereGeometry args={[2, 32, 32]} />
+      <meshStandardMaterial color="#ffaa00" emissive="#ff5500" emissiveIntensity={3} roughness={0.4} />
+    </mesh>
+    <mesh scale={[1.2, 1.2, 1.2]}>
+      <sphereGeometry args={[2, 16, 16]} />
+      <meshStandardMaterial color="#ffaa00" wireframe transparent opacity={0.15} />
+    </mesh>
+    <pointLight distance={100} intensity={2} color="#ffaa00" />
+  </group>;
+}
+
 function Planet({ data }: { data: PlanetData }) {
   const [distance, speed, size, color, label] = data;
   const planet = useRef<THREE.Mesh>(null);
@@ -23,22 +37,68 @@ function Planet({ data }: { data: PlanetData }) {
       <meshBasicMaterial color={color} transparent opacity={0.08} side={THREE.DoubleSide} />
     </mesh>
     <mesh ref={planet}>
-      <sphereGeometry args={[size, 48, 48]} />
+      <sphereGeometry args={[size, 64, 64]} />
       <meshStandardMaterial color={color} roughness={0.7} metalness={0.6} emissive={color} emissiveIntensity={0.1} />
     </mesh>
     <group ref={labelRef}><Billboard><Text fontSize={0.6} color="white" outlineWidth={0.04} outlineColor="#000">{label}</Text></Billboard></group>
   </>;
 }
 
-function Ship({ radius, speed, offset }: { radius: number; speed: number; offset: number }) {
+function SciFiShipModel() {
+  return <group rotation={[0, Math.PI, 0]} scale={[0.4, 0.4, 0.4]}>
+    <mesh position={[0, 0, 0.2]}>
+      <boxGeometry args={[0.3, 0.15, 1.2]} />
+      <meshStandardMaterial color="#eeeeee" roughness={0.3} metalness={0.8} />
+    </mesh>
+    <mesh position={[0, 0.1, 0.4]}>
+      <boxGeometry args={[0.2, 0.1, 0.4]} />
+      <meshStandardMaterial color="#00d9ff" emissive="#00d9ff" emissiveIntensity={0.5} />
+    </mesh>
+    <mesh position={[0, -0.05, 0]}>
+      <boxGeometry args={[1.4, 0.05, 0.6]} />
+      <meshStandardMaterial color="#888888" roughness={0.5} metalness={0.7} />
+    </mesh>
+    <mesh position={[0.6, 0.2, -0.2]} rotation={[0, 0, Math.PI / 6]}>
+      <boxGeometry args={[0.05, 0.4, 0.4]} />
+      <meshStandardMaterial color="#ff00ff" emissive="#ff00ff" emissiveIntensity={0.2} />
+    </mesh>
+    <mesh position={[-0.6, 0.2, -0.2]} rotation={[0, 0, -Math.PI / 6]}>
+      <boxGeometry args={[0.05, 0.4, 0.4]} />
+      <meshStandardMaterial color="#ff00ff" emissive="#ff00ff" emissiveIntensity={0.2} />
+    </mesh>
+    <mesh position={[0, 0, -0.6]} rotation={[Math.PI / 2, 0, 0]}>
+      <cylinderGeometry args={[0.15, 0.05, 0.1, 16]} />
+      <meshBasicMaterial color="#00d9ff" />
+    </mesh>
+  </group>;
+}
+
+interface SpaceshipProps {
+  radiusX: number;
+  radiusZ: number;
+  speed: number;
+  offset: number;
+  yOffset: number;
+}
+
+function Spaceship({ radiusX, radiusZ, speed, offset, yOffset }: SpaceshipProps) {
   const ship = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
     const angle = clock.getElapsedTime() * speed + offset;
-    ship.current?.position.set(Math.cos(angle) * radius, Math.sin(angle * 2), Math.sin(angle) * radius);
-    ship.current?.lookAt(Math.cos(angle + .1) * radius, 0, Math.sin(angle + .1) * radius);
+    if (!ship.current) return;
+    ship.current.position.set(
+      Math.cos(angle) * radiusX,
+      Math.sin(angle * 2) * yOffset,
+      Math.sin(angle) * radiusZ,
+    );
+    ship.current.lookAt(
+      Math.cos(angle + 0.1) * radiusX,
+      Math.sin((angle + 0.1) * 2) * yOffset,
+      Math.sin(angle + 0.1) * radiusZ,
+    );
   });
   return <group ref={ship}><Trail width={1.5} length={6} color="#00d9ff" attenuation={(t) => t * t}>
-    <mesh><boxGeometry args={[0.7, 0.15, 1.2]} /><meshStandardMaterial color="#ddd" metalness={0.8} /></mesh>
+    <SciFiShipModel />
   </Trail></group>;
 }
 
@@ -53,16 +113,28 @@ export default function HeroScene({ labels }: { labels: readonly [string, string
   return <div className="absolute top-0 right-0 w-full h-[55vh] md:h-full md:w-[75vw]">
     <Canvas className="w-full h-full">
       <PerspectiveCamera makeDefault position={[0, 8, 28]} fov={40} />
-      <ambientLight intensity={0.2} /><pointLight position={[0, 0, 0]} intensity={2} color="#ffaa00" />
+      <ambientLight intensity={0.2} />
       <Stars radius={120} depth={60} count={5000} factor={4} saturation={0} fade speed={0.3} />
       <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.2}>
         <group rotation={[0.2, 0, 0]} position={[2, 0, 0]}>
-          <mesh><sphereGeometry args={[2, 32, 32]} /><meshStandardMaterial color="#ffaa00" emissive="#ff5500" emissiveIntensity={3} /></mesh>
+          <Sun />
           {planets.map((planet) => <Planet key={planet[4]} data={planet} />)}
-          <Ship radius={7} speed={0.5} offset={2} /><Ship radius={12} speed={0.25} offset={4} /><Ship radius={18} speed={0.12} offset={3} />
+          <Spaceship radiusX={6} radiusZ={6} speed={0.6} offset={0} yOffset={0.5} />
+          <Spaceship radiusX={7} radiusZ={5} speed={0.5} offset={2} yOffset={-0.5} />
+          <Spaceship radiusX={10} radiusZ={11} speed={0.3} offset={1} yOffset={-1.5} />
+          <Spaceship radiusX={12} radiusZ={9} speed={0.25} offset={4} yOffset={1} />
+          <Spaceship radiusX={16} radiusZ={16} speed={0.15} offset={5} yOffset={0} />
+          <Spaceship radiusX={18} radiusZ={14} speed={0.12} offset={3} yOffset={2} />
         </group>
       </Float>
-      <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.4} />
+      <OrbitControls
+        enableZoom={false}
+        enablePan={false}
+        autoRotate
+        autoRotateSpeed={0.4}
+        maxPolarAngle={Math.PI / 1.8}
+        minPolarAngle={Math.PI / 3}
+      />
     </Canvas>
     <div className="absolute inset-y-0 left-0 w-24 md:w-[40%] bg-gradient-to-r from-background via-background/90 to-transparent pointer-events-none" />
     <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-background via-background/90 to-transparent md:hidden pointer-events-none" />
