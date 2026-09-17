@@ -30,18 +30,20 @@ describe('portfolio content', () => {
     }
   });
 
-  it('keeps the WMT multi-project focus localized', () => {
+  it('keeps the WMT platform portfolio focus localized', () => {
     expect(getExperience('ru')[0].focusAreas).toEqual([
-      'Многопроектная работа',
-      'Банковские системы',
-      'Безопасность',
-      'Performance Engineering',
+      'Enterprise-платформы',
+      'PDLC / SDLC',
+      'Agentic AI',
+      'Банки и FinTech',
+      'Security & Performance',
     ]);
     expect(getExperience('en')[0].focusAreas).toEqual([
-      'Multi-project Delivery',
-      'Banking Systems',
-      'Security',
-      'Performance Engineering',
+      'Enterprise Platforms',
+      'PDLC / SDLC',
+      'Agentic AI',
+      'Banking & FinTech',
+      'Security & Performance',
     ]);
   });
 

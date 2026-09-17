@@ -642,37 +642,39 @@ export const EXPERIENCE_DEFINITIONS = [
       "ru": {
         "role": "Java Developer / Architect",
         "period": "Апр 2022 - Настоящее время",
-        "description": "Разработка и архитектурное сопровождение нескольких enterprise-проектов WMT Group, включая банковские и FinTech-системы, AI-продукты и HR-платформы. Зоны ответственности — безопасность, производительность, надёжность и полный цикл поставки.",
+        "description": "Разработка и архитектура портфеля сложных enterprise-систем WMT Group: PDLC-платформы полного цикла, агентные AI-системы, банковские и FinTech-сервисы, HR-продукты. Зоны ответственности — системный дизайн, безопасность, производительность, надёжность и поставка.",
         "focusAreas": [
-          "Многопроектная работа",
-          "Банковские системы",
-          "Безопасность",
-          "Performance Engineering"
+          "Enterprise-платформы",
+          "PDLC / SDLC",
+          "Agentic AI",
+          "Банки и FinTech",
+          "Security & Performance"
         ],
         "achievements": [
+          "Спроектировал PDLC-контур полного цикла: управление задачами, фазовые workflow, парк агентов, knowledge/evidence, Git/CI/CD и релизные проверки.",
+          "Разрабатывал агентные AI-системы с оркестрацией 10+ автономных агентов, RAG, управлением контекстом и изолированными runtime.",
           "Проектировал защищённые интеграции и криптографические сервисы для банковских проектов, включая цифровые подписи, аудит и работу с чувствительными данными.",
           "Проводил профилирование и оптимизацию Java/Spring-сервисов, SQL и межсервисного взаимодействия, устраняя узкие места под высокой нагрузкой.",
-          "Спроектировал Multi-Agent систему с использованием LangChain/LangGraph с 10+ автономными агентами.",
-          "Разработал комплексную HR платформу для рекрутинга (Full-Stack) с 4 независимыми модулями.",
-          "Настроил end-to-end CI/CD пайплайны в GitLab с автоматическим сканированием безопасности."
+          "Разработал комплексную HR-платформу для рекрутинга с четырьмя независимыми модулями."
         ]
       },
       "en": {
         "role": "Java Developer / Architect",
         "period": "Apr 2022 - Present",
-        "description": "Engineering and architectural ownership across multiple WMT Group enterprise projects, including banking and FinTech systems, AI products, and HR platforms. Core responsibilities include security, performance, reliability, and end-to-end delivery.",
+        "description": "Engineering and architecture across a portfolio of complex WMT Group enterprise systems: full-cycle PDLC platforms, agentic AI systems, banking and FinTech services, and HR products. Responsibilities span system design, security, performance, reliability, and delivery.",
         "focusAreas": [
-          "Multi-project Delivery",
-          "Banking Systems",
-          "Security",
-          "Performance Engineering"
+          "Enterprise Platforms",
+          "PDLC / SDLC",
+          "Agentic AI",
+          "Banking & FinTech",
+          "Security & Performance"
         ],
         "achievements": [
+          "Designed a full-cycle PDLC spanning task management, phase workflows, agent fleet control, knowledge/evidence, Git/CI/CD, and release gates.",
+          "Built agentic AI systems with orchestration of 10+ autonomous agents, RAG, context management, and isolated runtimes.",
           "Designed secure integrations and cryptographic services for banking projects, including digital signatures, audit trails, and sensitive-data handling.",
           "Profiled and optimized Java/Spring services, SQL, and service-to-service communication to remove bottlenecks under high load.",
-          "Architected a Multi-Agent System using LangChain/LangGraph with 10+ autonomous agents.",
-          "Developed a comprehensive HR Recruiting Platform (Full-Stack) with 4 independent modules.",
-          "Established end-to-end CI/CD pipelines in GitLab with automated security scanning."
+          "Developed a comprehensive HR recruiting platform with four independent modules."
         ]
       }
     }
