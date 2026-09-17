@@ -63,7 +63,7 @@ export function assertPortfolioContent(): void {
       if (content.achievements.length === 0 || content.achievements.some((item) => !item.trim())) {
         throw new Error(`Experience ${experience.id} has incomplete achievements (${locale})`);
       }
-      if (content.focusAreas?.some((item) => !item.trim())) {
+      if (content.focusAreas.length === 0 || content.focusAreas.some((item) => !item.trim())) {
         throw new Error(`Experience ${experience.id} has incomplete focus areas (${locale})`);
       }
     }

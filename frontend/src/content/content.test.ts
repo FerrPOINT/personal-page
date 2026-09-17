@@ -30,7 +30,14 @@ describe('portfolio content', () => {
     }
   });
 
-  it('keeps the WMT platform portfolio focus localized', () => {
+  it('defines localized focus areas for every experience', () => {
+    for (const locale of ['ru', 'en'] as const) {
+      for (const experience of getExperience(locale)) {
+        expect(experience.focusAreas.length).toBeGreaterThan(0);
+        expect(experience.focusAreas.every((focusArea) => focusArea.trim().length > 0)).toBe(true);
+      }
+    }
+
     expect(getExperience('ru')[0].focusAreas).toEqual([
       'Enterprise-платформы',
       'PDLC / SDLC',

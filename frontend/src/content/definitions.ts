@@ -698,6 +698,13 @@ export const EXPERIENCE_DEFINITIONS = [
         "role": "FullStack Java Software Engineer",
         "period": "Янв 2017 - Фев 2022",
         "description": "Разработал высоконагруженные распределенные серверные системы и AdTech решения, обрабатывающие ~1 миллион RPS.",
+        "focusAreas": [
+          "Высоконагруженные системы",
+          "AdTech / OpenRTB",
+          "Распределённые системы",
+          "Оптимизация производительности",
+          "AWS"
+        ],
         "achievements": [
           "Построил систему OpenRTB bidder, обрабатывающую ~1 миллион запросов в секунду.",
           "Спроектировал архитектуру для сервисов предиктивного моделирования на AWS.",
@@ -709,6 +716,13 @@ export const EXPERIENCE_DEFINITIONS = [
         "role": "FullStack Java Software Engineer",
         "period": "Jan 2017 - Feb 2022",
         "description": "Developed high-load distributed server systems and AdTech solutions processing ~1 million RPS.",
+        "focusAreas": [
+          "High-Load Systems",
+          "AdTech / OpenRTB",
+          "Distributed Systems",
+          "Performance Engineering",
+          "AWS"
+        ],
         "achievements": [
           "Built an OpenRTB bidder system processing ~1 million requests per second.",
           "Designed architecture for predictive modeling services on AWS.",
@@ -732,6 +746,12 @@ export const EXPERIENCE_DEFINITIONS = [
         "role": "Software Developer",
         "period": "Авг 2016 - Дек 2016",
         "description": "Модификация ПО и исследование фреймворков.",
+        "focusAreas": [
+          "Корпоративные приложения",
+          "Исследование фреймворков",
+          "Интеграция технологий",
+          "Поддержка систем"
+        ],
         "achievements": [
           "Быстрое внедрение новых фреймворков и технологий для клиентских проектов.",
           "Модификация и поддержка существующих корпоративных приложений."
@@ -741,6 +761,12 @@ export const EXPERIENCE_DEFINITIONS = [
         "role": "Software Developer",
         "period": "Aug 2016 - Dec 2016",
         "description": "Software modification and framework research.",
+        "focusAreas": [
+          "Enterprise Applications",
+          "Framework Research",
+          "Technology Integration",
+          "System Maintenance"
+        ],
         "achievements": [
           "Rapid adoption of new frameworks and technologies for client projects.",
           "Modification and support of existing enterprise applications."
@@ -763,6 +789,12 @@ export const EXPERIENCE_DEFINITIONS = [
         "role": "Software Developer",
         "period": "Авг 2015 - Авг 2016",
         "description": "Разработка игр и оптимизация движка для мобильных платформ.",
+        "focusAreas": [
+          "Разработка игр",
+          "Мобильные платформы",
+          "Оптимизация движка",
+          "C# / UWP"
+        ],
         "achievements": [
           "Оптимизировал игровой движок для устройств с ограниченными ресурсами.",
           "Разработал приложения Universal Windows Platform (UWP) на C#."
@@ -772,6 +804,12 @@ export const EXPERIENCE_DEFINITIONS = [
         "role": "Software Developer",
         "period": "Aug 2015 - Aug 2016",
         "description": "Game development and engine optimization for mobile platforms.",
+        "focusAreas": [
+          "Game Development",
+          "Mobile Platforms",
+          "Engine Optimization",
+          "C# / UWP"
+        ],
         "achievements": [
           "Optimized game engine for resource-constrained mobile devices.",
           "Developed Universal Windows Platform (UWP) applications in C#."

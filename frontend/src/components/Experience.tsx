@@ -52,23 +52,21 @@ const Experience: React.FC = () => {
 
                 <p className="text-gray-300 mb-6 max-w-3xl">{job.description}</p>
 
-                {job.focusAreas && job.focusAreas.length > 0 && (
-                  <div className="mb-6">
-                    <p className="mb-2 text-xs font-mono uppercase tracking-[0.16em] text-secondary">
-                      {t('experience.focusAreas')}
-                    </p>
-                    <ul className="flex flex-wrap gap-2" aria-label={t('experience.focusAreas')}>
-                      {job.focusAreas.map((focusArea) => (
-                        <li
-                          key={focusArea}
-                          className="rounded-md border border-accent-magenta/20 bg-accent-magenta/10 px-3 py-1.5 text-xs font-medium text-gray-200"
-                        >
-                          {focusArea}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                <div className="mb-6">
+                  <p className="mb-2 text-xs font-mono uppercase tracking-[0.16em] text-secondary">
+                    {t('experience.focusAreas')}
+                  </p>
+                  <ul className="flex flex-wrap gap-2" aria-label={t('experience.focusAreas')}>
+                    {job.focusAreas.map((focusArea) => (
+                      <li
+                        key={focusArea}
+                        className="rounded-md border border-accent-magenta/20 bg-accent-magenta/10 px-3 py-1.5 text-xs font-medium text-gray-200"
+                      >
+                        {focusArea}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
                 <div className="space-y-2 mb-6">
                   {job.achievements.map((achievement, idx) => (
