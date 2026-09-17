@@ -7,7 +7,7 @@ import EmailContactButton from './EmailContactButton';
 import PhoneContactButton from './PhoneContactButton';
 import TelegramContactButton from './TelegramContactButton';
 import { useLanguage } from '../i18n/hooks/useLanguage';
-import { getTranslatedExperience, getTranslatedSkills } from '../i18n/utils/getTranslatedData';
+import { getExperience, getSkills } from '../content';
 import { ContactApiError, submitContact } from '../api/contact';
 
 type FormData = {
@@ -24,8 +24,8 @@ const Contact: React.FC = () => {
   const [submitMessage, setSubmitMessage] = useState<string>('');
   const messageContent = watch('message', '');
 
-  const experienceItems = useMemo(() => getTranslatedExperience(language), [language]);
-  const skills = useMemo(() => getTranslatedSkills(language), [language]);
+  const experienceItems = useMemo(() => getExperience(language), [language]);
+  const skills = useMemo(() => getSkills(language), [language]);
 
   const messageLength = messageContent.length;
   const isSizeWarning = messageLength > 4000;

@@ -2,12 +2,12 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Briefcase, Calendar, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../i18n/hooks/useLanguage';
-import { getTranslatedExperience } from '../i18n/utils/getTranslatedData';
+import { getExperience } from '../content';
 
 const Experience: React.FC = () => {
   const { t, language } = useLanguage();
   
-  const experienceItems = useMemo(() => getTranslatedExperience(language), [language]);
+  const experienceItems = useMemo(() => getExperience(language), [language]);
   
   return (
     <section id="experience" className="py-24 bg-surface relative overflow-hidden scroll-mt-24">

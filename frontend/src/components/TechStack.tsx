@@ -2,13 +2,12 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ResponsiveContainer, BarChart, Bar, XAxis, Cell, YAxis, CartesianGrid } from 'recharts';
 import { useLanguage } from '../i18n/hooks/useLanguage';
-import { TechSkill } from '../types';
-import { getTranslatedSkills } from '../i18n/utils/getTranslatedData';
+import { getSkills } from '../content';
 
 const TechStack: React.FC = () => {
   const { t, language } = useLanguage();
   
-  const skills = useMemo(() => getTranslatedSkills(language), [language]);
+  const skills = useMemo(() => getSkills(language), [language]);
   
   return (
     <section id="skills" className="py-24 bg-surface border-y border-white/5 scroll-mt-24">

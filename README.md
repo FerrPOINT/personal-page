@@ -49,6 +49,12 @@ npm run dev
 
 The frontend runs at `http://localhost:8888` and proxies `/api` to the backend at `http://localhost:9000`.
 
+## Portfolio content
+
+Projects, experience, skills, and article metadata are maintained as typed Git-managed content in `frontend/src/content`. UI translations contain labels only, while long article bodies are stored as language-specific Markdown and loaded when opened.
+
+Project media is local and responsive. See `frontend/src/content/README.md` for the image optimization command and the required AVIF/WebP variants.
+
 ## Checks
 
 ```bash

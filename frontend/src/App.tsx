@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { LanguageProvider } from './i18n/context/LanguageContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -7,8 +7,9 @@ import Projects from './components/Projects';
 import Insights from './components/Insights';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
+import { lazyWithReload } from './utils/lazyWithReload';
 
-const TechStack = lazy(() => import('./components/TechStack'));
+const TechStack = lazyWithReload('tech-stack', () => import('./components/TechStack'));
 
 const DeferredTechStack: React.FC = () => {
   const boundary = useRef<HTMLDivElement>(null);

@@ -1,9 +1,10 @@
-import React, { lazy, Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Mail } from 'lucide-react';
 import { useLanguage } from '../i18n/hooks/useLanguage';
+import { lazyWithReload } from '../utils/lazyWithReload';
 
-const HeroScene = lazy(() => import('./HeroScene'));
+const HeroScene = lazyWithReload('hero-scene', () => import('./HeroScene'));
 
 const Hero: React.FC = () => {
   const { t } = useLanguage();
