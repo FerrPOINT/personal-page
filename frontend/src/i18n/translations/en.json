@@ -74,7 +74,8 @@
     "loading": "Loading project…"
   },
   "experience": {
-    "title": "Professional Journey"
+    "title": "Professional Journey",
+    "focusAreas": "Key focus areas"
   },
   "techStack": {
     "title": "Technical Expertise",
@@ -155,7 +156,7 @@
       "downloadResume": "Download Resume",
       "printResume": "Print / Save PDF",
       "professionalSummary": "Professional Summary",
-      "summaryText": "Software Engineer with over 10 years of experience in designing and implementing complex IT solutions. Specializing in high-load distributed systems, microservices architectures, and AI-powered applications. Expert in Java (Spring Boot) and Python (AI/ML), with deep knowledge of DevOps practices (Docker, K8s).",
+      "summaryText": "Software engineer and architect with over 10 years of experience and a track record of contributing across multiple enterprise projects. Designed banking and FinTech systems with demanding security, performance, and reliability requirements. Specializes in Java/Spring, high-load distributed systems, AI applications, and DevOps.",
       "experience": "Experience",
       "technicalSkills": "Technical Skills"
     }

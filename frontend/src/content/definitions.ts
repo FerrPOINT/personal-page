@@ -642,22 +642,36 @@ export const EXPERIENCE_DEFINITIONS = [
       "ru": {
         "role": "Java Developer / Architect",
         "period": "Апр 2022 - Настоящее время",
-        "description": "Руководство разработкой сложных распределенных систем, включая архитектуру Multi-Agent AI, сервисы безопасности FinTech и HR платформы.",
+        "description": "Разработка и архитектурное сопровождение нескольких enterprise-проектов WMT Group, включая банковские и FinTech-системы, AI-продукты и HR-платформы. Зоны ответственности — безопасность, производительность, надёжность и полный цикл поставки.",
+        "focusAreas": [
+          "Многопроектная работа",
+          "Банковские системы",
+          "Безопасность",
+          "Performance Engineering"
+        ],
         "achievements": [
+          "Проектировал защищённые интеграции и криптографические сервисы для банковских проектов, включая цифровые подписи, аудит и работу с чувствительными данными.",
+          "Проводил профилирование и оптимизацию Java/Spring-сервисов, SQL и межсервисного взаимодействия, устраняя узкие места под высокой нагрузкой.",
           "Спроектировал Multi-Agent систему с использованием LangChain/LangGraph с 10+ автономными агентами.",
           "Разработал комплексную HR платформу для рекрутинга (Full-Stack) с 4 независимыми модулями.",
-          "Реализовал криптографические сервисы (алгоритмы GOST) для обработки высоконагруженных цифровых подписей.",
           "Настроил end-to-end CI/CD пайплайны в GitLab с автоматическим сканированием безопасности."
         ]
       },
       "en": {
         "role": "Java Developer / Architect",
         "period": "Apr 2022 - Present",
-        "description": "Leading development of complex distributed systems, including Multi-Agent AI architecture, FinTech security services, and HR platforms.",
+        "description": "Engineering and architectural ownership across multiple WMT Group enterprise projects, including banking and FinTech systems, AI products, and HR platforms. Core responsibilities include security, performance, reliability, and end-to-end delivery.",
+        "focusAreas": [
+          "Multi-project Delivery",
+          "Banking Systems",
+          "Security",
+          "Performance Engineering"
+        ],
         "achievements": [
+          "Designed secure integrations and cryptographic services for banking projects, including digital signatures, audit trails, and sensitive-data handling.",
+          "Profiled and optimized Java/Spring services, SQL, and service-to-service communication to remove bottlenecks under high load.",
           "Architected a Multi-Agent System using LangChain/LangGraph with 10+ autonomous agents.",
           "Developed a comprehensive HR Recruiting Platform (Full-Stack) with 4 independent modules.",
-          "Implemented Cryptographic Services (GOST algorithms) handling high-load digital signatures.",
           "Established end-to-end CI/CD pipelines in GitLab with automated security scanning."
         ]
       }

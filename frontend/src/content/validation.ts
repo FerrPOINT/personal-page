@@ -56,6 +56,17 @@ export function assertPortfolioContent(): void {
 
   for (const experience of EXPERIENCE_DEFINITIONS) {
     assertLocalizedRecord(experience.locales, `Experience ${experience.id}`);
+    for (const locale of locales) {
+      const content = experience.locales[locale];
+      assertText(content.role, `Experience ${experience.id} role (${locale})`);
+      assertText(content.description, `Experience ${experience.id} description (${locale})`);
+      if (content.achievements.length === 0 || content.achievements.some((item) => !item.trim())) {
+        throw new Error(`Experience ${experience.id} has incomplete achievements (${locale})`);
+      }
+      if (content.focusAreas?.some((item) => !item.trim())) {
+        throw new Error(`Experience ${experience.id} has incomplete focus areas (${locale})`);
+      }
+    }
   }
   for (const article of ARTICLE_DEFINITIONS) {
     assertLocalizedRecord(article.locales, `Article ${article.slug}`);

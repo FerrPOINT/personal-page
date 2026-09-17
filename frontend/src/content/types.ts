@@ -55,6 +55,7 @@ export interface ExperienceLocaleContent {
   role: string;
   period: string;
   description: string;
+  focusAreas?: string[];
   achievements: string[];
 }
 

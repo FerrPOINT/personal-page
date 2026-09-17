@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ARTICLE_DEFINITIONS, PROJECT_DEFINITIONS } from './definitions';
-import { getArticle, getArticles, getProjects } from './selectors';
+import { getArticle, getArticles, getExperience, getProjects } from './selectors';
 import { assertPortfolioContent } from './validation';
 
 describe('portfolio content', () => {
@@ -28,6 +28,21 @@ describe('portfolio content', () => {
         expect(Object.values(media.avif).concat(Object.values(media.webp)).every((url) => !/^https?:\/\//.test(url))).toBe(true);
       }
     }
+  });
+
+  it('keeps the WMT multi-project focus localized', () => {
+    expect(getExperience('ru')[0].focusAreas).toEqual([
+      'Многопроектная работа',
+      'Банковские системы',
+      'Безопасность',
+      'Performance Engineering',
+    ]);
+    expect(getExperience('en')[0].focusAreas).toEqual([
+      'Multi-project Delivery',
+      'Banking Systems',
+      'Security',
+      'Performance Engineering',
+    ]);
   });
 
   it('loads article bodies separately from summaries', async () => {
