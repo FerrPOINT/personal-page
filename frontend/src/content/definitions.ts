@@ -745,12 +745,12 @@ export const EXPERIENCE_DEFINITIONS = [
       "ru": {
         "role": "Software Developer",
         "period": "Авг 2016 - Дек 2016",
-        "description": "Модификация ПО и исследование фреймворков.",
+        "description": "Развитие и поддержка корпоративных приложений, подбор и внедрение технологий для клиентских проектов.",
         "focusAreas": [
           "Корпоративные приложения",
-          "Исследование фреймворков",
-          "Интеграция технологий",
-          "Поддержка систем"
+          "Развитие существующих систем",
+          "Внедрение технологий",
+          "Поддержка и сопровождение"
         ],
         "achievements": [
           "Быстрое внедрение новых фреймворков и технологий для клиентских проектов.",
@@ -760,12 +760,12 @@ export const EXPERIENCE_DEFINITIONS = [
       "en": {
         "role": "Software Developer",
         "period": "Aug 2016 - Dec 2016",
-        "description": "Software modification and framework research.",
+        "description": "Developed and maintained enterprise applications, evaluating and introducing technologies for client projects.",
         "focusAreas": [
           "Enterprise Applications",
-          "Framework Research",
-          "Technology Integration",
-          "System Maintenance"
+          "Existing System Evolution",
+          "Technology Adoption",
+          "Maintenance and Support"
         ],
         "achievements": [
           "Rapid adoption of new frameworks and technologies for client projects.",
