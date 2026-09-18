@@ -67,8 +67,8 @@ describe('portfolio content', () => {
     ]);
     expect(getExperience('ru')[1].company).toBe('WMT Group');
     expect(getExperience('en')[1].company).toBe('WMT Group');
-    expect(getExperience('ru')[1].period).toBe('Апр 2022 - Весна 2026');
-    expect(getExperience('en')[1].period).toBe('Apr 2022 - Spring 2026');
+    expect(getExperience('ru')[1].period).toBe('Апр 2022 - Март 2026');
+    expect(getExperience('en')[1].period).toBe('Apr 2022 - Mar 2026');
   });
 
   it('loads article bodies separately from summaries', async () => {

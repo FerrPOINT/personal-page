@@ -816,7 +816,7 @@ export const EXPERIENCE_DEFINITIONS = [
     "locales": {
       "ru": {
         "role": "Java Developer / Architect",
-        "period": "Апр 2022 - Весна 2026",
+        "period": "Апр 2022 - Март 2026",
         "description": "Разработка и архитектура портфеля сложных enterprise-систем WMT Group: PDLC-платформы полного цикла, агентные AI-системы, банковские и FinTech-сервисы, HR-продукты. Зоны ответственности — системный дизайн, безопасность, производительность, надёжность и поставка.",
         "focusAreas": [
           "Enterprise-платформы",
@@ -835,7 +835,7 @@ export const EXPERIENCE_DEFINITIONS = [
       },
       "en": {
         "role": "Java Developer / Architect",
-        "period": "Apr 2022 - Spring 2026",
+        "period": "Apr 2022 - Mar 2026",
         "description": "Engineering and architecture across a portfolio of complex WMT Group enterprise systems: full-cycle PDLC platforms, agentic AI systems, banking and FinTech services, and HR products. Responsibilities span system design, security, performance, reliability, and delivery.",
         "focusAreas": [
           "Enterprise Platforms",
