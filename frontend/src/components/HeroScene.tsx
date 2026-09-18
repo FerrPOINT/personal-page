@@ -114,7 +114,7 @@ export default function HeroScene({ labels }: { labels: readonly [string, string
       <ambientLight intensity={0.2} />
       <Stars radius={120} depth={60} count={5000} factor={4} saturation={0} fade speed={0.3} />
       <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.2}>
-        <group rotation={[0.2, 0, 0]} position={[2, 0, 0]}>
+        <group rotation={[0.2, 0, 0]} position={[0, 0, 0]}>
           <Sun />
           {planets.map((planet) => <Planet key={planet[4]} data={planet} />)}
           <Spaceship radiusX={6} radiusZ={6} speed={0.6} offset={0} yOffset={0.5} />
