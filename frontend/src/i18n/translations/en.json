@@ -106,6 +106,8 @@
     "description": "Software Architect with 10+ years of experience. Available for high-load system design, technical leadership, and complex AI integrations.",
     "email": "Email",
     "phone": "Phone",
+    "copy": "Copy: {label}",
+    "copied": "Copied: {label}",
     "location": "Location",
     "locationValue": "Novosibirsk, Russia (Remote/Relocation)",
     "github": "GitHub",
@@ -113,8 +115,6 @@
     "telegram": {
       "label": "Telegram",
       "writeButton": "Write in Telegram",
-      "copyTooltip": "Copy username",
-      "copied": "Copied!",
       "alsoWrite": "Also write in Telegram",
       "shareMessage": "Name: {name}\nEmail: {email}\nMessage: {message}"
     },

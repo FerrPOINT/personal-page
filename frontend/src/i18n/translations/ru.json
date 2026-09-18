@@ -106,6 +106,8 @@
     "description": "Архитектор ПО с опытом работы 10+ лет. Доступен для проектирования высоконагруженных систем, технического лидерства и сложных интеграций ИИ.",
     "email": "Email",
     "phone": "Телефон",
+    "copy": "Скопировать: {label}",
+    "copied": "Скопировано: {label}",
     "location": "Местоположение",
     "locationValue": "Новосибирск, Россия (Удаленно/Релокация)",
     "github": "GitHub",
@@ -113,8 +115,6 @@
     "telegram": {
       "label": "Telegram",
       "writeButton": "Написать в Telegram",
-      "copyTooltip": "Скопировать username",
-      "copied": "Скопировано!",
       "alsoWrite": "Также написать в Telegram",
       "shareMessage": "Имя: {name}\nEmail: {email}\nСообщение: {message}"
     },

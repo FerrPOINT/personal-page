@@ -1,11 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { MapPin, Send, FileText, Printer } from 'lucide-react';
+import { Mail, MapPin, Phone, Send, FileText, Printer } from 'lucide-react';
 import Modal from './Modal';
-import EmailContactButton from './EmailContactButton';
-import PhoneContactButton from './PhoneContactButton';
-import TelegramContactButton from './TelegramContactButton';
+import ContactMethod from './ContactMethod';
 import { useLanguage } from '../i18n/hooks/useLanguage';
 import { getExperience, getSkills } from '../content';
 import { ContactApiError, submitContact } from '../api/contact';
@@ -104,11 +102,30 @@ const Contact: React.FC = () => {
             </p>
 
             <div className="space-y-6 mb-12">
-              <EmailContactButton email="ferruspoint@mail.ru" />
+              <ContactMethod
+                href="mailto:ferruspoint@mail.ru"
+                icon={Mail}
+                label={t('contact.email')}
+                value="ferruspoint@mail.ru"
+                variant="email"
+              />
 
-              <PhoneContactButton phone="+7 (983) 320-97-85" />
+              <ContactMethod
+                href="tel:+79833209785"
+                icon={Phone}
+                label={t('contact.phone')}
+                value="+7 (983) 320-97-85"
+                variant="phone"
+              />
 
-              <TelegramContactButton username="azhukov7" />
+              <ContactMethod
+                href="https://t.me/azhukov7"
+                icon={Send}
+                label={t('contact.telegram.label')}
+                value="@azhukov7"
+                variant="telegram"
+                external
+              />
 
               <a href="https://www.google.com/maps/search/?api=1&query=Novosibirsk,+Russia" target="_blank" rel="noopener noreferrer" className="flex items-center group cursor-pointer">
                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mr-4 group-hover:bg-white/20 transition-colors">
