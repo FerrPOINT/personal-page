@@ -166,8 +166,8 @@ export const PROJECT_DEFINITIONS = [
           "large": analyticsAgent1600Webp
         },
         "alt": {
-          "ru": "Интерфейс аналитического AI-агента с диалогом, KPI, графиком и таблицей результатов",
-          "en": "Analytics AI agent interface with a conversation, KPIs, chart, and results table"
+          "ru": "Диалог с аналитическим AI-агентом, который отвечает встроенными графиками и таблицами",
+          "en": "Analytics AI agent conversation with charts and tables embedded in assistant responses"
         },
         "caption": {
           "ru": "Обезличенный макет интерфейса на синтетических данных.",
