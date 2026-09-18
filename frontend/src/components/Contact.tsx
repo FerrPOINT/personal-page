@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { Mail, MapPin, Phone, Send, FileText, Printer } from 'lucide-react';
+import { Github, Mail, MapPin, Phone, Send, FileText, Printer } from 'lucide-react';
 import Modal from './Modal';
 import ContactMethod from './ContactMethod';
 import { useLanguage } from '../i18n/hooks/useLanguage';
@@ -124,6 +124,15 @@ const Contact: React.FC = () => {
                 label={t('contact.telegram.label')}
                 value="@azhukov7"
                 variant="telegram"
+                external
+              />
+
+              <ContactMethod
+                href="https://github.com/FerrPOINT"
+                icon={Github}
+                label={t('contact.github')}
+                value="FerrPOINT"
+                variant="github"
                 external
               />
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Check, Clipboard, type LucideIcon } from 'lucide-react';
 import { useLanguage } from '../i18n/hooks/useLanguage';
 
-type ContactVariant = 'email' | 'phone' | 'telegram';
+type ContactVariant = 'email' | 'phone' | 'telegram' | 'github';
 
 interface Props {
   href: string;
@@ -30,6 +30,10 @@ const variantStyles: Record<ContactVariant, {
   telegram: {
     icon: 'text-accent-cyan',
     value: 'group-hover:text-accent-cyan',
+  },
+  github: {
+    icon: 'text-white',
+    value: 'group-hover:text-white',
   },
 };
 

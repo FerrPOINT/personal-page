@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Mail, Phone, Send } from 'lucide-react';
+import { Github, Mail, Phone, Send } from 'lucide-react';
 import ContactMethod from '../ContactMethod';
 
 vi.mock('../../i18n/hooks/useLanguage', () => ({
@@ -21,16 +21,19 @@ describe('contact links', () => {
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     const { container } = render(<>
       <ContactMethod href="https://t.me/azhukov7" icon={Send} label="Telegram" value="@azhukov7" variant="telegram" external />
+      <ContactMethod href="https://github.com/FerrPOINT" icon={Github} label="GitHub" value="FerrPOINT" variant="github" external />
       <ContactMethod href="mailto:test@example.com" icon={Mail} label="Email" value="test@example.com" variant="email" />
       <ContactMethod href="tel:+79833209785" icon={Phone} label="Phone" value="+7 (983) 320-97-85" variant="phone" />
     </>);
     expect(screen.getByRole('link', { name: 'Telegram @azhukov7' })).toHaveAttribute('href', 'https://t.me/azhukov7');
+    expect(screen.getByRole('link', { name: 'GitHub FerrPOINT' })).toHaveAttribute('href', 'https://github.com/FerrPOINT');
     expect(screen.getByRole('link', { name: 'Email test@example.com' })).toHaveAttribute('href', 'mailto:test@example.com');
     expect(screen.getByRole('link', { name: 'Phone +7 (983) 320-97-85' })).toHaveAttribute('href', 'tel:+79833209785');
     expect(screen.getByRole('link', { name: 'Telegram @azhukov7' })).toHaveAttribute('target', '_blank');
-    expect(container.querySelectorAll('a > div.rounded-full')).toHaveLength(3);
+    expect(screen.getByRole('link', { name: 'GitHub FerrPOINT' })).toHaveAttribute('target', '_blank');
+    expect(container.querySelectorAll('a > div.rounded-full')).toHaveLength(4);
     expect(container.querySelector('a button')).toBeNull();
-    expect([...container.querySelectorAll('a svg')]).toHaveLength(3);
+    expect([...container.querySelectorAll('a svg')]).toHaveLength(4);
     for (const icon of container.querySelectorAll('a svg')) {
       expect(icon).toHaveClass('group-hover:scale-110');
       expect(icon).toHaveClass('group-hover:brightness-125');
@@ -38,6 +41,7 @@ describe('contact links', () => {
     }
     expect(screen.getByRole('button', { name: 'Copy: Email' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy: Phone' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy: GitHub' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Copy: Telegram' }));
     expect(writeText).toHaveBeenCalledWith('@azhukov7');
   });
