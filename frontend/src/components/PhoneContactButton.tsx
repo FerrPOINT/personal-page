@@ -13,8 +13,8 @@ const PhoneContactButton: React.FC<Props> = ({ phone, className = '' }) => {
     window.setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <div className={`flex items-center relative ${className}`}>
-      <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="flex min-w-0 flex-1 items-center group" aria-label={`Phone ${phone}`}>
+    <div className={`relative flex w-fit max-w-full items-center ${className}`}>
+      <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="group flex min-w-0 items-center" aria-label={`Phone ${phone}`}>
         <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mr-4 group-hover:bg-accent-magenta/20 transition-colors" aria-hidden="true">
           <Phone className="w-5 h-5 text-accent-magenta" />
         </div>
@@ -23,7 +23,7 @@ const PhoneContactButton: React.FC<Props> = ({ phone, className = '' }) => {
           <p className="text-white font-medium group-hover:text-accent-magenta transition-colors">{phone}</p>
         </div>
       </a>
-      <button type="button" onClick={copy} className="p-2 rounded hover:bg-white/10 transition-colors"
+      <button type="button" onClick={copy} className="ml-2 shrink-0 rounded p-2 transition-colors hover:bg-white/10"
         aria-label={t('contact.telegram.copyTooltip')} title={t('contact.telegram.copyTooltip')}>
         {copied ? <Check className="w-4 h-4 text-green-400" /> : <Clipboard className="w-4 h-4 text-secondary" />}
       </button>

@@ -13,8 +13,8 @@ const EmailContactButton: React.FC<Props> = ({ email, className = '' }) => {
     window.setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <div className={`flex items-center relative ${className}`}>
-      <a href={`mailto:${email}`} className="flex min-w-0 flex-1 items-center group" aria-label={`Email ${email}`}>
+    <div className={`relative flex w-fit max-w-full items-center ${className}`}>
+      <a href={`mailto:${email}`} className="group flex min-w-0 items-center" aria-label={`Email ${email}`}>
         <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mr-4 group-hover:bg-red-400/20 transition-colors" aria-hidden="true">
           <Mail className="w-5 h-5 text-red-400" />
         </div>
@@ -23,7 +23,7 @@ const EmailContactButton: React.FC<Props> = ({ email, className = '' }) => {
           <p className="text-white font-medium group-hover:text-red-400 transition-colors">{email}</p>
         </div>
       </a>
-      <button type="button" onClick={copy} className="p-2 rounded hover:bg-white/10 transition-colors"
+      <button type="button" onClick={copy} className="ml-2 shrink-0 rounded p-2 transition-colors hover:bg-white/10"
         aria-label={t('contact.telegram.copyTooltip')} title={t('contact.telegram.copyTooltip')}>
         {copied ? <Check className="w-4 h-4 text-green-400" /> : <Clipboard className="w-4 h-4 text-secondary" />}
       </button>

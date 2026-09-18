@@ -14,9 +14,9 @@ const TelegramContactButton: React.FC<Props> = ({ username, className = '' }) =>
     window.setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <div className={`flex items-center relative ${className}`} data-testid="telegram-contact-section">
+    <div className={`relative flex w-fit max-w-full items-center ${className}`} data-testid="telegram-contact-section">
       <a href={`https://t.me/${username}`} target="_blank" rel="noopener noreferrer"
-        className="flex min-w-0 flex-1 items-center group" aria-label={`Telegram ${value}`}>
+        className="group flex min-w-0 items-center" aria-label={`Telegram ${value}`}>
         <div className="w-12 flex items-center justify-center mr-4" aria-hidden="true">
           <Send className="w-5 h-5 text-accent-cyan" />
         </div>
@@ -25,7 +25,7 @@ const TelegramContactButton: React.FC<Props> = ({ username, className = '' }) =>
           <p className="text-white font-medium group-hover:text-accent-cyan transition-colors">{value}</p>
         </div>
       </a>
-      <button type="button" onClick={copy} className="p-2 rounded hover:bg-white/10 transition-colors"
+      <button type="button" onClick={copy} className="ml-2 shrink-0 rounded p-2 transition-colors hover:bg-white/10"
         aria-label={t('contact.telegram.copyTooltip')} title={t('contact.telegram.copyTooltip')}>
         {copied ? <Check className="w-4 h-4 text-green-400" /> : <Clipboard className="w-4 h-4 text-secondary" />}
       </button>
