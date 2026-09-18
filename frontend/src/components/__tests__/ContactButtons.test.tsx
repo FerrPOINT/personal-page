@@ -29,6 +29,12 @@ describe('contact links', () => {
     expect(screen.getByRole('link', { name: 'Phone +7 (983) 320-97-85' })).toHaveAttribute('href', 'tel:+79833209785');
     expect(screen.getByRole('link', { name: 'Telegram @azhukov7' })).toHaveAttribute('target', '_blank');
     expect(container.querySelector('a button')).toBeNull();
+    expect([...container.querySelectorAll('a svg')]).toHaveLength(3);
+    for (const icon of container.querySelectorAll('a svg')) {
+      expect(icon).toHaveClass('group-hover:scale-110');
+      expect(icon).toHaveClass('group-hover:brightness-125');
+      expect(icon).toHaveClass('group-hover:drop-shadow-[0_0_8px_currentColor]');
+    }
     expect(screen.getByRole('button', { name: 'Copy: Email' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy: Phone' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Copy: Telegram' }));

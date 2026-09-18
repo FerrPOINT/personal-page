@@ -22,16 +22,16 @@ const variantStyles: Record<ContactVariant, {
 }> = {
   email: {
     icon: 'text-red-400',
-    iconContainer: 'h-12 w-12 rounded-full bg-white/5 group-hover:bg-red-400/20',
+    iconContainer: 'h-12 w-12 rounded-full bg-white/5',
     value: 'group-hover:text-red-400',
   },
   phone: {
     icon: 'text-accent-magenta',
-    iconContainer: 'h-12 w-12 rounded-full bg-white/5 group-hover:bg-accent-magenta/20',
+    iconContainer: 'h-12 w-12 rounded-full bg-white/5',
     value: 'group-hover:text-accent-magenta',
   },
   telegram: {
-    icon: 'text-accent-cyan group-hover:scale-110 group-hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.9)]',
+    icon: 'text-accent-cyan',
     iconContainer: 'h-12 w-12',
     value: 'group-hover:text-accent-cyan',
   },
@@ -70,7 +70,9 @@ const ContactMethod: React.FC<Props> = ({
           className={`mr-4 flex shrink-0 items-center justify-center transition-all ${styles.iconContainer}`}
           aria-hidden="true"
         >
-          <Icon className={`h-5 w-5 transition-all ${styles.icon}`} />
+          <Icon
+            className={`h-5 w-5 transition-all duration-200 group-hover:scale-110 group-hover:brightness-125 group-hover:drop-shadow-[0_0_8px_currentColor] ${styles.icon}`}
+          />
         </div>
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-wider text-secondary">{label}</p>
