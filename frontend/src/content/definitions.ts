@@ -3,6 +3,10 @@ import multiAgent800Avif from '../assets/projects/multi-agent-ai-800.avif';
 import multiAgent1600Avif from '../assets/projects/multi-agent-ai-1600.avif';
 import multiAgent800Webp from '../assets/projects/multi-agent-ai-800.webp';
 import multiAgent1600Webp from '../assets/projects/multi-agent-ai-1600.webp';
+import analyticsAgent800Avif from '../assets/projects/analytics-agent-800.avif';
+import analyticsAgent1600Avif from '../assets/projects/analytics-agent-1600.avif';
+import analyticsAgent800Webp from '../assets/projects/analytics-agent-800.webp';
+import analyticsAgent1600Webp from '../assets/projects/analytics-agent-1600.webp';
 import adtech800Avif from '../assets/projects/adtech-bidder-800.avif';
 import adtech1600Avif from '../assets/projects/adtech-bidder-1600.avif';
 import adtech800Webp from '../assets/projects/adtech-bidder-800.webp';
@@ -132,8 +136,125 @@ export const PROJECT_DEFINITIONS = [
     }
   },
   {
-    "slug": "adtech-bidder",
+    "slug": "analytics-agent",
     "order": 2,
+    "categories": [
+      "ai",
+      "devops",
+      "fullstack"
+    ],
+    "stack": [
+      "Python",
+      "FastAPI",
+      "LangGraph",
+      "PostgreSQL",
+      "SQLAlchemy",
+      "sqlglot",
+      "Plotly",
+      "Redis",
+      "Langfuse"
+    ],
+    "media": [
+      {
+        "kind": "cover",
+        "avif": {
+          "small": analyticsAgent800Avif,
+          "large": analyticsAgent1600Avif
+        },
+        "webp": {
+          "small": analyticsAgent800Webp,
+          "large": analyticsAgent1600Webp
+        },
+        "alt": {
+          "ru": "Интерфейс аналитического AI-агента с диалогом, KPI, графиком и таблицей результатов",
+          "en": "Analytics AI agent interface with a conversation, KPIs, chart, and results table"
+        },
+        "caption": {
+          "ru": "Обезличенный макет интерфейса на синтетических данных.",
+          "en": "An anonymized interface mockup using synthetic data."
+        }
+      }
+    ],
+    "locales": {
+      "ru": {
+        "title": "Аналитический AI-агент",
+        "role": "Architect / AI Backend",
+        "summary": "Ассистент превращает вопросы на естественном языке в проверяемые таблицы, графики и выгрузки.",
+        "context": "Спроектировал внутреннюю аналитическую платформу, в которой пользователь выбирает рабочую область и задаёт вопрос на естественном языке. Runtime строит типизированный план, разрешает метрики, периоды и фильтры, детерминированно формирует SQL, проверяет его через SQLPolicy и создаёт текст, таблицу и Plotly-график из одного валидированного результата.",
+        "contribution": [
+          "Спроектировал основной путь от пользовательского вопроса и project routing до проверенного результата.",
+          "Разделил ответственность LLM и runtime: модель формирует типизированный контракт анализа, а исполняемый SQL строится только детерминированным кодом.",
+          "Развивал диалоговый контекст, streaming-ответы, визуализацию, экспорт и наблюдаемость аналитического контура."
+        ],
+        "challenges": [
+          "Не допустить исполнения произвольного или придуманного моделью SQL.",
+          "Сохранять смысл связанных follow-up вопросов без переноса нерелевантных фильтров между анализами.",
+          "Гарантировать согласованность текста, таблицы и графика с фактическим результатом запроса."
+        ],
+        "decisions": [
+          "LLM возвращает AnalyticsRequest или ограниченный AnalysisPlan вместо исполняемого SQL.",
+          "Детерминированный SQL builder, bind parameters и единая AST-проверка SQLPolicy образуют безопасную границу данных.",
+          "Один валидированный ResultContract используется для текста, таблицы, графика и повторного экспорта."
+        ],
+        "results": [
+          "Создан единый аналитический контур для нескольких проектных БД без прямой генерации SQL моделью.",
+          "Поддержаны scoped-диалоги, последовательный анализ, Plotly-визуализации и экспорт CSV/XLSX/PNG.",
+          "Ошибки зависимостей, отсутствие данных и необходимость уточнения представлены явными безопасными outcomes."
+        ],
+        "metrics": [
+          {
+            "value": "Typed IR"
+          },
+          {
+            "value": "SQLPolicy"
+          },
+          {
+            "value": "CSV/XLSX/PNG"
+          }
+        ]
+      },
+      "en": {
+        "title": "Analytics AI Agent",
+        "role": "Architect / AI Backend",
+        "summary": "An assistant that turns natural-language questions into verifiable tables, charts, and exports.",
+        "context": "Designed an internal analytics platform where users select a workspace and ask questions in natural language. The runtime builds a typed plan, resolves metrics, periods, and filters, generates SQL deterministically, validates it through SQLPolicy, and produces text, a table, and a Plotly chart from one validated result.",
+        "contribution": [
+          "Designed the main path from user question and project routing to a validated result.",
+          "Separated LLM and runtime responsibilities: the model produces a typed analytics contract while executable SQL is built only by deterministic code.",
+          "Evolved conversational context, streamed responses, visualization, exports, and analytics observability."
+        ],
+        "challenges": [
+          "Preventing execution of arbitrary or model-invented SQL.",
+          "Preserving the meaning of related follow-up questions without leaking irrelevant filters between analyses.",
+          "Keeping narrative, table, and chart output grounded in the actual query result."
+        ],
+        "decisions": [
+          "The LLM returns an AnalyticsRequest or bounded AnalysisPlan instead of executable SQL.",
+          "A deterministic SQL builder, bind parameters, and a single SQLPolicy AST check form the safe data boundary.",
+          "One validated ResultContract drives narrative, table, chart, and repeatable exports."
+        ],
+        "results": [
+          "Established one analytics path across multiple project databases without direct model-generated SQL.",
+          "Delivered scoped conversations, sequential analysis, Plotly visualizations, and CSV/XLSX/PNG exports.",
+          "Dependency failures, no-data cases, and clarification needs are represented as explicit safe outcomes."
+        ],
+        "metrics": [
+          {
+            "value": "Typed IR"
+          },
+          {
+            "value": "SQLPolicy"
+          },
+          {
+            "value": "CSV/XLSX/PNG"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "adtech-bidder",
+    "order": 3,
     "categories": [
       "ai",
       "devops",
@@ -244,7 +365,7 @@ export const PROJECT_DEFINITIONS = [
   },
   {
     "slug": "hr-platform",
-    "order": 3,
+    "order": 4,
     "categories": [
       "devops",
       "fullstack"
@@ -359,7 +480,7 @@ export const PROJECT_DEFINITIONS = [
   },
   {
     "slug": "fintech-crypto",
-    "order": 4,
+    "order": 5,
     "categories": [
       "devops",
       "fullstack"
@@ -468,7 +589,7 @@ export const PROJECT_DEFINITIONS = [
   },
   {
     "slug": "pdlc-platform",
-    "order": 5,
+    "order": 6,
     "categories": [
       "ai",
       "devops",

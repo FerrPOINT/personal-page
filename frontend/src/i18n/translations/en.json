@@ -50,7 +50,7 @@
     }
   },
   "projects": {
-    "title": "Featured Projects",
+    "title": "Notable Projects",
     "description": "Full-Stack development and DevOps solutions delivered at scale. From high-load systems to complete CI/CD pipelines.",
     "viewCaseStudy": "View Detailed Case Study",
     "categories": {

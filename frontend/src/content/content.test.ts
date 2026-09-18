@@ -30,6 +30,14 @@ describe('portfolio content', () => {
     }
   });
 
+  it('publishes the analytics agent without client-identifying content', () => {
+    const analyticsAgent = PROJECT_DEFINITIONS.find((project) => project.slug === 'analytics-agent');
+    expect(analyticsAgent).toBeDefined();
+    expect(analyticsAgent?.locales.ru.title).toBe('Аналитический AI-агент');
+    expect(analyticsAgent?.locales.en.title).toBe('Analytics AI Agent');
+    expect(JSON.stringify(analyticsAgent)).not.toMatch(/мегафон|megafon/i);
+  });
+
   it('defines localized focus areas for every experience', () => {
     for (const locale of ['ru', 'en'] as const) {
       for (const experience of getExperience(locale)) {
