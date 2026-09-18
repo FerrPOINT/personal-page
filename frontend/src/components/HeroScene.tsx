@@ -110,7 +110,7 @@ export default function HeroScene({ labels }: { labels: readonly [string, string
   ];
   return <div className="absolute top-0 right-0 w-full h-[55vh] md:h-full md:w-[75vw]">
     <Canvas className="w-full h-full">
-      <PerspectiveCamera makeDefault position={[0, 18, 38]} fov={40} />
+      <PerspectiveCamera makeDefault position={[0, 20, 42]} fov={40} />
       <ambientLight intensity={0.2} />
       <Stars radius={120} depth={60} count={5000} factor={4} saturation={0} fade speed={0.3} />
       <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.2}>
