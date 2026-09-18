@@ -748,8 +748,61 @@ export const PROJECT_DEFINITIONS = [
 
 export const EXPERIENCE_DEFINITIONS = [
   {
-    "id": "1",
+    "id": "independent-products",
     "order": 1,
+    "company": "Independent / Freelance",
+    "tech": [
+      "Java 25",
+      "Spring Boot 4",
+      "Rust",
+      "Python",
+      "FastAPI",
+      "React",
+      "PostgreSQL",
+      "Docker"
+    ],
+    "locales": {
+      "ru": {
+        "role": "Software Architect / FullStack Engineer",
+        "period": "2025 - Настоящее время",
+        "description": "Параллельно развиваю собственные open-source и self-hosted продукты и выполняю фриланс-проекты полного цикла: от анализа задачи и архитектуры до реализации, CI/CD и эксплуатации.",
+        "focusAreas": [
+          "Enterprise-платформы",
+          "PDLC / SDLC",
+          "AI-агенты",
+          "Developer Infrastructure",
+          "Full-Cycle Delivery"
+        ],
+        "achievements": [
+          "Создаю экосистему Base Platform: Task Tracker, Project Workflow, Fleet Control, Wiki / Evidence, Forge CI/CD и Admin Panel — единый PDLC / SDLC-контур от задачи и работы AI-агентов до проверяемого релиза.",
+          "Разрабатываю Java Agent на Java 25 и Spring Boot: долгоживущие агентные сессии, REST / SSE и OpenAI-compatible API, CLI, инструменты с политиками безопасности, MCP и Telegram gateway.",
+          "Проектирую self-hosted enterprise-инструменты с типизированными API-контрактами, аудитом, изоляцией секретов, Docker-развёртыванием и воспроизводимым выпуском.",
+          "Выполняю фриланс-задачи по архитектуре, full-stack разработке, AI-интеграциям, CI/CD и развитию существующих систем."
+        ]
+      },
+      "en": {
+        "role": "Software Architect / FullStack Engineer",
+        "period": "2025 - Present",
+        "description": "In parallel, I build my own open-source and self-hosted products and deliver full-cycle freelance projects, from discovery and architecture through implementation, CI/CD, and operations.",
+        "focusAreas": [
+          "Enterprise Platforms",
+          "PDLC / SDLC",
+          "AI Agents",
+          "Developer Infrastructure",
+          "Full-Cycle Delivery"
+        ],
+        "achievements": [
+          "Building the Base Platform ecosystem: Task Tracker, Project Workflow, Fleet Control, Wiki / Evidence, Forge CI/CD, and Admin Panel — one PDLC / SDLC path from a work item and AI-agent execution to a verifiable release.",
+          "Developing Java Agent on Java 25 and Spring Boot with long-running agent sessions, REST / SSE and OpenAI-compatible APIs, CLI, policy-governed tools, MCP, and a Telegram gateway.",
+          "Designing self-hosted enterprise tools with typed API contracts, auditability, secret isolation, Docker deployment, and reproducible releases.",
+          "Delivering freelance work across architecture, full-stack development, AI integrations, CI/CD, and existing-system evolution."
+        ]
+      }
+    }
+  },
+  {
+    "id": "1",
+    "order": 2,
     "company": "WMT Group",
     "tech": [
       "Java 21",
@@ -803,7 +856,7 @@ export const EXPERIENCE_DEFINITIONS = [
   },
   {
     "id": "2",
-    "order": 2,
+    "order": 3,
     "company": "Jar Soft",
     "tech": [
       "Java",
@@ -856,7 +909,7 @@ export const EXPERIENCE_DEFINITIONS = [
   },
   {
     "id": "3",
-    "order": 3,
+    "order": 4,
     "company": "Improve Group",
     "tech": [
       "Java",
@@ -898,7 +951,7 @@ export const EXPERIENCE_DEFINITIONS = [
   },
   {
     "id": "4",
-    "order": 4,
+    "order": 5,
     "company": "Academ-Media",
     "tech": [
       "Java",

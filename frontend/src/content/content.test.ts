@@ -54,17 +54,19 @@ describe('portfolio content', () => {
     expect(getExperience('ru')[0].focusAreas).toEqual([
       'Enterprise-платформы',
       'PDLC / SDLC',
-      'Agentic AI',
-      'Банки и FinTech',
-      'Security & Performance',
+      'AI-агенты',
+      'Developer Infrastructure',
+      'Full-Cycle Delivery',
     ]);
     expect(getExperience('en')[0].focusAreas).toEqual([
       'Enterprise Platforms',
       'PDLC / SDLC',
-      'Agentic AI',
-      'Banking & FinTech',
-      'Security & Performance',
+      'AI Agents',
+      'Developer Infrastructure',
+      'Full-Cycle Delivery',
     ]);
+    expect(getExperience('ru')[1].company).toBe('WMT Group');
+    expect(getExperience('en')[1].company).toBe('WMT Group');
   });
 
   it('loads article bodies separately from summaries', async () => {
