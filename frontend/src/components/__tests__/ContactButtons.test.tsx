@@ -21,7 +21,7 @@ describe('contact links', () => {
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     const { container } = render(<>
       <ContactMethod href="https://t.me/azhukov7" icon={Send} label="Telegram" value="@azhukov7" variant="telegram" external />
-      <ContactMethod href="https://github.com/FerrPOINT" icon={Github} label="GitHub" value="FerrPOINT" variant="github" external />
+      <ContactMethod href="https://github.com/FerrPOINT" icon={Github} label="GitHub" value="FerrPOINT" copyValue="https://github.com/FerrPOINT" variant="github" external />
       <ContactMethod href="mailto:test@example.com" icon={Mail} label="Email" value="test@example.com" variant="email" />
       <ContactMethod href="tel:+79833209785" icon={Phone} label="Phone" value="+7 (983) 320-97-85" variant="phone" />
     </>);
@@ -44,5 +44,7 @@ describe('contact links', () => {
     expect(screen.getByRole('button', { name: 'Copy: GitHub' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Copy: Telegram' }));
     expect(writeText).toHaveBeenCalledWith('@azhukov7');
+    await user.click(screen.getByRole('button', { name: 'Copy: GitHub' }));
+    expect(writeText).toHaveBeenLastCalledWith('https://github.com/FerrPOINT');
   });
 });

@@ -132,6 +132,7 @@ const Contact: React.FC = () => {
                 icon={Github}
                 label={t('contact.github')}
                 value="FerrPOINT"
+                copyValue="https://github.com/FerrPOINT"
                 variant="github"
                 external
               />
