@@ -367,6 +367,7 @@ export const PROJECT_DEFINITIONS = [
     "slug": "hr-platform",
     "order": 4,
     "categories": [
+      "ai",
       "devops",
       "fullstack"
     ],

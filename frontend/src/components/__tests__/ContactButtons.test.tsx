@@ -28,6 +28,7 @@ describe('contact links', () => {
     expect(screen.getByRole('link', { name: 'Email test@example.com' })).toHaveAttribute('href', 'mailto:test@example.com');
     expect(screen.getByRole('link', { name: 'Phone +7 (983) 320-97-85' })).toHaveAttribute('href', 'tel:+79833209785');
     expect(screen.getByRole('link', { name: 'Telegram @azhukov7' })).toHaveAttribute('target', '_blank');
+    expect(container.querySelectorAll('a > div.rounded-full')).toHaveLength(3);
     expect(container.querySelector('a button')).toBeNull();
     expect([...container.querySelectorAll('a svg')]).toHaveLength(3);
     for (const icon of container.querySelectorAll('a svg')) {

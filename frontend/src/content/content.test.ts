@@ -38,6 +38,11 @@ describe('portfolio content', () => {
     expect(JSON.stringify(analyticsAgent)).not.toMatch(/мегафон|megafon/i);
   });
 
+  it('includes the HR platform in the AI category', () => {
+    const hrPlatform = PROJECT_DEFINITIONS.find((project) => project.slug === 'hr-platform');
+    expect(hrPlatform?.categories).toContain('ai');
+  });
+
   it('defines localized focus areas for every experience', () => {
     for (const locale of ['ru', 'en'] as const) {
       for (const experience of getExperience(locale)) {

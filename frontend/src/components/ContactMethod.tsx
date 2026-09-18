@@ -17,22 +17,18 @@ interface Props {
 
 const variantStyles: Record<ContactVariant, {
   icon: string;
-  iconContainer: string;
   value: string;
 }> = {
   email: {
     icon: 'text-red-400',
-    iconContainer: 'h-12 w-12 rounded-full bg-white/5',
     value: 'group-hover:text-red-400',
   },
   phone: {
     icon: 'text-accent-magenta',
-    iconContainer: 'h-12 w-12 rounded-full bg-white/5',
     value: 'group-hover:text-accent-magenta',
   },
   telegram: {
     icon: 'text-accent-cyan',
-    iconContainer: 'h-12 w-12',
     value: 'group-hover:text-accent-cyan',
   },
 };
@@ -67,7 +63,7 @@ const ContactMethod: React.FC<Props> = ({
         aria-label={`${label} ${value}`}
       >
         <div
-          className={`mr-4 flex shrink-0 items-center justify-center transition-all ${styles.iconContainer}`}
+          className="mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/5 transition-colors group-hover:bg-white/20"
           aria-hidden="true"
         >
           <Icon
