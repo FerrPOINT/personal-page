@@ -753,7 +753,7 @@ export const EXPERIENCE_DEFINITIONS = [
     "company": "Independent / Freelance",
     "tech": [
       "Java 25",
-      "Spring Boot 4",
+      "Spring Boot 4.1",
       "Rust",
       "Python",
       "FastAPI",
@@ -775,7 +775,7 @@ export const EXPERIENCE_DEFINITIONS = [
         ],
         "achievements": [
           "Создаю экосистему Base Platform: Task Tracker, Project Workflow, Fleet Control, Wiki / Evidence, Forge CI/CD и Admin Panel — единый PDLC / SDLC-контур от задачи и работы AI-агентов до проверяемого релиза.",
-          "Разрабатываю Java Agent на Java 25 и Spring Boot: долгоживущие агентные сессии, REST / SSE и OpenAI-compatible API, CLI, инструменты с политиками безопасности, MCP и Telegram gateway.",
+          "Разрабатываю Java Agent на Java 25 и Spring Boot 4.1: долгоживущие агентные сессии, REST / SSE и OpenAI-compatible API, CLI, инструменты с политиками безопасности, MCP и Telegram gateway.",
           "Проектирую self-hosted enterprise-инструменты с типизированными API-контрактами, аудитом, изоляцией секретов, Docker-развёртыванием и воспроизводимым выпуском.",
           "Выполняю фриланс-задачи по архитектуре, full-stack разработке, AI-интеграциям, CI/CD и развитию существующих систем."
         ]
@@ -793,7 +793,7 @@ export const EXPERIENCE_DEFINITIONS = [
         ],
         "achievements": [
           "Building the Base Platform ecosystem: Task Tracker, Project Workflow, Fleet Control, Wiki / Evidence, Forge CI/CD, and Admin Panel — one PDLC / SDLC path from a work item and AI-agent execution to a verifiable release.",
-          "Developing Java Agent on Java 25 and Spring Boot with long-running agent sessions, REST / SSE and OpenAI-compatible APIs, CLI, policy-governed tools, MCP, and a Telegram gateway.",
+          "Developing Java Agent on Java 25 and Spring Boot 4.1 with long-running agent sessions, REST / SSE and OpenAI-compatible APIs, CLI, policy-governed tools, MCP, and a Telegram gateway.",
           "Designing self-hosted enterprise tools with typed API contracts, auditability, secret isolation, Docker deployment, and reproducible releases.",
           "Delivering freelance work across architecture, full-stack development, AI integrations, CI/CD, and existing-system evolution."
         ]
@@ -1036,8 +1036,28 @@ export const SKILL_DEFINITIONS = [
     }
   },
   {
-    "id": "react-typescript",
+    "id": "rust-axum",
     "order": 5,
+    "level": 82,
+    "category": "languages",
+    "name": {
+      "ru": "Rust / Axum",
+      "en": "Rust / Axum"
+    }
+  },
+  {
+    "id": "agentic-ai-mcp",
+    "order": 6,
+    "level": 90,
+    "category": "ai",
+    "name": {
+      "ru": "Agentic AI / MCP",
+      "en": "Agentic AI / MCP"
+    }
+  },
+  {
+    "id": "react-typescript",
+    "order": 7,
     "level": 80,
     "category": "frameworks",
     "name": {
@@ -1047,7 +1067,7 @@ export const SKILL_DEFINITIONS = [
   },
   {
     "id": "high-load-aws",
-    "order": 6,
+    "order": 8,
     "level": 90,
     "category": "infrastructure",
     "name": {

@@ -5,7 +5,7 @@ import Contact from '../Contact';
 
 vi.mock('../../i18n/hooks/useLanguage', () => ({ useLanguage: () => ({
   language: 'ru',
-  t: (key: string) => ({
+  t: (key: string, params?: Record<string, string>) => ({
     'contact.form.name': 'Имя', 'contact.form.email': 'Email', 'contact.form.message': 'Сообщение',
     'contact.form.namePlaceholder': 'Имя', 'contact.form.emailPlaceholder': 'Email',
     'contact.form.messagePlaceholder': 'Текст', 'contact.form.submit': 'Отправить',
@@ -13,6 +13,14 @@ vi.mock('../../i18n/hooks/useLanguage', () => ({ useLanguage: () => ({
     'contact.form.error413': 'Слишком большое сообщение', 'contact.form.error429': 'Слишком много запросов',
     'contact.form.error500': 'Ошибка сервера', 'contact.form.errorTimeout': 'Таймаут',
     'contact.form.errorNetwork': 'Ошибка сети', 'contact.form.errorUnknown': 'Ошибка',
+    'contact.resume.viewResume': 'Просмотреть резюме', 'contact.resume.title': 'Резюме - Александр Жуков',
+    'contact.resume.name': 'Александр Жуков', 'contact.resume.position': 'Старший архитектор ПО',
+    'contact.resume.professionalSummary': 'Профессиональное резюме',
+    'contact.resume.summaryText': `Архитектор с опытом ${params?.years}`,
+    'contact.resume.keyExpertise': 'Ключевая экспертиза', 'contact.resume.selectedProjects': 'Значимые проекты',
+    'contact.resume.experience': 'Опыт работы', 'contact.resume.technicalSkills': 'Технические навыки',
+    'contact.resume.printResume': 'Печать / Сохранить PDF',
+    'contact.locationValue': 'Новосибирск, Россия',
   } as Record<string, string>)[key] || key,
 }) }));
 
@@ -51,5 +59,18 @@ describe('contact form', () => {
     render(<Contact />);
     await submit();
     await waitFor(() => expect(screen.getByLabelText('Сообщение')).toHaveValue('Hello'));
+  });
+
+  it('renders an up-to-date resume with public profiles and current projects', async () => {
+    const user = userEvent.setup();
+    render(<Contact />);
+
+    await user.click(screen.getByRole('button', { name: 'Просмотреть резюме' }));
+
+    expect(screen.getByRole('dialog', { name: 'Резюме - Александр Жуков' })).toBeInTheDocument();
+    expect(screen.getByText(/Архитектор с опытом \d+\+ лет/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'github.com/FerrPOINT' })).toHaveAttribute('href', 'https://github.com/FerrPOINT');
+    expect(screen.getByRole('link', { name: 'Java Agent' })).toHaveAttribute('href', 'https://github.com/FerrPOINT/java-agent');
+    expect(screen.getAllByText(/Spring Boot 4\.1/).length).toBeGreaterThan(0);
   });
 });

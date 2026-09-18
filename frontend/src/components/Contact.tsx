@@ -5,7 +5,14 @@ import { Github, Mail, MapPin, Phone, Send, FileText, Printer } from 'lucide-rea
 import Modal from './Modal';
 import ContactMethod from './ContactMethod';
 import { useLanguage } from '../i18n/hooks/useLanguage';
-import { getExperience, getSkills } from '../content';
+import {
+  PROFILE_CONTACTS,
+  formatYearsOfExperience,
+  getExperience,
+  getProjects,
+  getResumeHighlights,
+  getSkills,
+} from '../content';
 import { ContactApiError, submitContact } from '../api/contact';
 
 type FormData = {
@@ -24,6 +31,28 @@ const Contact: React.FC = () => {
 
   const experienceItems = useMemo(() => getExperience(language), [language]);
   const skills = useMemo(() => getSkills(language), [language]);
+  const projects = useMemo(() => getProjects(language), [language]);
+  const resumeHighlights = useMemo(() => getResumeHighlights(language), [language]);
+  const resumeProjects = useMemo(() => {
+    const selected = new Set(['pdlc-platform', 'analytics-agent', 'adtech-bidder', 'fintech-crypto']);
+    return projects.filter((project) => selected.has(project.slug));
+  }, [projects]);
+  const resumeFocusAreas = useMemo(() => Array.from(new Set(
+    experienceItems.flatMap((experience) => experience.focusAreas),
+  )).slice(0, 12), [experienceItems]);
+  const resumeSkills = useMemo(() => {
+    const redundantLabels = new Set([
+      'Java', 'Spring Boot', 'Rust', 'Python', 'React',
+      'Frameworks', 'Enterprise Systems', 'Game Dev', 'Mobile Optimization',
+    ]);
+    return Array.from(new Set([
+      ...skills.map((skill) => skill.name),
+      ...resumeHighlights.flatMap((project) => project.stack),
+      ...resumeProjects.flatMap((project) => project.stack),
+      ...experienceItems.flatMap((experience) => experience.tech),
+    ])).filter((skill) => !redundantLabels.has(skill));
+  }, [experienceItems, resumeHighlights, resumeProjects, skills]);
+  const yearsOfExperience = formatYearsOfExperience(language);
 
   const messageLength = messageContent.length;
   const isSizeWarning = messageLength > 4000;
@@ -61,14 +90,28 @@ const Contact: React.FC = () => {
                     <head>
                         <title>${pageTitle}</title>
                         <style>
-                            body { font-family: Arial, sans-serif; line-height: 1.5; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
-                            h1 { margin-bottom: 5px; }
-                            h2 { border-bottom: 2px solid #333; padding-bottom: 5px; margin-top: 20px; }
-                            .header { margin-bottom: 20px; }
-                            .job { margin-bottom: 15px; }
-                            .job-header { display: flex; justify-content: space-between; font-weight: bold; }
-                            .skills { display: flex; flex-wrap: wrap; gap: 5px; }
-                            .skill-tag { background: #eee; padding: 2px 5px; border-radius: 3px; font-size: 0.9em; }
+                            @page { size: A4; margin: 12mm; }
+                            * { box-sizing: border-box; }
+                            body { font-family: Arial, sans-serif; line-height: 1.42; color: #1f2937; max-width: 900px; margin: 0 auto; padding: 0; font-size: 10.5pt; }
+                            a { color: #0f5f78; text-decoration: none; }
+                            h1 { color: #111827; font-size: 24pt; line-height: 1.1; margin: 0 0 4px; }
+                            h2 { color: #111827; border-bottom: 1.5px solid #94a3b8; padding-bottom: 4px; margin: 18px 0 10px; font-size: 13pt; text-transform: uppercase; letter-spacing: .04em; }
+                            h3 { color: #111827; margin: 0; }
+                            p { margin: 0 0 6px; }
+                            .header { border-bottom: 2px solid #111827; margin-bottom: 14px; padding-bottom: 10px; }
+                            .contact-list, .focus-list, .skills { display: flex; flex-wrap: wrap; gap: 5px 12px; }
+                            .contact-list { color: #475569; font-size: 9pt; margin-top: 7px; }
+                            .summary { color: #334155; }
+                            .focus-tag, .skill-tag { background: #eef2f7; border-radius: 4px; padding: 3px 7px; font-size: 8.5pt; }
+                            .project, .job { break-inside: avoid; margin-bottom: 11px; }
+                            .project-header, .job-header { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+                            .project-title, .job-title { font-size: 11pt; font-weight: 700; }
+                            .project-meta, .job-period, .company { color: #64748b; font-size: 9pt; }
+                            .project-summary, .job-description, .bullet-list { font-size: 9.3pt; }
+                            .bullet-list { margin: 5px 0 0; padding-left: 18px; }
+                            .bullet-list li { margin-bottom: 3px; }
+                            .tech-line { color: #475569; font-size: 8.5pt; margin-top: 4px; }
+                            @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
                         </style>
                     </head>
                     <body>
@@ -78,8 +121,10 @@ const Contact: React.FC = () => {
             `);
             win.document.close();
             win.focus();
-            win.print();
-            win.close();
+            win.setTimeout(() => {
+                win.print();
+                win.close();
+            }, 200);
         }
     }
   };
@@ -98,41 +143,41 @@ const Contact: React.FC = () => {
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-8">{t('contact.title')}<br /> <span className="text-accent-cyan">{t('contact.titleScalable')}</span></h2>
             <p className="text-secondary text-lg mb-12">
-              {t('contact.description')}
+              {t('contact.description', { years: yearsOfExperience })}
             </p>
 
             <div className="space-y-6 mb-12">
               <ContactMethod
-                href="mailto:ferruspoint@mail.ru"
+                href={`mailto:${PROFILE_CONTACTS.email}`}
                 icon={Mail}
                 label={t('contact.email')}
-                value="ferruspoint@mail.ru"
+                value={PROFILE_CONTACTS.email}
                 variant="email"
               />
 
               <ContactMethod
-                href="tel:+79833209785"
+                href={`tel:${PROFILE_CONTACTS.phone}`}
                 icon={Phone}
                 label={t('contact.phone')}
-                value="+7 (983) 320-97-85"
+                value={PROFILE_CONTACTS.phoneDisplay}
                 variant="phone"
               />
 
               <ContactMethod
-                href="https://t.me/azhukov7"
+                href={PROFILE_CONTACTS.telegramUrl}
                 icon={Send}
                 label={t('contact.telegram.label')}
-                value="@azhukov7"
+                value={PROFILE_CONTACTS.telegramDisplay}
                 variant="telegram"
                 external
               />
 
               <ContactMethod
-                href="https://github.com/FerrPOINT"
+                href={PROFILE_CONTACTS.githubUrl}
                 icon={Github}
                 label={t('contact.github')}
-                value="FerrPOINT"
-                copyValue="https://github.com/FerrPOINT"
+                value={PROFILE_CONTACTS.githubDisplay}
+                copyValue={PROFILE_CONTACTS.githubUrl}
                 variant="github"
                 external
               />
@@ -262,18 +307,59 @@ const Contact: React.FC = () => {
             <div className="header border-b-2 border-black pb-4 mb-6">
                 <h1 className="text-3xl font-bold uppercase tracking-wider">{t('contact.resume.name')}</h1>
                 <p className="text-lg text-gray-700">{t('contact.resume.position')}</p>
-                <div className="mt-2 text-sm text-gray-600 flex flex-wrap gap-4">
-                    <span>+7 (983) 320-97-85</span>
-                    <span>ferruspoint@mail.ru</span>
+                <div className="contact-list mt-2 text-sm text-gray-600 flex flex-wrap gap-4">
+                    <a href={`tel:${PROFILE_CONTACTS.phone}`}>{PROFILE_CONTACTS.phoneDisplay}</a>
+                    <a href={`mailto:${PROFILE_CONTACTS.email}`}>{PROFILE_CONTACTS.email}</a>
+                    <a href={PROFILE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer">{PROFILE_CONTACTS.telegramDisplay}</a>
+                    <a href={PROFILE_CONTACTS.githubUrl} target="_blank" rel="noopener noreferrer">github.com/{PROFILE_CONTACTS.githubDisplay}</a>
                     <span>{t('contact.locationValue')}</span>
                 </div>
             </div>
 
             <section className="mb-6">
                 <h2 className="text-xl font-bold uppercase border-b border-gray-300 mb-4 pb-1">{t('contact.resume.professionalSummary')}</h2>
-                <p className="text-sm text-gray-800 leading-relaxed">
-                    {t('contact.resume.summaryText')}
+                <p className="summary text-sm text-gray-800 leading-relaxed">
+                    {t('contact.resume.summaryText', { years: yearsOfExperience })}
                 </p>
+            </section>
+
+            <section className="mb-6">
+                <h2 className="text-xl font-bold uppercase border-b border-gray-300 mb-4 pb-1">{t('contact.resume.keyExpertise')}</h2>
+                <div className="focus-list flex flex-wrap gap-2">
+                    {resumeFocusAreas.map(area => (
+                        <span key={area} className="focus-tag bg-gray-100 px-2 py-1 rounded text-sm font-medium">{area}</span>
+                    ))}
+                </div>
+            </section>
+
+            <section className="mb-6">
+                <h2 className="text-xl font-bold uppercase border-b border-gray-300 mb-4 pb-1">{t('contact.resume.selectedProjects')}</h2>
+                <div className="space-y-4">
+                    {resumeHighlights.map(project => (
+                        <div key={project.slug} className="project">
+                            <div className="project-header flex justify-between items-baseline gap-4">
+                                <a className="project-title font-bold" href={project.href} target="_blank" rel="noopener noreferrer">{project.title}</a>
+                                <span className="project-meta text-sm text-gray-600">Open Source</span>
+                            </div>
+                            <p className="project-summary text-sm text-gray-800">{project.summary}</p>
+                            <p className="tech-line text-xs text-gray-600">{project.stack.join(' · ')}</p>
+                        </div>
+                    ))}
+                    {resumeProjects.map(project => (
+                        <div key={project.slug} className="project">
+                            <div className="project-header flex justify-between items-baseline gap-4">
+                                {project.links?.[0] ? (
+                                    <a className="project-title font-bold" href={project.links[0].href} target="_blank" rel="noopener noreferrer">{project.title}</a>
+                                ) : (
+                                    <h3 className="project-title font-bold">{project.title}</h3>
+                                )}
+                                <span className="project-meta text-sm text-gray-600">{project.role}</span>
+                            </div>
+                            <p className="project-summary text-sm text-gray-800">{project.summary}</p>
+                            <p className="tech-line text-xs text-gray-600">{project.stack.slice(0, 7).join(' · ')}</p>
+                        </div>
+                    ))}
+                </div>
             </section>
 
             <section className="mb-6">
@@ -282,16 +368,17 @@ const Contact: React.FC = () => {
                     {experienceItems.map(job => (
                         <div key={job.id} className="job">
                             <div className="job-header flex justify-between items-baseline mb-2">
-                                <h3 className="font-bold text-lg">{job.role}</h3>
-                                <span className="text-sm text-gray-600 italic">{job.period}</span>
+                                <h3 className="job-title font-bold text-lg">{job.role}</h3>
+                                <span className="job-period text-sm text-gray-600 italic">{job.period}</span>
                             </div>
-                            <div className="text-sm font-semibold text-gray-700 mb-2">{job.company}</div>
-                            <p className="text-sm mb-2">{job.description}</p>
-                            <ul className="list-disc list-inside text-sm text-gray-800 pl-2">
+                            <div className="company text-sm font-semibold text-gray-700 mb-2">{job.company}</div>
+                            <p className="job-description text-sm mb-2">{job.description}</p>
+                            <ul className="bullet-list list-disc text-sm text-gray-800 pl-5">
                                 {job.achievements.map((ach, i) => (
                                     <li key={i}>{ach}</li>
                                 ))}
                             </ul>
+                            <p className="tech-line text-xs text-gray-600 mt-2">{job.tech.join(' · ')}</p>
                         </div>
                     ))}
                 </div>
@@ -300,16 +387,11 @@ const Contact: React.FC = () => {
             <section className="mb-6">
                 <h2 className="text-xl font-bold uppercase border-b border-gray-300 mb-4 pb-1">{t('contact.resume.technicalSkills')}</h2>
                 <div className="skills flex flex-wrap gap-2">
-                    {skills.map(skill => (
-                        <span key={skill.name} className="skill-tag bg-gray-200 px-2 py-1 rounded text-sm font-medium">
-                            {skill.name}
+                    {resumeSkills.map(skill => (
+                        <span key={skill} className="skill-tag bg-gray-200 px-2 py-1 rounded text-sm font-medium">
+                            {skill}
                         </span>
                     ))}
-                    <span className="skill-tag bg-gray-200 px-2 py-1 rounded text-sm font-medium">PostgreSQL</span>
-                    <span className="skill-tag bg-gray-200 px-2 py-1 rounded text-sm font-medium">Kafka</span>
-                    <span className="skill-tag bg-gray-200 px-2 py-1 rounded text-sm font-medium">LangChain</span>
-                    <span className="skill-tag bg-gray-200 px-2 py-1 rounded text-sm font-medium">Redis</span>
-                    <span className="skill-tag bg-gray-200 px-2 py-1 rounded text-sm font-medium">Kubernetes</span>
                 </div>
             </section>
         </div>

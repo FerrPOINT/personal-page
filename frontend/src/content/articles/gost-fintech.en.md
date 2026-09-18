@@ -1,4 +1,4 @@
-Integrating GOST cryptographic standards into modern Java microservices presents unique challenges: legacy library compatibility, performance under load, and compliance with strict banking security standards. This article details our approach to building a production-grade cryptographic service handling millions of digital signatures.
+Integrating GOST cryptographic standards into modern Java microservices presents unique challenges: legacy library compatibility, performance under load, and compliance with strict banking security standards. This article describes an approach to building a production-grade cryptographic service for asynchronous digital-signature processing and reporting-period load spikes.
 
 **The GOST Challenge**
 

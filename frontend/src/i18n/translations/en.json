@@ -30,16 +30,15 @@
     "name": "Aleksandr",
     "surname": "Zhukov",
     "description": "Software Architect & Engineer with {years} of experience. Expert in {java}, {highload}, and {ai}.",
-    "years": "10+ years",
     "java": "Java/Spring",
     "highload": "High-Load Systems",
-    "ai": "AI Integration",
+    "ai": "AI Agents & Integration",
     "viewProjects": "View Projects",
     "contactMe": "Contact Me",
     "stats": {
       "yearsExp": "Years Exp",
       "rpsScaled": "RPS Scaled",
-      "fullStackCycle": "Stack Cycle"
+      "fullStackCycle": "Full Cycle"
     },
     "planets": {
       "reactTS": "REACT / TS",
@@ -51,7 +50,7 @@
   },
   "projects": {
     "title": "Notable Projects",
-    "description": "Full-Stack development and DevOps solutions delivered at scale. From high-load systems to complete CI/CD pipelines.",
+    "description": "Architecture and engineering across AI agents, PDLC platforms, high-load systems, FinTech, Full-Stack, and DevOps.",
     "viewCaseStudy": "View Detailed Case Study",
     "categories": {
       "all": "All",
@@ -79,14 +78,14 @@
   },
   "techStack": {
     "title": "Technical Expertise",
-    "description": "Balanced proficiency across Infrastructure, Backend Engineering, and AI integration. My focus is on reliability, scalability, and maintainability.",
+    "description": "Architecture, backend, infrastructure, and AI integration for enterprise systems, with a focus on security, performance, reliability, and full-cycle delivery.",
     "architecture": {
       "title": "Architecture",
-      "description": "Distributed Systems, Event-Driven, Microservices"
+      "description": "PDLC / SDLC, Distributed Systems, Event-Driven, Microservices"
     },
     "aiMl": {
       "title": "AI/ML",
-      "description": "LangChain, RAG, PyTorch, Model Serving"
+      "description": "Agentic AI, LangGraph, RAG, MCP, LLM tools"
     }
   },
   "insights": {
@@ -103,7 +102,7 @@
   "contact": {
     "title": "Let's Build Something",
     "titleScalable": "Scalable",
-    "description": "Software Architect with 10+ years of experience. Available for high-load system design, technical leadership, and complex AI integrations.",
+    "description": "Software Architect with {years} of experience. Available for enterprise and high-load system design, technical leadership, and complex AI integrations.",
     "email": "Email",
     "phone": "Phone",
     "copy": "Copy: {label}",
@@ -138,8 +137,8 @@
       "errorNetwork": "Network error: Unable to connect to the server. Please check your internet connection and try again.",
       "errorInvalidResponse": "Server returned invalid response. Please try again or contact support.",
       "errorUnknown": "Unknown error occurred. Please try again.",
-      "errorTooLarge": "Message is too large ({size} MB). Maximum allowed size is {max} MB. Please shorten your message.",
-      "error413": "Message is too large. The server rejected your request because it exceeds the maximum allowed size. Please shorten your message to less than 1 MB.",
+      "errorTooLarge": "The message is too long. The maximum length is 5000 characters.",
+      "error413": "The message is too long. Please shorten it to 5000 characters.",
       "error400": "Invalid request data. Please check your input.",
       "error500": "Server error. Please try again later.",
       "error503": "Service temporarily unavailable. Please try again later.",
@@ -156,7 +155,9 @@
       "downloadResume": "Download Resume",
       "printResume": "Print / Save PDF",
       "professionalSummary": "Professional Summary",
-      "summaryText": "Software engineer and architect with over 10 years of experience building complex enterprise systems. Designed full-cycle development platforms (PDLC/SDLC), agentic AI systems, and banking and FinTech services with demanding security, performance, and reliability requirements. Specializes in Java/Spring, distributed systems, AI, and DevOps.",
+      "summaryText": "Software engineer and architect with {years} of experience building complex enterprise systems. Designed full-cycle development platforms (PDLC/SDLC), agentic AI systems, and banking and FinTech services with demanding security, performance, and reliability requirements. Builds self-hosted products with Java 25, Spring Boot 4.1, Rust, Python, and React.",
+      "keyExpertise": "Key Expertise",
+      "selectedProjects": "Notable Projects",
       "experience": "Experience",
       "technicalSkills": "Technical Skills"
     }

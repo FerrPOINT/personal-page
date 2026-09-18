@@ -3,11 +3,12 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Mail } from 'lucide-react';
 import { useLanguage } from '../i18n/hooks/useLanguage';
 import { lazyWithReload } from '../utils/lazyWithReload';
+import { formatYearsOfExperience, getYearsOfExperience } from '../content';
 
 const HeroScene = lazyWithReload('hero-scene', () => import('./HeroScene'));
 
 const Hero: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [showScene, setShowScene] = useState(false);
 
   useEffect(() => {
@@ -21,8 +22,9 @@ const Hero: React.FC = () => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const yearsOfExperience = getYearsOfExperience();
   const description = t('hero.description', {
-    years: t('hero.years'), java: t('hero.java'), highload: t('hero.highload'), ai: t('hero.ai'),
+    years: formatYearsOfExperience(language), java: t('hero.java'), highload: t('hero.highload'), ai: t('hero.ai'),
   });
 
   return (
@@ -59,7 +61,7 @@ const Hero: React.FC = () => {
               </a>
             </div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 0.8 }} className="mt-12 grid grid-cols-3 gap-8 border-t border-white/10 pt-8">
-              <div><p className="text-3xl font-bold text-white">10+</p><p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.yearsExp')}</p></div>
+              <div><p className="text-3xl font-bold text-white">{yearsOfExperience}+</p><p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.yearsExp')}</p></div>
               <div><p className="text-3xl font-bold text-white">1M+</p><p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.rpsScaled')}</p></div>
               <div><p className="text-3xl font-bold text-white">Full</p><p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.fullStackCycle')}</p></div>
             </motion.div>
