@@ -100,6 +100,17 @@ const SHIP_ORBITS = [
   { radiusX: 18, radiusZ: 14, speed: 0.12, offset: 3, yOffset: 2 },
 ] as const;
 
+type ShipOrbit = (typeof SHIP_ORBITS)[number];
+
+const shipPositionAt = (orbit: ShipOrbit, elapsed: number, target: THREE.Vector3): THREE.Vector3 => {
+  const angle = elapsed * orbit.speed + orbit.offset;
+  return target.set(
+    Math.cos(angle) * orbit.radiusX,
+    Math.sin(angle * 2) * orbit.yOffset,
+    Math.sin(angle) * orbit.radiusZ,
+  );
+};
+
 function Spaceship({ radiusX, radiusZ, speed, offset, yOffset, positionTarget }: SpaceshipProps) {
   const ship = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
@@ -159,7 +170,7 @@ const BLASTER_COUNT = 4;
 const BURST_COUNT = 6;
 const BURST_FRAGMENT_COUNT = 18;
 const BLASTER_RANGE_SQ = 0.75 ** 2;
-const BLASTER_BEAM_LENGTH = 0.6;
+const BLASTER_BEAM_LENGTH = 1;
 const METEOR_UP = new THREE.Vector3(0, 1, 0);
 const METEOR_HEAT_START_DISTANCE = 19;
 const METEOR_HEAT_PEAK_DISTANCE = 3;
@@ -221,7 +232,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
   const blasters = useRef<BlasterState[]>(Array.from({ length: BLASTER_COUNT }, () => ({
     active: false,
     age: 0,
-    duration: 0.18,
+    duration: 0.28,
     sourceShipIndex: -1,
     destination: new THREE.Vector3(),
   })));
@@ -348,9 +359,10 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     const meteor = meteors.current[index];
     const sequence = spawnSequence.current;
     spawnSequence.current += 1;
-    const threatenedShip = sequence % 3 === 0
-      ? ships[(Math.floor(sequence / 3) + 4) % ships.length]
-      : null;
+    const threatenedShipIndex = sequence % 3 === 0
+      ? (Math.floor(sequence / 3) + 4) % ships.length
+      : -1;
+    const threatenedShip = threatenedShipIndex >= 0 ? ships[threatenedShipIndex] : null;
     const angle = threatenedShip
       ? Math.atan2(threatenedShip.z, threatenedShip.x) + (Math.random() - 0.5) * 0.35
       : Math.random() * Math.PI * 2;
@@ -364,10 +376,15 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
 
     const aim = Math.random();
     if (threatenedShip) {
-      target.copy(threatenedShip);
-      target.x += (Math.random() - 0.5) * 1.2;
-      target.y += (Math.random() - 0.5) * 0.8;
-      target.z += (Math.random() - 0.5) * 1.2;
+      const orbit = SHIP_ORBITS[threatenedShipIndex];
+      shipPositionAt(orbit, elapsed, target);
+      let travelEstimate = meteor.position.distanceTo(target) / speed;
+      shipPositionAt(orbit, elapsed + travelEstimate, target);
+      travelEstimate = meteor.position.distanceTo(target) / speed;
+      shipPositionAt(orbit, elapsed + travelEstimate, target);
+      target.x += (Math.random() - 0.5) * 0.3;
+      target.y += (Math.random() - 0.5) * 0.2;
+      target.z += (Math.random() - 0.5) * 0.3;
     } else if (aim < 0.18) {
       target.set(0, 0, 0);
     } else if (aim < 0.48) {
