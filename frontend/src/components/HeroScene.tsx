@@ -4,6 +4,7 @@ import { Billboard, Float, OrbitControls, PerspectiveCamera, Sparkles, Stars, Te
 import * as THREE from 'three';
 import {
   BLASTER_ATTACK_RANGE,
+  BLASTER_BEAM_DURATION,
   calculateBlasterSegment,
   calculateFirstContact,
   getCollisionMotionScale,
@@ -239,7 +240,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
   const blasters = useRef<BlasterState[]>(Array.from({ length: BLASTER_COUNT }, () => ({
     active: false,
     age: 0,
-    duration: 0.16,
+    duration: BLASTER_BEAM_DURATION,
     start: new THREE.Vector3(),
     end: new THREE.Vector3(),
   })));
@@ -329,8 +330,8 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     const meteor = meteors.current[index];
     const sequence = spawnSequence.current;
     spawnSequence.current += 1;
-    const threatenedShipIndex = sequence % 3 === 0
-      ? (Math.floor(sequence / 3) + 4) % ships.length
+    const threatenedShipIndex = sequence % 2 === 0
+      ? (Math.floor(sequence / 2) + 4) % ships.length
       : -1;
     const threatenedShip = threatenedShipIndex >= 0 ? ships[threatenedShipIndex] : null;
     const angle = threatenedShip

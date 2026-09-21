@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import {
+  BLASTER_ATTACK_RANGE,
   BLASTER_MUZZLE_OFFSET,
   calculateBlasterSegment,
   calculateFirstContact,
@@ -143,7 +144,7 @@ describe('hero scene trajectories', () => {
       meteorEnd,
       shipStart,
       shipEnd,
-      0.75,
+      BLASTER_ATTACK_RANGE,
     );
     expect(contactTime).not.toBeNull();
 
@@ -155,12 +156,13 @@ describe('hero scene trajectories', () => {
 
     const shotDirection = end.clone().sub(start).normalize();
     const contactDirection = meteorAtContact.clone().sub(shipAtContact).normalize();
-    expect(shipAtContact.distanceTo(meteorAtContact)).toBeCloseTo(0.75, 6);
+    expect(shipAtContact.distanceTo(meteorAtContact)).toBeCloseTo(BLASTER_ATTACK_RANGE, 6);
     expect(shotDirection.dot(contactDirection)).toBeCloseTo(1, 6);
     expect(start.distanceTo(end)).toBeCloseTo(
-      0.75 - BLASTER_MUZZLE_OFFSET - METEOR_SURFACE_OFFSET,
+      BLASTER_ATTACK_RANGE - BLASTER_MUZZLE_OFFSET - METEOR_SURFACE_OFFSET,
       6,
     );
+    expect(start.distanceTo(end)).toBeGreaterThan(1);
   });
 
   it('rejects trajectories that never enter the collision radius', () => {

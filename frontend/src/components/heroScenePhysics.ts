@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 
-export const BLASTER_ATTACK_RANGE = 0.75;
+export const BLASTER_ATTACK_RANGE = 1.65;
+export const BLASTER_BEAM_DURATION = 0.32;
 export const BLASTER_MUZZLE_OFFSET = 0.16;
 export const METEOR_SURFACE_OFFSET = 0.22;
 export const SCENE_UP = new THREE.Vector3(0, 1, 0);
