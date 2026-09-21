@@ -141,7 +141,7 @@ export default function HeroScene({ labels }: { labels: readonly [string, string
         minPolarAngle={Math.PI / 3}
       />
     </Canvas>
-    <div className="absolute inset-y-0 left-0 w-24 md:w-[40%] bg-gradient-to-r from-background via-background/90 to-transparent pointer-events-none" />
+    <div className="absolute inset-y-0 left-0 w-24 md:w-[36%] bg-gradient-to-r from-background/75 via-background/45 to-transparent pointer-events-none" />
     <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-background via-background/90 to-transparent md:hidden pointer-events-none" />
   </div>;
 }
