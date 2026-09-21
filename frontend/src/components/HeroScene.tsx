@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Billboard, Float, OrbitControls, PerspectiveCamera, Stars, Text } from '@react-three/drei';
+import { Billboard, Float, OrbitControls, PerspectiveCamera, Sparkles, Stars, Text } from '@react-three/drei';
 import * as THREE from 'three';
 
 type PlanetData = readonly [
@@ -127,23 +127,6 @@ interface ImpactState {
 const METEOR_COUNT = 5;
 const IMPACT_COUNT = 6;
 const METEOR_UP = new THREE.Vector3(0, 1, 0);
-const METEOR_FLAME_LAYERS = [
-  [0, -0.36, 0, 0.14, 0.4, 0.14, '#ffe0a0', 0.72],
-  [0.035, -0.68, -0.02, 0.19, 0.5, 0.17, '#ff9a2f', 0.54],
-  [-0.045, -1.02, 0.035, 0.22, 0.55, 0.19, '#ff531c', 0.38],
-  [0.06, -1.36, -0.04, 0.2, 0.48, 0.17, '#d93612', 0.24],
-  [-0.055, -1.68, 0.025, 0.17, 0.4, 0.15, '#74281c', 0.14],
-] as const;
-const METEOR_SMOKE_LAYERS = [
-  [0.08, -1.62, -0.02, 0.21, 0.52, 0.18, 0.1],
-  [-0.1, -2.0, 0.06, 0.24, 0.58, 0.2, 0.065],
-] as const;
-const METEOR_SPARKS = [
-  [0.1, -0.72, 0.03, 0.055],
-  [-0.08, -1.05, 0.06, 0.04],
-  [0.13, -1.38, -0.05, 0.032],
-  [-0.06, -1.72, -0.03, 0.025],
-] as const;
 
 const planetPositionAt = (planet: PlanetData, elapsed: number, target: THREE.Vector3): THREE.Vector3 => {
   const [distance, speed, , , , offset] = planet;
@@ -343,36 +326,46 @@ function MeteorField({ planets }: { planets: readonly PlanetData[] }) {
           <meshBasicMaterial color="#ffd08a" toneMapped={false} />
         </mesh>
         <group ref={(node) => { meteorFireGroups.current[index] = node; }}>
-          {METEOR_FLAME_LAYERS.map(([x, y, z, scaleX, scaleY, scaleZ, color, opacity], flameIndex) => (
-            <mesh key={`flame-${flameIndex}`} position={[x, y, z]} scale={[scaleX, scaleY, scaleZ]}>
-              <sphereGeometry args={[1, 10, 8]} />
-              <meshBasicMaterial
-                color={color}
-                transparent
-                opacity={opacity}
-                depthWrite={false}
-                blending={THREE.AdditiveBlending}
-              />
-            </mesh>
-          ))}
-          {METEOR_SMOKE_LAYERS.map(([x, y, z, scaleX, scaleY, scaleZ, opacity], smokeIndex) => (
-            <mesh key={`smoke-${smokeIndex}`} position={[x, y, z]} scale={[scaleX, scaleY, scaleZ]}>
-              <sphereGeometry args={[1, 8, 6]} />
-              <meshBasicMaterial color="#6a5149" transparent opacity={opacity} depthWrite={false} />
-            </mesh>
-          ))}
-          {METEOR_SPARKS.map(([x, y, z, size], sparkIndex) => (
-            <mesh key={sparkIndex} position={[x, y, z]}>
-              <sphereGeometry args={[size, 6, 6]} />
-              <meshBasicMaterial
-                color={sparkIndex < 2 ? '#ffd27a' : '#ff5a1f'}
-                transparent
-                opacity={0.8 - sparkIndex * 0.13}
-                depthWrite={false}
-                blending={THREE.AdditiveBlending}
-              />
-            </mesh>
-          ))}
+          <mesh position={[0, -0.3, 0]} scale={[0.12, 0.38, 0.12]}>
+            <sphereGeometry args={[1, 12, 8]} />
+            <meshBasicMaterial
+              color="#ffe2a3"
+              transparent
+              opacity={0.68}
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+            />
+          </mesh>
+          <mesh position={[0.02, -0.52, -0.01]} scale={[0.2, 0.62, 0.18]}>
+            <sphereGeometry args={[1, 12, 8]} />
+            <meshBasicMaterial
+              color="#ff5a18"
+              transparent
+              opacity={0.34}
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+            />
+          </mesh>
+          <Sparkles
+            count={22}
+            position={[0, -1.35, 0]}
+            scale={[0.48, 2.45, 0.48]}
+            size={2.4}
+            speed={0.35}
+            noise={[0.35, 0.2, 0.35]}
+            color="#ff6a18"
+            opacity={0.72}
+          />
+          <Sparkles
+            count={12}
+            position={[0, -1.55, 0]}
+            scale={[0.62, 2.8, 0.62]}
+            size={4}
+            speed={0.18}
+            noise={[0.42, 0.18, 0.42]}
+            color="#6a5149"
+            opacity={0.14}
+          />
         </group>
         <pointLight color="#ff6a18" intensity={1.25} distance={5} />
       </group>
