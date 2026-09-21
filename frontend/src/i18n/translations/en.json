@@ -12,7 +12,7 @@
     "switchColorTheme": "Switch to the {theme}",
     "colorThemes": {
       "neon": "turquoise-purple theme",
-      "ember": "orange-turquoise theme"
+      "ember": "orange-purple theme"
     }
   },
   "navbar": {
