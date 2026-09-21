@@ -1,5 +1,5 @@
-import React, { useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import React, { useLayoutEffect, useMemo, useRef } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Billboard, Float, OrbitControls, PerspectiveCamera, Sparkles, Stars, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import {
@@ -21,6 +21,30 @@ type PlanetData = readonly [
 
 const SCENE_PRIMARY = '#00d9ff';
 const SCENE_SECONDARY = '#ff00ff';
+
+function SceneCamera() {
+  const camera = useRef<THREE.PerspectiveCamera>(null);
+  const { size } = useThree();
+
+  useLayoutEffect(() => {
+    if (!camera.current) return;
+    if (size.width >= 768) {
+      camera.current.setViewOffset(
+        size.width,
+        size.height,
+        -size.width * 0.125,
+        0,
+        size.width,
+        size.height,
+      );
+    } else {
+      camera.current.clearViewOffset();
+    }
+    camera.current.updateProjectionMatrix();
+  }, [size.height, size.width]);
+
+  return <PerspectiveCamera ref={camera} makeDefault position={[0, 20, 42]} fov={40} />;
+}
 
 function Sun() {
   return <group>
@@ -863,9 +887,9 @@ export default function HeroScene({ labels }: { labels: readonly [string, string
     [15, 0.15, 0.8, '#3b82f6', labels[3], planetOffsets[3]],
     [19, 0.10, 0.9, '#f97316', labels[4], planetOffsets[4]],
   ];
-  return <div className="absolute top-0 right-0 w-full h-[55vh] md:h-full md:w-[75vw]">
+  return <div className="absolute inset-0 w-full h-[55vh] md:h-full">
     <Canvas className="w-full h-full">
-      <PerspectiveCamera makeDefault position={[0, 20, 42]} fov={40} />
+      <SceneCamera />
       <ambientLight intensity={0.2} />
       <Stars radius={120} depth={60} count={5000} factor={4} saturation={0} fade speed={0.3} />
       <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.2}>
@@ -887,7 +911,7 @@ export default function HeroScene({ labels }: { labels: readonly [string, string
         minPolarAngle={Math.PI / 3}
       />
     </Canvas>
-    <div className="absolute inset-y-0 left-0 w-24 md:w-[36%] bg-gradient-to-r from-background/75 via-background/45 to-transparent pointer-events-none" />
+    <div className="absolute inset-y-0 left-0 w-24 md:w-[42%] bg-gradient-to-r from-background/60 via-background/30 to-transparent pointer-events-none" />
     <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-background via-background/90 to-transparent md:hidden pointer-events-none" />
   </div>;
 }

@@ -29,7 +29,6 @@ const Hero: React.FC = () => {
 
   return (
     <section id="hero" className="relative w-full min-h-screen bg-background overflow-hidden selection:bg-accent-primary/30">
-      <div className="hero-starfield absolute inset-0 z-0 pointer-events-none" aria-hidden="true" />
       <div className="absolute inset-0 z-0 pointer-events-none md:pointer-events-auto">
         {showScene && (
           <Suspense fallback={null}>
