@@ -159,6 +159,7 @@ const BLASTER_COUNT = 4;
 const BURST_COUNT = 6;
 const BURST_FRAGMENT_COUNT = 18;
 const BLASTER_RANGE_SQ = 0.75 ** 2;
+const BLASTER_BEAM_LENGTH = 0.6;
 const METEOR_UP = new THREE.Vector3(0, 1, 0);
 const METEOR_HEAT_START_DISTANCE = 19;
 const METEOR_HEAT_PEAK_DISTANCE = 3;
@@ -220,7 +221,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
   const blasters = useRef<BlasterState[]>(Array.from({ length: BLASTER_COUNT }, () => ({
     active: false,
     age: 0,
-    duration: 0.5,
+    duration: 0.18,
     sourceShipIndex: -1,
     destination: new THREE.Vector3(),
   })));
@@ -303,6 +304,23 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     });
   };
 
+  const placeBlaster = (
+    group: THREE.Group,
+    source: THREE.Vector3,
+    destination: THREE.Vector3,
+    width: number,
+  ) => {
+    beamDirection.copy(destination).sub(source);
+    const distance = beamDirection.length();
+    if (distance <= 0.001) return;
+    beamDirection.multiplyScalar(1 / distance);
+    const length = Math.min(distance, BLASTER_BEAM_LENGTH);
+    beamMidpoint.copy(source).addScaledVector(beamDirection, length * 0.5);
+    group.position.copy(beamMidpoint);
+    group.quaternion.setFromUnitVectors(METEOR_UP, beamDirection);
+    group.scale.set(width, length, width);
+  };
+
   const fireBlaster = (sourceShipIndex: number, destination: THREE.Vector3): boolean => {
     const index = blasters.current.findIndex((blaster) => !blaster.active);
     if (index < 0) return false;
@@ -315,13 +333,8 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     const group = blasterGroups.current[index];
     const material = blasterMaterials.current[index];
     if (group) {
-      beamDirection.copy(destination).sub(source);
-      const length = beamDirection.length();
-      beamMidpoint.copy(source).add(destination).multiplyScalar(0.5);
       group.visible = true;
-      group.position.copy(beamMidpoint);
-      group.quaternion.setFromUnitVectors(METEOR_UP, beamDirection.normalize());
-      group.scale.set(1, length, 1);
+      placeBlaster(group, source, destination, 1);
     }
     if (material) material.opacity = 0.95;
     createImpact(destination, '#ff6a18', 2);
@@ -518,13 +531,8 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       const material = blasterMaterials.current[index];
       if (group) {
         const source = ships[blaster.sourceShipIndex];
-        beamDirection.copy(blaster.destination).sub(source);
-        const length = beamDirection.length();
-        beamMidpoint.copy(source).add(blaster.destination).multiplyScalar(0.5);
         const width = 1 - progress * 0.65;
-        group.position.copy(beamMidpoint);
-        if (length > 0.001) group.quaternion.setFromUnitVectors(METEOR_UP, beamDirection.normalize());
-        group.scale.set(width, length, width);
+        placeBlaster(group, source, blaster.destination, width);
       }
       if (material) material.opacity = (1 - progress) * 0.95;
       if (progress >= 1) {
