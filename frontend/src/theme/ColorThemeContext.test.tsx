@@ -27,7 +27,9 @@ describe('color themes', () => {
     expect(colorThemes.neon.accentPrimary).toBe('0 217 255');
     expect(colorThemes.neon.accentSecondary).toBe('255 0 255');
     expect(colorThemes.ember.accentPrimary).toBe('251 146 60');
-    expect(colorThemes.ember.accentSecondary).toBe('192 132 252');
+    expect(colorThemes.ember.accentSecondary).toBe('139 92 246');
+    expect(colorThemes.ember.accentSecondaryLight).toBe('167 139 250');
+    expect(colorThemes.ember.accentSecondaryDark).toBe('109 40 217');
     expect(DEFAULT_COLOR_THEME).toBe('neon');
     expect(getInitialColorTheme()).toBe('neon');
   });
@@ -36,7 +38,7 @@ describe('color themes', () => {
     applyColorTheme('neon');
     expect(document.documentElement).toHaveAttribute('data-color-theme', 'neon');
     expect(document.documentElement.style.getPropertyValue('--color-accent-primary')).toBe('0 217 255');
-    expect(themeRuntimeColor('ember', 'accentSecondary')).toBe('rgb(192, 132, 252)');
+    expect(themeRuntimeColor('ember', 'accentSecondary')).toBe('rgb(139, 92, 246)');
 
     window.localStorage.setItem(COLOR_THEME_STORAGE_KEY, 'ember');
     expect(getInitialColorTheme()).toBe('ember');
@@ -54,6 +56,6 @@ describe('color themes', () => {
 
     expect(screen.getByRole('button', { name: 'ember' })).toBeInTheDocument();
     expect(window.localStorage.getItem(COLOR_THEME_STORAGE_KEY)).toBe('ember');
-    expect(document.documentElement.style.getPropertyValue('--color-accent-secondary')).toBe('192 132 252');
+    expect(document.documentElement.style.getPropertyValue('--color-accent-secondary')).toBe('139 92 246');
   });
 });

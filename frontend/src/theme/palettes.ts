@@ -24,9 +24,9 @@ export const colorThemes = {
     accentPrimary: '251 146 60',
     accentPrimaryLight: '253 186 116',
     accentPrimaryDark: '234 88 12',
-    accentSecondary: '192 132 252',
-    accentSecondaryLight: '216 180 254',
-    accentSecondaryDark: '147 51 234',
+    accentSecondary: '139 92 246',
+    accentSecondaryLight: '167 139 250',
+    accentSecondaryDark: '109 40 217',
   },
 } as const;
 
