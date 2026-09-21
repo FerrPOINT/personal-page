@@ -126,6 +126,7 @@ interface MeteorState {
   velocity: THREE.Vector3;
   age: number;
   maxAge: number;
+  heat: number;
 }
 
 interface ImpactState {
@@ -157,6 +158,16 @@ const BURST_COUNT = 6;
 const BURST_FRAGMENT_COUNT = 18;
 const BLASTER_RANGE_SQ = 6 ** 2;
 const METEOR_UP = new THREE.Vector3(0, 1, 0);
+const METEOR_HEAT_START_DISTANCE = 19;
+const METEOR_HEAT_PEAK_DISTANCE = 3;
+const METEOR_CORE_COLD = new THREE.Color('#292421');
+const METEOR_CORE_HOT = new THREE.Color('#ff7a18');
+const METEOR_EMISSIVE_COLD = new THREE.Color('#321109');
+const METEOR_EMISSIVE_HOT = new THREE.Color('#fff1c7');
+const METEOR_GLOW_COLD = new THREE.Color('#7a2511');
+const METEOR_GLOW_HOT = new THREE.Color('#fff0b0');
+const METEOR_HEAD_COLD = new THREE.Color('#8d2c12');
+const METEOR_HEAD_HOT = new THREE.Color('#fff7dc');
 
 const planetPositionAt = (planet: PlanetData, elapsed: number, target: THREE.Vector3): THREE.Vector3 => {
   const [distance, speed, , , , offset] = planet;
@@ -167,6 +178,12 @@ const planetPositionAt = (planet: PlanetData, elapsed: number, target: THREE.Vec
 function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships: readonly THREE.Vector3[] }) {
   const meteorGroups = useRef<Array<THREE.Group | null>>([]);
   const meteorCores = useRef<Array<THREE.Mesh | null>>([]);
+  const meteorCoreMaterials = useRef<Array<THREE.MeshStandardMaterial | null>>([]);
+  const meteorGlowMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
+  const meteorHeadMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
+  const meteorInnerTailMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
+  const meteorOuterTailMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
+  const meteorLights = useRef<Array<THREE.PointLight | null>>([]);
   const meteorFireGroups = useRef<Array<THREE.Group | null>>([]);
   const impactGroups = useRef<Array<THREE.Group | null>>([]);
   const impactMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
@@ -189,6 +206,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     velocity: new THREE.Vector3(),
     age: 0,
     maxAge: 0,
+    heat: 0,
   })));
   const impacts = useRef<ImpactState[]>(Array.from({ length: IMPACT_COUNT }, () => ({
     active: false,
@@ -358,6 +376,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     meteor.velocity.copy(target).sub(meteor.position).normalize().multiplyScalar(speed);
     meteor.age = 0;
     meteor.maxAge = 14;
+    meteor.heat = 0;
     meteor.active = true;
     const group = meteorGroups.current[index];
     if (group) {
@@ -379,6 +398,13 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       if (!meteor.active) return;
       meteor.age += delta;
       meteor.position.addScaledVector(meteor.velocity, delta);
+      const distanceToSun = meteor.position.length();
+      const targetHeat = 1 - THREE.MathUtils.smoothstep(
+        distanceToSun,
+        METEOR_HEAT_PEAK_DISTANCE,
+        METEOR_HEAT_START_DISTANCE,
+      );
+      meteor.heat = THREE.MathUtils.damp(meteor.heat, targetHeat, 4.5, delta);
       const group = meteorGroups.current[index];
       if (group) group.position.copy(meteor.position);
       const core = meteorCores.current[index];
@@ -386,10 +412,36 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         core.rotation.x += delta * 2.2;
         core.rotation.z += delta * 1.4;
       }
+      const coreMaterial = meteorCoreMaterials.current[index];
+      if (coreMaterial) {
+        coreMaterial.color.lerpColors(METEOR_CORE_COLD, METEOR_CORE_HOT, meteor.heat);
+        coreMaterial.emissive.lerpColors(METEOR_EMISSIVE_COLD, METEOR_EMISSIVE_HOT, meteor.heat);
+        coreMaterial.emissiveIntensity = 0.12 + meteor.heat * 2.7;
+      }
+      const glowMaterial = meteorGlowMaterials.current[index];
+      if (glowMaterial) {
+        glowMaterial.color.lerpColors(METEOR_GLOW_COLD, METEOR_GLOW_HOT, meteor.heat);
+        glowMaterial.opacity = 0.08 + meteor.heat * 0.5;
+      }
+      const headMaterial = meteorHeadMaterials.current[index];
+      if (headMaterial) {
+        headMaterial.color.lerpColors(METEOR_HEAD_COLD, METEOR_HEAD_HOT, meteor.heat);
+        headMaterial.opacity = 0.3 + meteor.heat * 0.7;
+      }
+      const innerTailMaterial = meteorInnerTailMaterials.current[index];
+      if (innerTailMaterial) innerTailMaterial.opacity = 0.16 + meteor.heat * 0.62;
+      const outerTailMaterial = meteorOuterTailMaterials.current[index];
+      if (outerTailMaterial) outerTailMaterial.opacity = 0.08 + meteor.heat * 0.34;
       const fire = meteorFireGroups.current[index];
       if (fire) {
         const flicker = 0.9 + Math.sin(elapsed * 19 + index * 1.7) * 0.12;
-        fire.scale.set(flicker, 0.94 + flicker * 0.08, flicker);
+        const heatScale = 0.38 + meteor.heat * 0.9;
+        fire.scale.set(flicker * heatScale, heatScale, flicker * heatScale);
+      }
+      const light = meteorLights.current[index];
+      if (light) {
+        light.intensity = 0.12 + meteor.heat * 2.2;
+        light.distance = 2.5 + meteor.heat * 4.5;
       }
 
       let impactColor: string | null = null;
@@ -519,9 +571,10 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         <mesh ref={(node) => { meteorCores.current[index] = node; }} scale={[1, 0.82, 0.9]}>
           <icosahedronGeometry args={[0.28, 1]} />
           <meshStandardMaterial
+            ref={(node) => { meteorCoreMaterials.current[index] = node; }}
             color="#24130d"
             emissive="#c83f12"
-            emissiveIntensity={0.55}
+            emissiveIntensity={0.12}
             roughness={1}
             metalness={0.05}
             flatShading
@@ -530,24 +583,33 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         <mesh position={[0, 0.16, 0]} scale={[0.88, 1.2, 0.88]}>
           <icosahedronGeometry args={[0.34, 1]} />
           <meshBasicMaterial
+            ref={(node) => { meteorGlowMaterials.current[index] = node; }}
             color="#ff6a18"
             transparent
-            opacity={0.26}
+            opacity={0.08}
             depthWrite={false}
             blending={THREE.AdditiveBlending}
           />
         </mesh>
         <mesh position={[0, 0.28, 0]}>
           <sphereGeometry args={[0.13, 10, 8]} />
-          <meshBasicMaterial color="#ffd08a" toneMapped={false} />
+          <meshBasicMaterial
+            ref={(node) => { meteorHeadMaterials.current[index] = node; }}
+            color="#8d2c12"
+            transparent
+            opacity={0.3}
+            depthWrite={false}
+            toneMapped={false}
+          />
         </mesh>
         <group ref={(node) => { meteorFireGroups.current[index] = node; }}>
           <mesh position={[0, -0.3, 0]} scale={[0.12, 0.38, 0.12]}>
             <sphereGeometry args={[1, 12, 8]} />
             <meshBasicMaterial
+              ref={(node) => { meteorInnerTailMaterials.current[index] = node; }}
               color="#ffe2a3"
               transparent
-              opacity={0.68}
+              opacity={0.16}
               depthWrite={false}
               blending={THREE.AdditiveBlending}
             />
@@ -555,9 +617,10 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
           <mesh position={[0.02, -0.52, -0.01]} scale={[0.2, 0.62, 0.18]}>
             <sphereGeometry args={[1, 12, 8]} />
             <meshBasicMaterial
+              ref={(node) => { meteorOuterTailMaterials.current[index] = node; }}
               color="#ff5a18"
               transparent
-              opacity={0.34}
+              opacity={0.08}
               depthWrite={false}
               blending={THREE.AdditiveBlending}
             />
@@ -583,7 +646,12 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
             opacity={0.14}
           />
         </group>
-        <pointLight color="#ff6a18" intensity={1.25} distance={5} />
+        <pointLight
+          ref={(node) => { meteorLights.current[index] = node; }}
+          color="#ff8a2a"
+          intensity={0.12}
+          distance={2.5}
+        />
       </group>
     ))}
     {Array.from({ length: IMPACT_COUNT }, (_, index) => (
