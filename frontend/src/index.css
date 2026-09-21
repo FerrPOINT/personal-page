@@ -15,9 +15,12 @@
 }
 
 @layer utilities {
-  .hero-description-outline {
+  .hero-soft-backdrop {
     position: relative;
     isolation: isolate;
+  }
+
+  .hero-description-outline {
     text-shadow:
       -1px -1px 0 #000,
       0 -1px 0 #000,
@@ -30,7 +33,7 @@
       0 2px 4px #000;
   }
 
-  .hero-description-outline::before {
+  .hero-soft-backdrop::before {
     content: '';
     position: absolute;
     z-index: -1;

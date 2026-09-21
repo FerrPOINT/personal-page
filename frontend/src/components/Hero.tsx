@@ -49,7 +49,7 @@ const Hero: React.FC = () => {
             <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-6 tracking-tight">
               {t('hero.name')}<br /><span className="accent-gradient-flow text-transparent bg-clip-text bg-gradient-to-r from-accent-primary to-accent-secondary filter drop-shadow-accent-secondary">{t('hero.surname')}</span>
             </h1>
-            <p className="hero-description-outline text-xl md:text-2xl text-secondary mb-8 leading-relaxed max-w-lg">{description}</p>
+            <p className="hero-soft-backdrop hero-description-outline text-xl md:text-2xl text-secondary mb-8 leading-relaxed max-w-lg">{description}</p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a href="#projects" onClick={(event) => scrollToSection(event, 'projects')}
                 className="group flex items-center justify-center px-8 py-4 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition-all cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)]">
@@ -60,7 +60,7 @@ const Hero: React.FC = () => {
                 {t('hero.contactMe')}<Mail className="ml-2 w-5 h-5 group-hover:text-accent-primary transition-colors" />
               </a>
             </div>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 0.8 }} className="mt-12 grid grid-cols-3 gap-8 border-t border-white/10 pt-8">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 0.8 }} className="hero-soft-backdrop mt-12 grid grid-cols-3 gap-8 border-t border-white/10 pt-8">
               <div><p className="text-3xl font-bold text-white">{yearsOfExperience}+</p><p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.yearsExp')}</p></div>
               <div><p className="text-3xl font-bold text-white">1M+</p><p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.rpsScaled')}</p></div>
               <div><p className="text-3xl font-bold text-white">Full</p><p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.fullStackCycle')}</p></div>
