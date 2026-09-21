@@ -8,7 +8,12 @@
     "writtenBy": "Автор: Александр Жуков",
     "switchLanguage": "Переключить на {lang}",
     "english": "Английский",
-    "russian": "Русский"
+    "russian": "Русский",
+    "switchColorTheme": "Переключить на {theme}",
+    "colorThemes": {
+      "neon": "голубо-фиолетовую тему",
+      "ember": "оранжево-фиолетовую тему"
+    }
   },
   "hero": {
     "badge": "Открыт для новых возможностей",

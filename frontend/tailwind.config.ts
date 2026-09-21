@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import { themeCssColor, themeCssTriplet } from './src/theme/palettes';
 
 const config: Config = {
   content: [
@@ -9,35 +10,34 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Современная система цветов с поддержкой opacity через Tailwind
         background: {
-          DEFAULT: '#0a0a0a',
-          pure: '#0a0a0a',
+          DEFAULT: themeCssColor('background'),
+          pure: themeCssColor('background'),
         },
         surface: {
-          DEFAULT: '#121212',
-          pure: '#121212',
+          DEFAULT: themeCssColor('surface'),
+          pure: themeCssColor('surface'),
         },
         primary: {
-          DEFAULT: '#f0f0f0',
-          pure: '#f0f0f0',
+          DEFAULT: themeCssColor('textPrimary'),
+          pure: themeCssColor('textPrimary'),
         },
         secondary: {
-          DEFAULT: '#888888',
-          pure: '#888888',
+          DEFAULT: themeCssColor('textSecondary'),
+          pure: themeCssColor('textSecondary'),
         },
         accent: {
-          cyan: {
-            DEFAULT: '#00d9ff',
-            pure: '#00d9ff',
-            light: '#33e0ff',
-            dark: '#00b8d9',
+          primary: {
+            DEFAULT: themeCssColor('accentPrimary'),
+            pure: themeCssColor('accentPrimary'),
+            light: themeCssColor('accentPrimaryLight'),
+            dark: themeCssColor('accentPrimaryDark'),
           },
-          magenta: {
-            DEFAULT: '#ff00ff',
-            pure: '#ff00ff',
-            light: '#ff33ff',
-            dark: '#cc00cc',
+          secondary: {
+            DEFAULT: themeCssColor('accentSecondary'),
+            pure: themeCssColor('accentSecondary'),
+            light: themeCssColor('accentSecondaryLight'),
+            dark: themeCssColor('accentSecondaryDark'),
           },
         },
       },
@@ -49,12 +49,15 @@ const config: Config = {
         'spin-slow': 'spin 20s linear infinite',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
-      // Современные тени и эффекты
       boxShadow: {
-        'glow-cyan': '0 0 20px rgba(0, 217, 255, 0.3)',
-        'glow-magenta': '0 0 20px rgba(255, 0, 255, 0.3)',
-        'glow-cyan-lg': '0 0 40px rgba(0, 217, 255, 0.5)',
-        'glow-magenta-lg': '0 0 40px rgba(255, 0, 255, 0.5)',
+        'glow-primary': `0 0 20px rgb(${themeCssTriplet('accentPrimary')} / 0.3)`,
+        'glow-secondary': `0 0 20px rgb(${themeCssTriplet('accentSecondary')} / 0.3)`,
+        'glow-primary-lg': `0 0 40px rgb(${themeCssTriplet('accentPrimary')} / 0.5)`,
+        'glow-secondary-lg': `0 0 40px rgb(${themeCssTriplet('accentSecondary')} / 0.5)`,
+      },
+      dropShadow: {
+        'accent-primary': `0 0 8px rgb(${themeCssTriplet('accentPrimary')} / 0.75)`,
+        'accent-secondary': `0 0 10px rgb(${themeCssTriplet('accentSecondary')} / 0.45)`,
       },
       // Современные переходы
       transitionTimingFunction: {

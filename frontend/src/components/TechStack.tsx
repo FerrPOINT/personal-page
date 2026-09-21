@@ -3,9 +3,12 @@ import { motion } from 'framer-motion';
 import { ResponsiveContainer, BarChart, Bar, XAxis, Cell, YAxis, CartesianGrid } from 'recharts';
 import { useLanguage } from '../i18n/hooks/useLanguage';
 import { getSkills } from '../content';
+import { themeRuntimeColor } from '../theme/palettes';
+import { useColorTheme } from '../theme/ColorThemeContext';
 
 const TechStack: React.FC = () => {
   const { t, language } = useLanguage();
+  const { theme } = useColorTheme();
   
   const skills = useMemo(() => getSkills(language), [language]);
   
@@ -21,18 +24,18 @@ const TechStack: React.FC = () => {
               viewport={{ once: true }}
             >
               <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('techStack.title')}</h2>
-              <div className="w-20 h-1 bg-gradient-to-r from-accent-cyan to-accent-magenta mb-6"></div>
+              <div className="w-20 h-1 bg-gradient-to-r from-accent-primary to-accent-secondary mb-6"></div>
               <p className="text-secondary mb-8 leading-relaxed">
                 {t('techStack.description')}
               </p>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <div className="p-4 bg-white/5 rounded-lg border border-white/5">
-                    <h4 className="text-accent-cyan font-bold mb-1">{t('techStack.architecture.title')}</h4>
+                    <h4 className="text-accent-primary font-bold mb-1">{t('techStack.architecture.title')}</h4>
                     <p className="text-xs text-secondary">{t('techStack.architecture.description')}</p>
                  </div>
                  <div className="p-4 bg-white/5 rounded-lg border border-white/5">
-                    <h4 className="text-accent-magenta font-bold mb-1">{t('techStack.aiMl.title')}</h4>
+                    <h4 className="text-accent-secondary font-bold mb-1">{t('techStack.aiMl.title')}</h4>
                     <p className="text-xs text-secondary">{t('techStack.aiMl.description')}</p>
                  </div>
               </div>
@@ -53,13 +56,18 @@ const TechStack: React.FC = () => {
                   layout="vertical"
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={themeRuntimeColor(theme, 'textSecondary')}
+                    strokeOpacity={0.2}
+                    horizontal={false}
+                  />
                   <XAxis type="number" domain={[0, 100]} hide />
                   <YAxis 
                     dataKey="name" 
                     type="category" 
                     width={140} 
-                    tick={{ fill: '#f0f0f0', fontSize: 12, fontWeight: 600 }}
+                    tick={{ fill: themeRuntimeColor(theme, 'textPrimary'), fontSize: 12, fontWeight: 600 }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -67,7 +75,7 @@ const TechStack: React.FC = () => {
                     {skills.map((entry, index) => (
                       <Cell 
                         key={`cell-${index}`} 
-                        fill={index % 2 === 0 ? '#00d9ff' : '#ff00ff'} 
+                        fill={themeRuntimeColor(theme, index % 2 === 0 ? 'accentPrimary' : 'accentSecondary')}
                         fillOpacity={0.8}
                       />
                     ))}

@@ -19,7 +19,7 @@ import ProjectImage from './ProjectImage';
 
 type ProjectFilter = 'all' | ProjectCategory;
 
-const usesCyanAccent = (project: Project): boolean => (
+const usesPrimaryAccent = (project: Project): boolean => (
   project.categories.includes('ai') || project.categories.includes('devops')
 );
 
@@ -77,7 +77,7 @@ const Projects: React.FC = () => {
         >
           <div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('projects.title')}</h2>
-            <div className="w-20 h-1 bg-gradient-to-r from-accent-cyan to-accent-magenta mb-4" />
+            <div className="w-20 h-1 bg-gradient-to-r from-accent-primary to-accent-secondary mb-4" />
             <p className="text-secondary max-w-xl">{t('projects.description')}</p>
           </div>
 
@@ -131,7 +131,7 @@ const Projects: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
                 <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2 pointer-events-none">
                   {selectedProject.categories.map((category) => (
-                    <span key={category} className="px-3 py-1 bg-black/70 backdrop-blur-md text-xs font-mono border border-accent-cyan/50 text-accent-cyan rounded">
+                    <span key={category} className="px-3 py-1 bg-black/70 backdrop-blur-md text-xs font-mono border border-accent-primary/50 text-accent-primary rounded">
                       {categoryLabels[category]}
                     </span>
                   ))}
@@ -165,21 +165,21 @@ const Projects: React.FC = () => {
               )}
             </figure>
 
-            <ProjectSection icon={<Globe className="w-5 h-5 text-accent-cyan" />} title={t('projects.context')}>
+            <ProjectSection icon={<Globe className="w-5 h-5 text-accent-primary" />} title={t('projects.context')}>
               <p className="text-gray-300 leading-relaxed">{selectedProject.context}</p>
             </ProjectSection>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ProjectListSection icon={<UserCheck className="w-5 h-5 text-accent-cyan" />} title={t('projects.contribution')} items={selectedProject.contribution} accent="cyan" />
-              <ProjectListSection icon={<Layers className="w-5 h-5 text-accent-magenta" />} title={t('projects.decisions')} items={selectedProject.decisions} accent="magenta" />
-              <ProjectListSection icon={<Cpu className="w-5 h-5 text-accent-magenta" />} title={t('projects.challenges')} items={selectedProject.challenges} accent="magenta" />
-              <ProjectListSection icon={<CheckCircle className="w-5 h-5 text-accent-cyan" />} title={t('projects.results')} items={selectedProject.results} accent="cyan" />
+              <ProjectListSection icon={<UserCheck className="w-5 h-5 text-accent-primary" />} title={t('projects.contribution')} items={selectedProject.contribution} accent="primary" />
+              <ProjectListSection icon={<Layers className="w-5 h-5 text-accent-secondary" />} title={t('projects.decisions')} items={selectedProject.decisions} accent="secondary" />
+              <ProjectListSection icon={<Cpu className="w-5 h-5 text-accent-secondary" />} title={t('projects.challenges')} items={selectedProject.challenges} accent="secondary" />
+              <ProjectListSection icon={<CheckCircle className="w-5 h-5 text-accent-primary" />} title={t('projects.results')} items={selectedProject.results} accent="primary" />
             </div>
 
-            <ProjectSection icon={<Server className="w-5 h-5 text-accent-cyan" />} title={t('projects.stack')}>
+            <ProjectSection icon={<Server className="w-5 h-5 text-accent-primary" />} title={t('projects.stack')}>
               <div className="flex flex-wrap gap-2">
                 {selectedProject.stack.map((technology) => (
-                  <span key={technology} className="px-3 py-1.5 rounded-lg text-sm font-medium border bg-accent-cyan/10 border-accent-cyan/30 text-accent-cyan">
+                  <span key={technology} className="px-3 py-1.5 rounded-lg text-sm font-medium border bg-accent-primary/10 border-accent-primary/30 text-accent-primary">
                     {technology}
                   </span>
                 ))}
@@ -187,7 +187,7 @@ const Projects: React.FC = () => {
               {selectedProject.links && selectedProject.links.length > 0 && (
                 <div className="mt-6 flex flex-wrap gap-3 border-t border-white/10 pt-5">
                   {selectedProject.links.map((link) => (
-                    <a key={link.href} href={link.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-accent-cyan hover:underline">
+                    <a key={link.href} href={link.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-accent-primary hover:underline">
                       {link.label[language]} <ExternalLink className="h-4 w-4" />
                     </a>
                   ))}
@@ -212,13 +212,13 @@ const ProjectListSection: React.FC<{
   icon: React.ReactNode;
   title: string;
   items: string[];
-  accent: 'cyan' | 'magenta';
+  accent: 'primary' | 'secondary';
 }> = ({ icon, title, items, accent }) => (
   <ProjectSection icon={icon} title={title}>
     <ul className="space-y-3">
       {items.map((item) => (
         <li key={item} className="flex items-start text-sm text-gray-300 leading-relaxed">
-          <span className={`w-2 h-2 rounded-full mt-2 mr-3 shrink-0 ${accent === 'cyan' ? 'bg-accent-cyan' : 'bg-accent-magenta'}`} />
+          <span className={`w-2 h-2 rounded-full mt-2 mr-3 shrink-0 ${accent === 'primary' ? 'bg-accent-primary' : 'bg-accent-secondary'}`} />
           <span>{item}</span>
         </li>
       ))}
@@ -235,7 +235,7 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, language, categoryLabels, viewLabel, onClick }) => {
-  const cyan = usesCyanAccent(project);
+  const primaryAccent = usesPrimaryAccent(project);
   const cover = project.media[0];
 
   return (
@@ -246,9 +246,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, language, categoryLa
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.3 }}
       className={`group relative bg-surface border rounded-xl overflow-hidden transition-all duration-300 flex flex-col h-full md:last:odd:col-span-2 md:last:odd:w-[calc(50%-1rem)] md:last:odd:justify-self-center ${
-        cyan
-          ? 'border-white/10 hover:border-accent-cyan/40 hover:shadow-[0_0_40px_rgba(0,217,255,0.2)]'
-          : 'border-white/10 hover:border-accent-magenta/40 hover:shadow-[0_0_40px_rgba(255,0,255,0.2)]'
+        primaryAccent
+          ? 'border-white/10 hover:border-accent-primary/40 hover:shadow-glow-primary-lg'
+          : 'border-white/10 hover:border-accent-secondary/40 hover:shadow-glow-secondary-lg'
       }`}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/90 z-10 pointer-events-none" />
@@ -263,8 +263,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, language, categoryLa
           {project.categories.map((category) => (
             <span key={category} className={`px-3 py-1 bg-black/70 backdrop-blur-md text-xs font-mono border rounded ${
               category === 'ai' || category === 'devops'
-                ? 'border-accent-cyan/50 text-accent-cyan'
-                : 'border-accent-magenta/50 text-accent-magenta'
+                ? 'border-accent-primary/50 text-accent-primary'
+                : 'border-accent-secondary/50 text-accent-secondary'
             }`}>
               {categoryLabels[category]}
             </span>
@@ -274,12 +274,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, language, categoryLa
       </div>
 
       <div className="p-6 relative z-20 -mt-12 flex flex-col flex-grow">
-        <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-accent-cyan transition-colors">{project.title}</h3>
+        <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-accent-primary transition-colors">{project.title}</h3>
         <p className="text-gray-300 text-sm mb-6 min-h-[3rem] leading-relaxed">{project.summary}</p>
         <div className="grid grid-cols-3 gap-2 mb-6">
           {project.metrics.map((metric) => (
             <div key={`${metric.value}-${metric.label ?? ''}`} className="flex items-center justify-center text-xs font-mono text-gray-300 bg-white/5 p-2 rounded border border-white/10 text-center">
-              <span className={`w-1.5 h-1.5 rounded-full mr-1.5 shrink-0 ${cyan ? 'bg-accent-cyan' : 'bg-accent-magenta'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full mr-1.5 shrink-0 ${primaryAccent ? 'bg-accent-primary' : 'bg-accent-secondary'}`} />
               <span className="truncate">{metric.label ? `${metric.value} ${metric.label}` : metric.value}</span>
             </div>
           ))}
@@ -295,9 +295,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, language, categoryLa
             type="button"
             onClick={onClick}
             className={`w-full flex items-center justify-center text-sm font-bold py-2.5 px-4 rounded-lg transition-all group/btn ${
-              cyan
-                ? 'bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/30 hover:bg-accent-cyan/20'
-                : 'bg-accent-magenta/10 text-accent-magenta border border-accent-magenta/30 hover:bg-accent-magenta/20'
+              primaryAccent
+                ? 'bg-accent-primary/10 text-accent-primary border border-accent-primary/30 hover:bg-accent-primary/20'
+                : 'bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/30 hover:bg-accent-secondary/20'
             }`}
           >
             {viewLabel}

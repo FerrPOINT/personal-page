@@ -30,7 +30,7 @@ const DeferredTechStack: React.FC = () => {
 function App() {
   return (
     <LanguageProvider>
-      <div className="min-h-screen bg-background text-primary font-sans antialiased selection:bg-accent-cyan/30 selection:text-white">
+      <div className="min-h-screen bg-background text-primary font-sans antialiased selection:bg-accent-primary/30 selection:text-white">
         <Navbar />
         
         <main className="flex flex-col w-full">

@@ -141,7 +141,7 @@ const Contact: React.FC = () => {
             viewport={{ once: true, margin: "-100px" }}
             animate={{ opacity: 1, x: 0 }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-8">{t('contact.title')}<br /> <span className="text-accent-cyan">{t('contact.titleScalable')}</span></h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-8">{t('contact.title')}<br /> <span className="text-accent-primary">{t('contact.titleScalable')}</span></h2>
             <p className="text-secondary text-lg mb-12">
               {t('contact.description', { years: yearsOfExperience })}
             </p>
@@ -198,7 +198,7 @@ const Contact: React.FC = () => {
                 onClick={() => setShowResume(true)}
                 className="flex items-center px-6 py-3 bg-white/5 border border-white/20 rounded-lg text-white hover:bg-white/10 transition-colors group"
               >
-                <FileText className="w-5 h-5 mr-2 text-accent-cyan" />
+                <FileText className="w-5 h-5 mr-2 text-accent-primary" />
                 <span>{t('contact.resume.viewResume')}</span>
               </button>
             </div>
@@ -218,7 +218,7 @@ const Contact: React.FC = () => {
                   id="contact-name" type="text" autoComplete="name" maxLength={255}
                   aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? 'contact-name-error' : undefined}
                   {...register("name", { required: true, maxLength: 255 })}
-                  className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-colors"
+                  className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-colors"
                   placeholder={t('contact.form.namePlaceholder')}
                 />
                 {errors.name && <span id="contact-name-error" className="text-red-500 text-xs mt-1">{t('contact.form.nameRequired')}</span>}
@@ -230,7 +230,7 @@ const Contact: React.FC = () => {
                   id="contact-email" type="email" autoComplete="email" maxLength={255}
                   aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'contact-email-error' : undefined}
                   {...register("email", { required: true, pattern: /^\S+@\S+$/i })}
-                  className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-colors"
+                  className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-colors"
                   placeholder={t('contact.form.emailPlaceholder')}
                 />
                 {errors.email && <span id="contact-email-error" className="text-red-500 text-xs mt-1">{t('contact.form.emailRequired')}</span>}
@@ -244,7 +244,7 @@ const Contact: React.FC = () => {
                   aria-describedby={errors.message ? 'contact-message-error contact-message-help' : 'contact-message-help'}
                   {...register("message", { required: true, maxLength: 5000 })}
                   rows={4}
-                  className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-colors"
+                  className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-colors"
                   placeholder={t('contact.form.messagePlaceholder')}
                 />
                 <div className="flex justify-between items-center mt-1">
@@ -272,7 +272,7 @@ const Contact: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-accent-cyan to-accent-magenta text-white font-bold py-4 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center disabled:opacity-50"
+                className="w-full bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-bold py-4 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center disabled:opacity-50"
               >
                 {isSubmitting ? (
                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -295,7 +295,7 @@ const Contact: React.FC = () => {
         <div className="flex justify-end mb-4 no-print">
             <button 
                 onClick={handlePrint}
-                className="flex items-center px-4 py-2 bg-accent-cyan text-black rounded hover:bg-white transition-colors text-sm font-bold"
+                className="flex items-center px-4 py-2 bg-accent-primary text-black rounded hover:bg-white transition-colors text-sm font-bold"
             >
                 <Printer className="w-4 h-4 mr-2" />
                 {t('contact.resume.printResume')}

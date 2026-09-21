@@ -2,6 +2,8 @@ import React, { useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Billboard, Float, OrbitControls, PerspectiveCamera, Stars, Text } from '@react-three/drei';
 import * as THREE from 'three';
+import { themeRuntimeColor } from '../theme/palettes';
+import { useColorTheme } from '../theme/ColorThemeContext';
 
 type PlanetData = readonly [distance: number, speed: number, size: number, color: string, label: string];
 
@@ -44,7 +46,7 @@ function Planet({ data }: { data: PlanetData }) {
   </>;
 }
 
-function SciFiShipModel() {
+function SciFiShipModel({ primary, secondary }: { primary: string; secondary: string }) {
   return <group rotation={[0, Math.PI, 0]} scale={[0.4, 0.4, 0.4]}>
     <mesh position={[0, 0, 0.2]}>
       <boxGeometry args={[0.3, 0.15, 1.2]} />
@@ -52,7 +54,7 @@ function SciFiShipModel() {
     </mesh>
     <mesh position={[0, 0.1, 0.4]}>
       <boxGeometry args={[0.2, 0.1, 0.4]} />
-      <meshStandardMaterial color="#00d9ff" emissive="#00d9ff" emissiveIntensity={0.5} />
+      <meshStandardMaterial color={primary} emissive={primary} emissiveIntensity={0.5} />
     </mesh>
     <mesh position={[0, -0.05, 0]}>
       <boxGeometry args={[1.4, 0.05, 0.6]} />
@@ -60,15 +62,15 @@ function SciFiShipModel() {
     </mesh>
     <mesh position={[0.6, 0.2, -0.2]} rotation={[0, 0, Math.PI / 6]}>
       <boxGeometry args={[0.05, 0.4, 0.4]} />
-      <meshStandardMaterial color="#ff00ff" emissive="#ff00ff" emissiveIntensity={0.2} />
+      <meshStandardMaterial color={secondary} emissive={secondary} emissiveIntensity={0.2} />
     </mesh>
     <mesh position={[-0.6, 0.2, -0.2]} rotation={[0, 0, -Math.PI / 6]}>
       <boxGeometry args={[0.05, 0.4, 0.4]} />
-      <meshStandardMaterial color="#ff00ff" emissive="#ff00ff" emissiveIntensity={0.2} />
+      <meshStandardMaterial color={secondary} emissive={secondary} emissiveIntensity={0.2} />
     </mesh>
     <mesh position={[0, 0, -0.6]} rotation={[Math.PI / 2, 0, 0]}>
       <cylinderGeometry args={[0.15, 0.05, 0.1, 16]} />
-      <meshBasicMaterial color="#00d9ff" />
+      <meshBasicMaterial color={primary} />
     </mesh>
   </group>;
 }
@@ -79,9 +81,11 @@ interface SpaceshipProps {
   speed: number;
   offset: number;
   yOffset: number;
+  primary: string;
+  secondary: string;
 }
 
-function Spaceship({ radiusX, radiusZ, speed, offset, yOffset }: SpaceshipProps) {
+function Spaceship({ radiusX, radiusZ, speed, offset, yOffset, primary, secondary }: SpaceshipProps) {
   const ship = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
     const angle = clock.getElapsedTime() * speed + offset;
@@ -97,13 +101,16 @@ function Spaceship({ radiusX, radiusZ, speed, offset, yOffset }: SpaceshipProps)
       Math.sin(angle + 0.1) * radiusZ,
     );
   });
-  return <group ref={ship}><SciFiShipModel /></group>;
+  return <group ref={ship}><SciFiShipModel primary={primary} secondary={secondary} /></group>;
 }
 
 export default function HeroScene({ labels }: { labels: readonly [string, string, string, string, string] }) {
+  const { theme } = useColorTheme();
+  const primary = themeRuntimeColor(theme, 'accentPrimary');
+  const secondary = themeRuntimeColor(theme, 'accentSecondary');
   const planets: readonly PlanetData[] = [
-    [6, 0.30, 0.5, '#00d9ff', labels[0]],
-    [9, 0.25, 0.7, '#ff00ff', labels[1]],
+    [6, 0.30, 0.5, primary, labels[0]],
+    [9, 0.25, 0.7, secondary, labels[1]],
     [12, 0.20, 0.65, '#10b981', labels[2]],
     [15, 0.15, 0.8, '#3b82f6', labels[3]],
     [19, 0.10, 0.9, '#f97316', labels[4]],
@@ -117,12 +124,12 @@ export default function HeroScene({ labels }: { labels: readonly [string, string
         <group rotation={[0.2, 0, 0]} position={[0, 0, 0]}>
           <Sun />
           {planets.map((planet) => <Planet key={planet[4]} data={planet} />)}
-          <Spaceship radiusX={6} radiusZ={6} speed={0.6} offset={0} yOffset={0.5} />
-          <Spaceship radiusX={7} radiusZ={5} speed={0.5} offset={2} yOffset={-0.5} />
-          <Spaceship radiusX={10} radiusZ={11} speed={0.3} offset={1} yOffset={-1.5} />
-          <Spaceship radiusX={12} radiusZ={9} speed={0.25} offset={4} yOffset={1} />
-          <Spaceship radiusX={16} radiusZ={16} speed={0.15} offset={5} yOffset={0} />
-          <Spaceship radiusX={18} radiusZ={14} speed={0.12} offset={3} yOffset={2} />
+          <Spaceship radiusX={6} radiusZ={6} speed={0.6} offset={0} yOffset={0.5} primary={primary} secondary={secondary} />
+          <Spaceship radiusX={7} radiusZ={5} speed={0.5} offset={2} yOffset={-0.5} primary={primary} secondary={secondary} />
+          <Spaceship radiusX={10} radiusZ={11} speed={0.3} offset={1} yOffset={-1.5} primary={primary} secondary={secondary} />
+          <Spaceship radiusX={12} radiusZ={9} speed={0.25} offset={4} yOffset={1} primary={primary} secondary={secondary} />
+          <Spaceship radiusX={16} radiusZ={16} speed={0.15} offset={5} yOffset={0} primary={primary} secondary={secondary} />
+          <Spaceship radiusX={18} radiusZ={14} speed={0.12} offset={3} yOffset={2} primary={primary} secondary={secondary} />
         </group>
       </Float>
       <OrbitControls

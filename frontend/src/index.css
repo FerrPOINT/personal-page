@@ -6,13 +6,7 @@
 
 @layer base {
   :root {
-    /* CSS переменные для будущего расширения (dark mode, themes) */
-    --color-background: 10 10 10; /* #0a0a0a */
-    --color-surface: 18 18 18; /* #121212 */
-    --color-primary: 240 240 240; /* #f0f0f0 */
-    --color-secondary: 136 136 136; /* #888888 */
-    --color-accent-cyan: 0 217 255; /* #00d9ff */
-    --color-accent-magenta: 255 0 255; /* #ff00ff */
+    color-scheme: dark;
   }
 
   body {
@@ -41,13 +35,13 @@
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-accent-cyan;
+    @apply bg-accent-primary;
   }
 
   /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgb(var(--color-surface)) rgb(var(--color-background));
+    scrollbar-color: theme('colors.surface.DEFAULT') theme('colors.background.DEFAULT');
   }
 
   /* Улучшенная типографика */
@@ -57,7 +51,7 @@
 
   /* Улучшенная доступность для фокуса */
   :focus-visible {
-    @apply outline-none ring-2 ring-accent-cyan ring-offset-2 ring-offset-background;
+    @apply outline-none ring-2 ring-accent-primary ring-offset-2 ring-offset-background;
   }
 
   /* Предотвращение выделения текста на интерактивных элементах */

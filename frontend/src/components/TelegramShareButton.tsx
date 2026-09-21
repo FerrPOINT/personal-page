@@ -37,7 +37,7 @@ const TelegramShareButton: React.FC<TelegramShareButtonProps> = ({ formData }) =
   return (
     <button
       onClick={handleShare}
-      className="w-full flex items-center justify-center px-4 py-3 bg-accent-cyan/10 border border-accent-cyan/30 rounded-lg text-accent-cyan hover:bg-accent-cyan/20 transition-all group"
+      className="w-full flex items-center justify-center px-4 py-3 bg-accent-primary/10 border border-accent-primary/30 rounded-lg text-accent-primary hover:bg-accent-primary/20 transition-all group"
     >
       <MessageCircle className="w-5 h-5 mr-2" />
       <span className="font-medium">{t('contact.telegram.alsoWrite')}</span>

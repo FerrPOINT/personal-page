@@ -28,7 +28,7 @@ const Hero: React.FC = () => {
   });
 
   return (
-    <section id="hero" className="relative w-full min-h-screen bg-background overflow-hidden selection:bg-accent-cyan/30">
+    <section id="hero" className="relative w-full min-h-screen bg-background overflow-hidden selection:bg-accent-primary/30">
       <div className="absolute inset-0 z-0 pointer-events-none md:pointer-events-auto">
         {showScene && (
           <Suspense fallback={null}>
@@ -45,9 +45,9 @@ const Hero: React.FC = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-screen flex flex-col justify-center pointer-events-none">
         <div className="w-full md:w-1/2 pt-[45vh] md:pt-0 pointer-events-auto">
           <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }}>
-            <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-accent-cyan text-sm font-mono mb-6 backdrop-blur-sm shadow-[0_0_15px_rgba(0,217,255,0.1)]">{t('hero.badge')}</span>
+            <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-accent-primary text-sm font-mono mb-6 backdrop-blur-sm shadow-glow-primary">{t('hero.badge')}</span>
             <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-6 tracking-tight">
-              {t('hero.name')}<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan to-accent-magenta filter drop-shadow-[0_0_10px_rgba(255,0,255,0.3)]">{t('hero.surname')}</span>
+              {t('hero.name')}<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-primary to-accent-secondary filter drop-shadow-accent-secondary">{t('hero.surname')}</span>
             </h1>
             <p className="text-xl md:text-2xl text-secondary mb-8 leading-relaxed max-w-lg">{description}</p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -57,7 +57,7 @@ const Hero: React.FC = () => {
               </a>
               <a href="#contact" onClick={(event) => scrollToSection(event, 'contact')}
                 className="group flex items-center justify-center px-8 py-4 bg-transparent border border-white/20 text-white font-bold rounded-lg hover:bg-white/5 transition-all cursor-pointer backdrop-blur-sm">
-                {t('hero.contactMe')}<Mail className="ml-2 w-5 h-5 group-hover:text-accent-cyan transition-colors" />
+                {t('hero.contactMe')}<Mail className="ml-2 w-5 h-5 group-hover:text-accent-primary transition-colors" />
               </a>
             </div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 0.8 }} className="mt-12 grid grid-cols-3 gap-8 border-t border-white/10 pt-8">

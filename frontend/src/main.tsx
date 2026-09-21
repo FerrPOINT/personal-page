@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import { ColorThemeProvider } from './theme/ColorThemeContext';
+import { applyColorTheme, getInitialColorTheme } from './theme/palettes';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -10,10 +12,14 @@ if (!rootElement) {
 
 // Wrap render in try-catch to handle initialization errors
 try {
+  const initialTheme = getInitialColorTheme();
+  applyColorTheme(initialTheme);
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>
-      <App />
+      <ColorThemeProvider initialTheme={initialTheme}>
+        <App />
+      </ColorThemeProvider>
     </React.StrictMode>
   );
 } catch (error) {

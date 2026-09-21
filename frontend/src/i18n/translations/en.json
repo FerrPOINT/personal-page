@@ -8,7 +8,12 @@
     "writtenBy": "Written by Aleksandr Zhukov",
     "switchLanguage": "Switch to {lang}",
     "english": "English",
-    "russian": "Russian"
+    "russian": "Russian",
+    "switchColorTheme": "Switch to the {theme}",
+    "colorThemes": {
+      "neon": "blue-purple theme",
+      "ember": "orange-purple theme"
+    }
   },
   "navbar": {
     "logo": {

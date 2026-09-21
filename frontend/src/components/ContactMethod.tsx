@@ -24,12 +24,12 @@ const variantStyles: Record<ContactVariant, {
     value: 'group-hover:text-red-400',
   },
   phone: {
-    icon: 'text-accent-magenta',
-    value: 'group-hover:text-accent-magenta',
+    icon: 'text-accent-secondary',
+    value: 'group-hover:text-accent-secondary',
   },
   telegram: {
-    icon: 'text-accent-cyan',
-    value: 'group-hover:text-accent-cyan',
+    icon: 'text-accent-primary',
+    value: 'group-hover:text-accent-primary',
   },
   github: {
     icon: 'text-white',

@@ -48,7 +48,7 @@ function renderMarkdownContent(content: string): React.ReactNode[] {
     }
 
     blocks.push(
-      <ul key={`ul-${blocks.length}`} className="list-disc space-y-3 pl-6 marker:text-accent-cyan">
+      <ul key={`ul-${blocks.length}`} className="list-disc space-y-3 pl-6 marker:text-accent-primary">
         {listItems.map((item, index) => (
           <li key={index} className="text-gray-300 leading-7 pl-1">
             {renderInlineMarkdown(item)}
@@ -134,7 +134,7 @@ const Insights: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('insights.title')}</h2>
-          <div className="w-20 h-1 bg-gradient-to-r from-accent-cyan to-accent-magenta mx-auto"></div>
+          <div className="w-20 h-1 bg-gradient-to-r from-accent-primary to-accent-secondary mx-auto"></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -146,14 +146,14 @@ const Insights: React.FC = () => {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
               onClick={() => setSelectedSlug(post.slug)}
-              className="flex flex-col h-full bg-surface border border-white/5 rounded-2xl p-6 hover:border-accent-magenta/30 transition-colors group cursor-pointer"
+              className="flex flex-col h-full bg-surface border border-white/5 rounded-2xl p-6 hover:border-accent-secondary/30 transition-colors group cursor-pointer"
             >
               <div className="flex justify-between items-center mb-4 text-xs font-mono text-secondary uppercase tracking-wider">
                 <span>{categoryLabels[post.category]}</span>
                 <span>{post.date}</span>
               </div>
               
-              <h3 className="text-xl font-bold text-white mb-3 group-hover:text-accent-magenta transition-colors">
+              <h3 className="text-xl font-bold text-white mb-3 group-hover:text-accent-secondary transition-colors">
                 {post.title}
               </h3>
               
@@ -166,7 +166,7 @@ const Insights: React.FC = () => {
                   <Clock className="w-3 h-3 mr-1" />
                   {post.readTime}
                 </div>
-                <div className="flex items-center text-sm font-bold text-white group-hover:text-accent-magenta transition-colors">
+                <div className="flex items-center text-sm font-bold text-white group-hover:text-accent-secondary transition-colors">
                   {t('common.readArticle')}
                   <ArrowUpRight className="w-4 h-4 ml-1" />
                 </div>
@@ -186,7 +186,7 @@ const Insights: React.FC = () => {
         {selectedPost && (
             <article className="prose prose-invert max-w-none">
                 <div className="mb-6 pb-6 border-b border-white/10">
-                    <span className="text-accent-magenta font-mono text-sm uppercase tracking-wider">{categoryLabels[selectedPost.category]}</span>
+                    <span className="text-accent-secondary font-mono text-sm uppercase tracking-wider">{categoryLabels[selectedPost.category]}</span>
                     <h1 className="text-3xl font-bold text-white mt-2 mb-4">{selectedPost.title}</h1>
                     <div className="flex items-center text-secondary text-sm">
                         <span>{selectedPost.date}</span>
@@ -200,7 +200,7 @@ const Insights: React.FC = () => {
                 
                 <div className="mt-8 pt-6 border-t border-white/10 flex justify-between items-center">
                     <span className="text-sm text-secondary">{t('common.writtenBy')}</span>
-                    <button onClick={closeArticle} className="text-accent-cyan hover:underline text-sm font-medium">
+                    <button onClick={closeArticle} className="text-accent-primary hover:underline text-sm font-medium">
                         {t('common.closeArticle')}
                     </button>
                 </div>

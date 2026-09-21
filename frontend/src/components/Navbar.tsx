@@ -3,6 +3,7 @@ import { Menu, X, Terminal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../i18n/hooks/useLanguage';
 import LanguageSwitcher from './LanguageSwitcher';
+import ColorThemeSwitcher from './ColorThemeSwitcher';
 
 const Navbar: React.FC = () => {
   const { t } = useLanguage();
@@ -44,12 +45,12 @@ const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <a href="#hero" className="flex-shrink-0 flex items-center gap-2 cursor-pointer group" onClick={(e) => handleScrollTo(e, '#hero')}>
-            <div className="bg-gradient-to-br from-accent-cyan to-accent-magenta p-2 rounded-lg group-hover:opacity-90 transition-opacity">
+            <div className="bg-gradient-to-br from-accent-primary to-accent-secondary p-2 rounded-lg group-hover:opacity-90 transition-opacity">
               <Terminal className="w-6 h-6 text-white" />
             </div>
             <div className="hidden sm:block">
-              <span className="block text-lg font-bold tracking-wider text-white group-hover:text-accent-cyan transition-colors">{t('navbar.logo.name')}</span>
-              <span className="block text-xs text-accent-cyan font-mono tracking-widest">{t('navbar.logo.title')}</span>
+              <span className="block text-lg font-bold tracking-wider text-white group-hover:text-accent-primary transition-colors">{t('navbar.logo.name')}</span>
+              <span className="block text-xs text-accent-primary font-mono tracking-widest">{t('navbar.logo.title')}</span>
             </div>
           </a>
 
@@ -61,21 +62,22 @@ const Navbar: React.FC = () => {
                   key={item.href}
                   href={item.href}
                   onClick={(e) => handleScrollTo(e, item.href)}
-                  className="text-sm font-medium text-secondary hover:text-accent-cyan transition-colors duration-200 relative group"
+                  className="text-sm font-medium text-secondary hover:text-accent-primary transition-colors duration-200 relative group"
                 >
                   {item.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent-cyan transition-all duration-300 group-hover:w-full"></span>
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent-primary transition-all duration-300 group-hover:w-full"></span>
                 </a>
               ))}
             </div>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
+            <ColorThemeSwitcher />
             <LanguageSwitcher />
             <a 
               href="#contact"
               onClick={(e) => handleScrollTo(e, '#contact')}
-              className="px-6 py-2 rounded-full border border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10 transition-all duration-300 font-medium text-sm"
+              className="px-6 py-2 rounded-full border border-accent-primary/30 text-accent-primary hover:bg-accent-primary/10 transition-all duration-300 font-medium text-sm"
             >
               {t('navbar.letsTalk')}
             </a>
@@ -83,6 +85,7 @@ const Navbar: React.FC = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center gap-3">
+            <ColorThemeSwitcher />
             <LanguageSwitcher />
             <button
               type="button"
@@ -121,7 +124,7 @@ const Navbar: React.FC = () => {
                 <a 
                   href="#contact"
                   onClick={(e) => handleScrollTo(e, '#contact')}
-                  className="block w-full text-center px-4 py-2 rounded-full border border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10 transition-all duration-300 font-medium text-sm"
+                  className="block w-full text-center px-4 py-2 rounded-full border border-accent-primary/30 text-accent-primary hover:bg-accent-primary/10 transition-all duration-300 font-medium text-sm"
                 >
                   {t('navbar.letsTalk')}
                 </a>
