@@ -291,12 +291,12 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     const waves = burstWaveMeshes.current[index];
     const waveMaterials = burstWaveMaterials.current[index];
     const light = burstLights.current[index];
-    if (core) core.scale.setScalar(0.25);
-    if (coreMaterial) coreMaterial.opacity = 0.95;
+    if (core) core.scale.setScalar(0.18);
+    if (coreMaterial) coreMaterial.opacity = 0.78;
     waves?.forEach((wave, waveIndex) => {
-      if (wave) wave.scale.setScalar(waveIndex === 0 ? 0.25 : 0.18);
+      if (wave) wave.scale.setScalar(waveIndex === 0 ? 0.18 : 0.12);
       const waveMaterial = waveMaterials?.[waveIndex];
-      if (waveMaterial) waveMaterial.opacity = waveIndex === 0 ? 0.85 : 0.65;
+      if (waveMaterial) waveMaterial.opacity = waveIndex === 0 ? 0.56 : 0.36;
     });
     if (light) light.intensity = 8.5;
     burst.velocities.forEach((velocity, fragmentIndex) => {
@@ -573,16 +573,16 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       const waves = burstWaveMeshes.current[burstIndex];
       const waveMaterials = burstWaveMaterials.current[burstIndex];
       const light = burstLights.current[burstIndex];
-      if (core) core.scale.setScalar(0.25 + expansion * 3.4);
-      if (coreMaterial) coreMaterial.opacity = fade * 0.95;
+      if (core) core.scale.setScalar(0.18 + expansion * 1.55);
+      if (coreMaterial) coreMaterial.opacity = fade * 0.78;
       waves?.forEach((wave, waveIndex) => {
         if (!wave) return;
         const delay = waveIndex * 0.12;
         const waveProgress = Math.max(0, Math.min(1, (progress - delay) / (1 - delay)));
         const waveExpansion = 1 - (1 - waveProgress) ** 3;
-        wave.scale.setScalar((waveIndex === 0 ? 0.25 : 0.18) + waveExpansion * (waveIndex === 0 ? 4.2 : 3.6));
+        wave.scale.setScalar((waveIndex === 0 ? 0.18 : 0.12) + waveExpansion * (waveIndex === 0 ? 2.2 : 1.7));
         const waveMaterial = waveMaterials?.[waveIndex];
-        if (waveMaterial) waveMaterial.opacity = (1 - waveProgress) ** 1.4 * (waveIndex === 0 ? 0.85 : 0.65);
+        if (waveMaterial) waveMaterial.opacity = (1 - waveProgress) ** 2.2 * (waveIndex === 0 ? 0.56 : 0.36);
       });
       if (light) light.intensity = fade * 8.5;
       burst.velocities.forEach((velocity, fragmentIndex) => {
@@ -758,7 +758,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         visible={false}
       >
         <mesh ref={(node) => { burstCoreMeshes.current[burstIndex] = node; }}>
-          <icosahedronGeometry args={[0.62, 2]} />
+          <icosahedronGeometry args={[0.48, 2]} />
           <meshBasicMaterial
             ref={(node) => { burstCoreMaterials.current[burstIndex] = node; }}
             color="#ffb13b"
@@ -778,7 +778,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
             }}
             rotation={waveIndex === 0 ? [Math.PI / 2, 0, 0] : [0.55, 0.75, 0.2]}
           >
-            <torusGeometry args={[0.62, waveIndex === 0 ? 0.075 : 0.045, 8, 36]} />
+            <torusGeometry args={[0.5, waveIndex === 0 ? 0.035 : 0.022, 8, 36]} />
             <meshBasicMaterial
               ref={(node) => {
                 if (!burstWaveMaterials.current[burstIndex]) burstWaveMaterials.current[burstIndex] = [];
