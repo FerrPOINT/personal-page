@@ -188,7 +188,7 @@ function MeteorField({ planets }: { planets: readonly PlanetData[] }) {
     const meteor = meteors.current[index];
     const angle = Math.random() * Math.PI * 2;
     const radius = 23 + Math.random() * 6;
-    const speed = 7 + Math.random() * 4;
+    const speed = 3.5 + Math.random() * 2;
     meteor.position.set(Math.cos(angle) * radius, (Math.random() - 0.5) * 7, Math.sin(angle) * radius);
 
     const aim = Math.random();
@@ -213,7 +213,7 @@ function MeteorField({ planets }: { planets: readonly PlanetData[] }) {
 
     meteor.velocity.copy(target).sub(meteor.position).normalize().multiplyScalar(speed);
     meteor.age = 0;
-    meteor.maxAge = 7.5;
+    meteor.maxAge = 14;
     meteor.active = true;
     const group = meteorGroups.current[index];
     if (group) {
