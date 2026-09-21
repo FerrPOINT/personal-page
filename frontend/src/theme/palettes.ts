@@ -1,7 +1,7 @@
 export type ColorTheme = 'neon' | 'ember';
 
-export const DEFAULT_COLOR_THEME: ColorTheme = 'ember';
-export const COLOR_THEME_STORAGE_KEY = 'personal-page-color-theme';
+export const DEFAULT_COLOR_THEME: ColorTheme = 'neon';
+export const COLOR_THEME_STORAGE_KEY = 'personal-page-color-theme-v2';
 
 export const colorThemes = {
   neon: {
