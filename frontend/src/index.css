@@ -16,6 +16,8 @@
 
 @layer utilities {
   .hero-description-outline {
+    position: relative;
+    isolation: isolate;
     text-shadow:
       -1px -1px 0 #000,
       0 -1px 0 #000,
@@ -26,6 +28,21 @@
       0 1px 0 #000,
       1px 1px 0 #000,
       0 2px 4px #000;
+  }
+
+  .hero-description-outline::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: -0.45rem -0.8rem;
+    border-radius: 0.75rem;
+    background: radial-gradient(
+      ellipse at 38% 50%,
+      rgb(0 0 0 / 48%) 0%,
+      rgb(0 0 0 / 30%) 68%,
+      transparent 100%
+    );
+    pointer-events: none;
   }
 
   .accent-gradient-flow {
