@@ -3,6 +3,12 @@ export type ColorTheme = 'neon' | 'ember';
 export const DEFAULT_COLOR_THEME: ColorTheme = 'neon';
 export const COLOR_THEME_STORAGE_KEY = 'personal-page-color-theme-v2';
 
+const sharedPurpleAccent = {
+  accentSecondary: '255 0 255',
+  accentSecondaryLight: '255 51 255',
+  accentSecondaryDark: '204 0 204',
+} as const;
+
 export const colorThemes = {
   neon: {
     background: '10 10 10',
@@ -12,9 +18,7 @@ export const colorThemes = {
     accentPrimary: '0 217 255',
     accentPrimaryLight: '51 224 255',
     accentPrimaryDark: '0 184 217',
-    accentSecondary: '255 0 255',
-    accentSecondaryLight: '255 51 255',
-    accentSecondaryDark: '204 0 204',
+    ...sharedPurpleAccent,
   },
   ember: {
     background: '9 10 10',
@@ -24,9 +28,7 @@ export const colorThemes = {
     accentPrimary: '251 146 60',
     accentPrimaryLight: '253 186 116',
     accentPrimaryDark: '234 88 12',
-    accentSecondary: '139 92 246',
-    accentSecondaryLight: '167 139 250',
-    accentSecondaryDark: '109 40 217',
+    ...sharedPurpleAccent,
   },
 } as const;
 
