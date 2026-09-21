@@ -141,6 +141,8 @@ interface BlasterState {
   active: boolean;
   age: number;
   duration: number;
+  sourceShipIndex: number;
+  destination: THREE.Vector3;
 }
 
 interface BurstState {
@@ -219,6 +221,8 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     active: false,
     age: 0,
     duration: 0.5,
+    sourceShipIndex: -1,
+    destination: new THREE.Vector3(),
   })));
   const bursts = useRef<BurstState[]>(Array.from({ length: BURST_COUNT }, () => ({
     active: false,
@@ -299,12 +303,15 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     });
   };
 
-  const fireBlaster = (source: THREE.Vector3, destination: THREE.Vector3): boolean => {
+  const fireBlaster = (sourceShipIndex: number, destination: THREE.Vector3): boolean => {
     const index = blasters.current.findIndex((blaster) => !blaster.active);
     if (index < 0) return false;
     const blaster = blasters.current[index];
     blaster.active = true;
     blaster.age = 0;
+    blaster.sourceShipIndex = sourceShipIndex;
+    blaster.destination.copy(destination);
+    const source = ships[sourceShipIndex];
     const group = blasterGroups.current[index];
     const material = blasterMaterials.current[index];
     if (group) {
@@ -474,7 +481,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
           defendingShip = shipIndex;
         }
       });
-      if (defendingShip >= 0 && fireBlaster(ships[defendingShip], meteor.position)) {
+      if (defendingShip >= 0 && fireBlaster(defendingShip, meteor.position)) {
         shipCooldowns.current[defendingShip] = elapsed + 1.2 + Math.random() * 0.8;
         meteor.active = false;
         if (group) group.visible = false;
@@ -510,9 +517,14 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       const group = blasterGroups.current[index];
       const material = blasterMaterials.current[index];
       if (group) {
+        const source = ships[blaster.sourceShipIndex];
+        beamDirection.copy(blaster.destination).sub(source);
+        const length = beamDirection.length();
+        beamMidpoint.copy(source).add(blaster.destination).multiplyScalar(0.5);
         const width = 1 - progress * 0.65;
-        group.scale.x = width;
-        group.scale.z = width;
+        group.position.copy(beamMidpoint);
+        if (length > 0.001) group.quaternion.setFromUnitVectors(METEOR_UP, beamDirection.normalize());
+        group.scale.set(width, length, width);
       }
       if (material) material.opacity = (1 - progress) * 0.95;
       if (progress >= 1) {
