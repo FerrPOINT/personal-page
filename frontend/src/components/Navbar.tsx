@@ -45,7 +45,7 @@ const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <a href="#hero" className="flex-shrink-0 flex items-center gap-2 cursor-pointer group" onClick={(e) => handleScrollTo(e, '#hero')}>
-            <div className="bg-gradient-to-br from-accent-primary to-accent-secondary p-2 rounded-lg group-hover:opacity-90 transition-opacity">
+            <div className="accent-gradient-flow bg-gradient-to-br from-accent-primary to-accent-secondary p-2 rounded-lg group-hover:opacity-90 transition-opacity">
               <Terminal className="w-6 h-6 text-white" />
             </div>
             <div className="hidden sm:block">

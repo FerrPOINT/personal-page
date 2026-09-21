@@ -47,7 +47,7 @@ const Hero: React.FC = () => {
           <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, ease: 'easeOut' }}>
             <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-accent-primary text-sm font-mono mb-6 backdrop-blur-sm shadow-glow-primary">{t('hero.badge')}</span>
             <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-6 tracking-tight">
-              {t('hero.name')}<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-primary to-accent-secondary filter drop-shadow-accent-secondary">{t('hero.surname')}</span>
+              {t('hero.name')}<br /><span className="accent-gradient-flow text-transparent bg-clip-text bg-gradient-to-r from-accent-primary to-accent-secondary filter drop-shadow-accent-secondary">{t('hero.surname')}</span>
             </h1>
             <p className="text-xl md:text-2xl text-secondary mb-8 leading-relaxed max-w-lg">{description}</p>
             <div className="flex flex-col sm:flex-row gap-4">

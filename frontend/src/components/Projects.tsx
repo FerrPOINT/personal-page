@@ -77,7 +77,7 @@ const Projects: React.FC = () => {
         >
           <div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('projects.title')}</h2>
-            <div className="w-20 h-1 bg-gradient-to-r from-accent-primary to-accent-secondary mb-4" />
+            <div className="accent-gradient-flow w-20 h-1 bg-gradient-to-r from-accent-primary to-accent-secondary mb-4" />
             <p className="text-secondary max-w-xl">{t('projects.description')}</p>
           </div>
 

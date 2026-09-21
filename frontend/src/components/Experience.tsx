@@ -19,7 +19,7 @@ const Experience: React.FC = () => {
           className="mb-16"
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('experience.title')}</h2>
-          <div className="w-20 h-1 bg-gradient-to-r from-accent-primary to-accent-secondary"></div>
+          <div className="accent-gradient-flow w-20 h-1 bg-gradient-to-r from-accent-primary to-accent-secondary"></div>
         </motion.div>
 
         <div className="relative border-l border-white/10 ml-3 md:ml-6 space-y-12">

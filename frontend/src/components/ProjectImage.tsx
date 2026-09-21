@@ -24,7 +24,7 @@ const ProjectImage: React.FC<ProjectImageProps> = ({
       <div
         role="img"
         aria-label={alt}
-        className={`flex h-full w-full items-center justify-center bg-gradient-to-br from-accent-primary/20 via-surface to-accent-secondary/20 p-8 text-center ${className}`}
+        className={`accent-gradient-flow flex h-full w-full items-center justify-center bg-gradient-to-br from-accent-primary/20 via-surface to-accent-secondary/20 p-8 text-center ${className}`}
       >
         <span className="max-w-sm font-mono text-sm text-white/70">{title}</span>
       </div>

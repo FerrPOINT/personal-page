@@ -17,16 +17,16 @@ export const colorThemes = {
     accentSecondaryDark: '204 0 204',
   },
   ember: {
-    background: '10 9 12',
-    surface: '19 16 22',
-    textPrimary: '245 242 247',
-    textSecondary: '157 149 163',
+    background: '9 10 10',
+    surface: '16 20 20',
+    textPrimary: '244 247 246',
+    textSecondary: '148 163 159',
     accentPrimary: '251 146 60',
     accentPrimaryLight: '253 186 116',
     accentPrimaryDark: '234 88 12',
-    accentSecondary: '192 132 252',
-    accentSecondaryLight: '216 180 254',
-    accentSecondaryDark: '147 51 234',
+    accentSecondary: '45 212 191',
+    accentSecondaryLight: '94 234 212',
+    accentSecondaryDark: '13 148 136',
   },
 } as const;
 

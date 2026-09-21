@@ -4,6 +4,33 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes accent-gradient-flow {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@layer utilities {
+  .accent-gradient-flow {
+    background-size: 100% 100%;
+  }
+
+  [data-color-theme='ember'] .accent-gradient-flow {
+    background-size: 220% 220%;
+    animation: accent-gradient-flow 5s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-color-theme='ember'] .accent-gradient-flow {
+      animation: none;
+    }
+  }
+}
+
 @layer base {
   :root {
     color-scheme: dark;
