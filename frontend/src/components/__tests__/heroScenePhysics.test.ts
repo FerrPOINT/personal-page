@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import {
   calculateFirstContact,
+  getBlasterShotLength,
   getCollisionMotionScale,
   placeBlasterBeam,
 } from '../heroScenePhysics';
@@ -13,18 +14,82 @@ const expectVectorClose = (actual: THREE.Vector3, expected: THREE.Vector3) => {
 };
 
 describe('hero scene trajectories', () => {
-  it('keeps the beam between the moving ship and the actual impact point', () => {
+  it('reanchors the beam at the moving ship without stretching past the shot length', () => {
     const destination = new THREE.Vector3(0.5, 0.25, -0.25);
     const movedSource = new THREE.Vector3(1.2, -0.4, 0.8);
+    const shotLength = 0.75;
     const group = new THREE.Group();
-    expect(placeBlasterBeam(group, movedSource, destination, 1)).toBe(true);
+    expect(placeBlasterBeam(group, movedSource, destination, shotLength, 1)).toBe(true);
     group.updateMatrixWorld(true);
 
     const renderedStart = new THREE.Vector3(0, -0.5, 0).applyMatrix4(group.matrixWorld);
     const renderedEnd = new THREE.Vector3(0, 0.5, 0).applyMatrix4(group.matrixWorld);
+    const expectedEnd = destination.clone().sub(movedSource).setLength(shotLength).add(movedSource);
     expectVectorClose(renderedStart, movedSource);
-    expectVectorClose(renderedEnd, destination);
-    expect(group.scale.y).toBeCloseTo(movedSource.distanceTo(destination), 6);
+    expectVectorClose(renderedEnd, expectedEnd);
+    expect(group.scale.y).toBeCloseTo(shotLength, 6);
+  });
+
+  it('never stretches a shot when the ship moves far from the impact point', () => {
+    const currentSource = new THREE.Vector3(10, 0, 0);
+    const impactPoint = new THREE.Vector3(0, 0, 0);
+    const shotLength = 0.75;
+    const group = new THREE.Group();
+    expect(placeBlasterBeam(group, currentSource, impactPoint, shotLength, 1)).toBe(true);
+    group.updateMatrixWorld(true);
+
+    const renderedStart = new THREE.Vector3(0, -0.5, 0).applyMatrix4(group.matrixWorld);
+    const renderedEnd = new THREE.Vector3(0, 0.5, 0).applyMatrix4(group.matrixWorld);
+    expectVectorClose(renderedStart, currentSource);
+    expect(renderedStart.distanceTo(renderedEnd)).toBeCloseTo(shotLength, 6);
+    expect(renderedEnd.x).toBeCloseTo(9.25, 6);
+  });
+
+  it('ends exactly at the impact point when it remains within the shot length', () => {
+    const source = new THREE.Vector3(0, 0, 0);
+    const impactPoint = new THREE.Vector3(0.3, -0.2, 0.1);
+    const group = new THREE.Group();
+    expect(placeBlasterBeam(group, source, impactPoint, 0.75, 1)).toBe(true);
+    group.updateMatrixWorld(true);
+
+    const renderedEnd = new THREE.Vector3(0, 0.5, 0).applyMatrix4(group.matrixWorld);
+    expectVectorClose(renderedEnd, impactPoint);
+  });
+
+  it('preserves beam origin, direction, and maximum length across varied trajectories', () => {
+    let seed = 0x5eed1234;
+    const random = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 0x1_0000_0000;
+    };
+
+    for (let index = 0; index < 250; index += 1) {
+      const source = new THREE.Vector3(
+        random() * 40 - 20,
+        random() * 10 - 5,
+        random() * 40 - 20,
+      );
+      const destination = new THREE.Vector3(
+        random() * 40 - 20,
+        random() * 10 - 5,
+        random() * 40 - 20,
+      );
+      const maxLength = 0.05 + random() * 0.7;
+      const group = new THREE.Group();
+      expect(placeBlasterBeam(group, source, destination, maxLength, 1)).toBe(true);
+      group.updateMatrixWorld(true);
+
+      const renderedStart = new THREE.Vector3(0, -0.5, 0).applyMatrix4(group.matrixWorld);
+      const renderedEnd = new THREE.Vector3(0, 0.5, 0).applyMatrix4(group.matrixWorld);
+      const renderedDirection = renderedEnd.clone().sub(renderedStart).normalize();
+      const targetDirection = destination.clone().sub(source).normalize();
+      expectVectorClose(renderedStart, source);
+      expect(renderedStart.distanceTo(renderedEnd)).toBeCloseTo(
+        Math.min(source.distanceTo(destination), maxLength),
+        5,
+      );
+      expect(renderedDirection.dot(targetDirection)).toBeCloseTo(1, 5);
+    }
   });
 
   it('detects a meteor crossing the interception radius between rendered frames', () => {
@@ -65,7 +130,13 @@ describe('hero scene trajectories', () => {
 
   it('does not create a ray without a valid firing direction', () => {
     const point = new THREE.Vector3(1, 2, 3);
-    expect(placeBlasterBeam(new THREE.Group(), point, point, 1)).toBe(false);
+    expect(placeBlasterBeam(new THREE.Group(), point, point, 0.75, 1)).toBe(false);
+  });
+
+  it('derives beam length from the actual shot and attack radius', () => {
+    const source = new THREE.Vector3(0, 0, 0);
+    expect(getBlasterShotLength(source, new THREE.Vector3(0.4, 0, 0))).toBeCloseTo(0.4, 6);
+    expect(getBlasterShotLength(source, new THREE.Vector3(10, 0, 0))).toBeCloseTo(0.75, 6);
   });
 
   it('scales fragment motion with collision speed', () => {

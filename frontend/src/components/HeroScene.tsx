@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import {
   BLASTER_ATTACK_RANGE,
   calculateFirstContact,
+  getBlasterShotLength,
   getCollisionMotionScale,
   placeBlasterBeam,
   SCENE_UP,
@@ -177,6 +178,7 @@ interface BlasterState {
   duration: number;
   sourceShipIndex: number;
   destination: THREE.Vector3;
+  maxLength: number;
 }
 
 interface BurstState {
@@ -241,6 +243,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     duration: 0.28,
     sourceShipIndex: -1,
     destination: new THREE.Vector3(),
+    maxLength: 0,
   })));
   const bursts = useRef<BurstState[]>(Array.from({ length: BURST_COUNT }, () => ({
     active: false,
@@ -310,16 +313,18 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     if (index < 0) return false;
     const blaster = blasters.current[index];
     const source = ships[sourceShipIndex];
-    if (sourceAtContact.distanceToSquared(destination) <= 1e-6) return false;
+    const shotDistance = getBlasterShotLength(sourceAtContact, destination);
+    if (shotDistance <= 1e-3) return false;
     blaster.active = true;
     blaster.age = 0;
     blaster.sourceShipIndex = sourceShipIndex;
     blaster.destination.copy(destination);
+    blaster.maxLength = shotDistance;
     const group = blasterGroups.current[index];
     const material = blasterMaterials.current[index];
     if (group) {
       group.visible = true;
-      placeBlasterBeam(group, source, blaster.destination, 1);
+      placeBlasterBeam(group, source, blaster.destination, blaster.maxLength, 1);
     }
     if (material) material.opacity = 0.95;
     createMeteorExplosion(destination, impactVelocity);
@@ -543,7 +548,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       if (group) {
         const source = ships[blaster.sourceShipIndex];
         const width = 1 - progress * 0.65;
-        placeBlasterBeam(group, source, blaster.destination, width);
+        placeBlasterBeam(group, source, blaster.destination, blaster.maxLength, width);
       }
       if (material) material.opacity = (1 - progress) * 0.95;
       if (progress >= 1) {
