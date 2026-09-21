@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import {
   BLASTER_ATTACK_RANGE,
   calculateFirstContact,
+  getCollisionMotionScale,
   placeBlasterBeam,
   SCENE_UP,
 } from './heroScenePhysics';
@@ -170,14 +171,6 @@ interface MeteorState {
   heat: number;
 }
 
-interface ImpactState {
-  active: boolean;
-  position: THREE.Vector3;
-  age: number;
-  duration: number;
-  magnitude: number;
-}
-
 interface BlasterState {
   active: boolean;
   age: number;
@@ -191,11 +184,11 @@ interface BurstState {
   age: number;
   duration: number;
   velocities: THREE.Vector3[];
+  angularVelocities: THREE.Vector3[];
   scales: number[];
 }
 
 const METEOR_COUNT = 5;
-const IMPACT_COUNT = 6;
 const BLASTER_COUNT = 4;
 const BURST_COUNT = 6;
 const BURST_FRAGMENT_COUNT = 26;
@@ -226,17 +219,10 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
   const meteorOuterTailMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
   const meteorLights = useRef<Array<THREE.PointLight | null>>([]);
   const meteorFireGroups = useRef<Array<THREE.Group | null>>([]);
-  const impactGroups = useRef<Array<THREE.Group | null>>([]);
-  const impactMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
-  const impactLights = useRef<Array<THREE.PointLight | null>>([]);
   const blasterGroups = useRef<Array<THREE.Group | null>>([]);
   const blasterMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
   const burstGroups = useRef<Array<THREE.Group | null>>([]);
   const burstFragments = useRef<Array<Array<THREE.Mesh | null>>>([]);
-  const burstCoreMeshes = useRef<Array<THREE.Mesh | null>>([]);
-  const burstCoreMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
-  const burstWaveMeshes = useRef<Array<Array<THREE.Mesh | null>>>([]);
-  const burstWaveMaterials = useRef<Array<Array<THREE.MeshBasicMaterial | null>>>([]);
   const burstLights = useRef<Array<THREE.PointLight | null>>([]);
   const shipCooldowns = useRef(Array.from({ length: ships.length }, () => 0));
   const spawnSequence = useRef(0);
@@ -248,13 +234,6 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     age: 0,
     maxAge: 0,
     heat: 0,
-  })));
-  const impacts = useRef<ImpactState[]>(Array.from({ length: IMPACT_COUNT }, () => ({
-    active: false,
-    position: new THREE.Vector3(),
-    age: 0,
-    duration: 0.45,
-    magnitude: 1,
   })));
   const blasters = useRef<BlasterState[]>(Array.from({ length: BLASTER_COUNT }, () => ({
     active: false,
@@ -268,6 +247,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     age: 0,
     duration: 2.2,
     velocities: Array.from({ length: BURST_FRAGMENT_COUNT }, () => new THREE.Vector3()),
+    angularVelocities: Array.from({ length: BURST_FRAGMENT_COUNT }, () => new THREE.Vector3()),
     scales: Array.from({ length: BURST_FRAGMENT_COUNT }, () => 1),
   })));
   const target = useMemo(() => new THREE.Vector3(), []);
@@ -279,36 +259,12 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
   const sceneOrigin = useMemo(() => new THREE.Vector3(), []);
   const direction = useMemo(() => new THREE.Vector3(), []);
 
-  const createImpact = (position: THREE.Vector3, color: string, magnitude = 1) => {
-    const index = impacts.current.findIndex((impact) => !impact.active);
-    if (index < 0) return;
-    const impact = impacts.current[index];
-    impact.active = true;
-    impact.position.copy(position);
-    impact.age = 0;
-    impact.magnitude = magnitude;
-    const group = impactGroups.current[index];
-    const material = impactMaterials.current[index];
-    const light = impactLights.current[index];
-    if (group) {
-      group.visible = true;
-      group.position.copy(position);
-      group.scale.setScalar(0.15 * magnitude);
-    }
-    if (material) {
-      material.color.set(color);
-      material.opacity = 0.9;
-    }
-    if (light) {
-      light.color.set(color);
-      light.intensity = 3 * magnitude;
-    }
-  };
-
-  const createBurst = (position: THREE.Vector3) => {
+  const createBurst = (position: THREE.Vector3, impactVelocity: THREE.Vector3) => {
     const index = bursts.current.findIndex((burst) => !burst.active);
     if (index < 0) return;
     const burst = bursts.current[index];
+    const collisionMotionScale = getCollisionMotionScale(impactVelocity);
+    const impactDirection = direction.copy(impactVelocity).normalize();
     burst.active = true;
     burst.age = 0;
     const group = burstGroups.current[index];
@@ -316,25 +272,21 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       group.visible = true;
       group.position.copy(position);
     }
-    const core = burstCoreMeshes.current[index];
-    const coreMaterial = burstCoreMaterials.current[index];
-    const waves = burstWaveMeshes.current[index];
-    const waveMaterials = burstWaveMaterials.current[index];
     const light = burstLights.current[index];
-    if (core) core.scale.setScalar(0.18);
-    if (coreMaterial) coreMaterial.opacity = 0.78;
-    waves?.forEach((wave, waveIndex) => {
-      if (wave) wave.scale.setScalar(waveIndex === 0 ? 0.18 : 0.12);
-      const waveMaterial = waveMaterials?.[waveIndex];
-      if (waveMaterial) waveMaterial.opacity = waveIndex === 0 ? 0.56 : 0.36;
-    });
     if (light) light.intensity = 8.5;
     burst.velocities.forEach((velocity, fragmentIndex) => {
       velocity.set(
         Math.random() * 2 - 1,
         Math.random() * 2 - 1,
         Math.random() * 2 - 1,
-      ).normalize().multiplyScalar(3.8 + Math.random() * 5);
+      ).normalize()
+        .multiplyScalar(collisionMotionScale * (0.7 + Math.random() * 0.9))
+        .addScaledVector(impactDirection, collisionMotionScale * 0.22);
+      burst.angularVelocities[fragmentIndex].set(
+        Math.random() * 2 - 1,
+        Math.random() * 2 - 1,
+        Math.random() * 2 - 1,
+      ).normalize().multiplyScalar(collisionMotionScale * (0.8 + Math.random() * 1.4));
       burst.scales[fragmentIndex] = 0.65 + Math.random() * 0.85;
       const fragment = burstFragments.current[index]?.[fragmentIndex];
       if (fragment) {
@@ -345,15 +297,14 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     });
   };
 
-  const createMeteorExplosion = (position: THREE.Vector3) => {
-    createImpact(position, '#ff6a18', 2);
-    createBurst(position);
-  };
+  const createMeteorExplosion = (position: THREE.Vector3, impactVelocity: THREE.Vector3) =>
+    createBurst(position, impactVelocity);
 
   const fireBlaster = (
     sourceShipIndex: number,
     sourceAtContact: THREE.Vector3,
     destination: THREE.Vector3,
+    impactVelocity: THREE.Vector3,
   ): boolean => {
     const index = blasters.current.findIndex((blaster) => !blaster.active);
     if (index < 0) return false;
@@ -371,7 +322,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       placeBlasterBeam(group, source, blaster.destination, 1);
     }
     if (material) material.opacity = 0.95;
-    createMeteorExplosion(destination);
+    createMeteorExplosion(destination, impactVelocity);
     return true;
   };
 
@@ -548,7 +499,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
 
       if (collisionTime !== null && collisionTime <= interceptionTime) {
         impactPosition.lerpVectors(previousMeteorPosition, meteor.position, collisionTime);
-        createMeteorExplosion(impactPosition);
+        createMeteorExplosion(impactPosition, meteor.velocity);
         meteor.active = false;
         if (group) group.visible = false;
         return;
@@ -557,7 +508,12 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       if (defendingShip >= 0) {
         impactPosition.lerpVectors(previousMeteorPosition, meteor.position, interceptionTime);
       }
-      if (defendingShip >= 0 && fireBlaster(defendingShip, firingSourcePosition, impactPosition)) {
+      if (defendingShip >= 0 && fireBlaster(
+        defendingShip,
+        firingSourcePosition,
+        impactPosition,
+        meteor.velocity,
+      )) {
         shipCooldowns.current[defendingShip] = elapsed + 1.2 + Math.random() * 0.8;
         meteor.active = false;
         if (group) group.visible = false;
@@ -566,7 +522,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
 
       if (collisionTime !== null) {
         impactPosition.lerpVectors(previousMeteorPosition, meteor.position, collisionTime);
-        createMeteorExplosion(impactPosition);
+        createMeteorExplosion(impactPosition, meteor.velocity);
         meteor.active = false;
         if (group) group.visible = false;
         return;
@@ -574,22 +530,6 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
 
       if (meteor.age >= meteor.maxAge || (meteor.age > 0.5 && meteor.position.lengthSq() > 32 ** 2)) {
         meteor.active = false;
-        if (group) group.visible = false;
-      }
-    });
-
-    impacts.current.forEach((impact, index) => {
-      if (!impact.active) return;
-      impact.age += delta;
-      const progress = Math.min(impact.age / impact.duration, 1);
-      const group = impactGroups.current[index];
-      const material = impactMaterials.current[index];
-      const light = impactLights.current[index];
-      if (group) group.scale.setScalar((0.15 + progress * 1.5) * impact.magnitude);
-      if (material) material.opacity = (1 - progress) * 0.9;
-      if (light) light.intensity = (1 - progress) * 3 * impact.magnitude;
-      if (progress >= 1) {
-        impact.active = false;
         if (group) group.visible = false;
       }
     });
@@ -616,32 +556,19 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       if (!burst.active) return;
       burst.age += delta;
       const progress = Math.min(burst.age / burst.duration, 1);
-      const expansion = 1 - (1 - progress) ** 3;
       const fade = (1 - progress) ** 1.7;
-      const core = burstCoreMeshes.current[burstIndex];
-      const coreMaterial = burstCoreMaterials.current[burstIndex];
-      const waves = burstWaveMeshes.current[burstIndex];
-      const waveMaterials = burstWaveMaterials.current[burstIndex];
       const light = burstLights.current[burstIndex];
-      if (core) core.scale.setScalar(0.18 + expansion * 1.55);
-      if (coreMaterial) coreMaterial.opacity = fade * 0.78;
-      waves?.forEach((wave, waveIndex) => {
-        if (!wave) return;
-        const delay = waveIndex * 0.12;
-        const waveProgress = Math.max(0, Math.min(1, (progress - delay) / (1 - delay)));
-        const waveExpansion = 1 - (1 - waveProgress) ** 3;
-        wave.scale.setScalar((waveIndex === 0 ? 0.18 : 0.12) + waveExpansion * (waveIndex === 0 ? 2.2 : 1.7));
-        const waveMaterial = waveMaterials?.[waveIndex];
-        if (waveMaterial) waveMaterial.opacity = (1 - waveProgress) ** 2.2 * (waveIndex === 0 ? 0.56 : 0.36);
-      });
       if (light) light.intensity = fade * 8.5;
       burst.velocities.forEach((velocity, fragmentIndex) => {
         const fragment = burstFragments.current[burstIndex]?.[fragmentIndex];
+        const angularVelocity = burst.angularVelocities[fragmentIndex];
         if (!fragment) return;
         fragment.position.addScaledVector(velocity, delta);
         velocity.multiplyScalar(Math.exp(-0.85 * delta));
-        fragment.rotation.x += delta * (3 + fragmentIndex * 0.25);
-        fragment.rotation.z += delta * (2 + fragmentIndex * 0.18);
+        fragment.rotation.x += angularVelocity.x * delta;
+        fragment.rotation.y += angularVelocity.y * delta;
+        fragment.rotation.z += angularVelocity.z * delta;
+        angularVelocity.multiplyScalar(Math.exp(-0.6 * delta));
         fragment.scale.setScalar(Math.max(0.05, burst.scales[fragmentIndex] * (1 - progress) ** 1.2));
       });
       if (progress >= 1) {
@@ -745,31 +672,6 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         />
       </group>
     ))}
-    {Array.from({ length: IMPACT_COUNT }, (_, index) => (
-      <group
-        key={`impact-${index}`}
-        ref={(node) => { impactGroups.current[index] = node; }}
-        visible={false}
-      >
-        <mesh>
-          <sphereGeometry args={[0.45, 12, 12]} />
-          <meshBasicMaterial
-            ref={(node) => { impactMaterials.current[index] = node; }}
-            color="#ffaa00"
-            transparent
-            opacity={0}
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
-          />
-        </mesh>
-        <pointLight
-          ref={(node) => { impactLights.current[index] = node; }}
-          color="#ffaa00"
-          intensity={0}
-          distance={7}
-        />
-      </group>
-    ))}
     {Array.from({ length: BLASTER_COUNT }, (_, index) => (
       <group
         key={`blaster-${index}`}
@@ -807,42 +709,6 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         ref={(node) => { burstGroups.current[burstIndex] = node; }}
         visible={false}
       >
-        <mesh ref={(node) => { burstCoreMeshes.current[burstIndex] = node; }}>
-          <icosahedronGeometry args={[0.48, 2]} />
-          <meshBasicMaterial
-            ref={(node) => { burstCoreMaterials.current[burstIndex] = node; }}
-            color="#ffb13b"
-            transparent
-            opacity={0}
-            depthWrite={false}
-            toneMapped={false}
-            blending={THREE.AdditiveBlending}
-          />
-        </mesh>
-        {[0, 1].map((waveIndex) => (
-          <mesh
-            key={`wave-${waveIndex}`}
-            ref={(node) => {
-              if (!burstWaveMeshes.current[burstIndex]) burstWaveMeshes.current[burstIndex] = [];
-              burstWaveMeshes.current[burstIndex][waveIndex] = node;
-            }}
-            rotation={waveIndex === 0 ? [Math.PI / 2, 0, 0] : [0.55, 0.75, 0.2]}
-          >
-            <torusGeometry args={[0.5, waveIndex === 0 ? 0.035 : 0.022, 8, 36]} />
-            <meshBasicMaterial
-              ref={(node) => {
-                if (!burstWaveMaterials.current[burstIndex]) burstWaveMaterials.current[burstIndex] = [];
-                burstWaveMaterials.current[burstIndex][waveIndex] = node;
-              }}
-              color={waveIndex === 0 ? '#ff7a18' : '#ffd27a'}
-              transparent
-              opacity={0}
-              depthWrite={false}
-              toneMapped={false}
-              blending={THREE.AdditiveBlending}
-            />
-          </mesh>
-        ))}
         {Array.from({ length: BURST_FRAGMENT_COUNT }, (_, fragmentIndex) => (
           <mesh
             key={fragmentIndex}

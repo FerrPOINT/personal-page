@@ -4,6 +4,9 @@ export const BLASTER_ATTACK_RANGE = 0.75;
 export const SCENE_UP = new THREE.Vector3(0, 1, 0);
 const BLASTER_DIRECTION = new THREE.Vector3();
 
+export const getCollisionMotionScale = (impactVelocity: THREE.Vector3): number =>
+  THREE.MathUtils.clamp(impactVelocity.length(), 2.5, 7);
+
 export const placeBlasterBeam = (
   group: THREE.Group,
   source: THREE.Vector3,

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import {
   calculateFirstContact,
+  getCollisionMotionScale,
   placeBlasterBeam,
 } from '../heroScenePhysics';
 
@@ -65,5 +66,12 @@ describe('hero scene trajectories', () => {
   it('does not create a ray without a valid firing direction', () => {
     const point = new THREE.Vector3(1, 2, 3);
     expect(placeBlasterBeam(new THREE.Group(), point, point, 1)).toBe(false);
+  });
+
+  it('scales fragment motion with collision speed', () => {
+    expect(getCollisionMotionScale(new THREE.Vector3(3.5, 0, 0))).toBe(3.5);
+    expect(getCollisionMotionScale(new THREE.Vector3(5.5, 0, 0))).toBe(5.5);
+    expect(getCollisionMotionScale(new THREE.Vector3())).toBe(2.5);
+    expect(getCollisionMotionScale(new THREE.Vector3(20, 0, 0))).toBe(7);
   });
 });
