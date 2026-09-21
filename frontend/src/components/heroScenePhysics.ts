@@ -1,30 +1,24 @@
 import * as THREE from 'three';
 
 export const BLASTER_ATTACK_RANGE = 0.75;
-export const BLASTER_BEAM_LENGTH = 9;
 export const SCENE_UP = new THREE.Vector3(0, 1, 0);
+const BLASTER_DIRECTION = new THREE.Vector3();
 
-export const captureBlasterDirection = (
-  source: THREE.Vector3,
-  destination: THREE.Vector3,
-  direction: THREE.Vector3,
-): boolean => {
-  direction.copy(destination).sub(source);
-  const distanceSq = direction.lengthSq();
-  if (distanceSq <= 1e-6) return false;
-  direction.multiplyScalar(1 / Math.sqrt(distanceSq));
-  return true;
-};
-
-export const placeBlasterRay = (
+export const placeBlasterBeam = (
   group: THREE.Group,
   source: THREE.Vector3,
-  direction: THREE.Vector3,
+  destination: THREE.Vector3,
   width: number,
-): void => {
-  group.position.copy(source).addScaledVector(direction, BLASTER_BEAM_LENGTH * 0.5);
+): boolean => {
+  const direction = BLASTER_DIRECTION.copy(destination).sub(source);
+  const distanceSq = direction.lengthSq();
+  if (distanceSq <= 1e-6) return false;
+  const distance = Math.sqrt(distanceSq);
+  direction.multiplyScalar(1 / distance);
+  group.position.lerpVectors(source, destination, 0.5);
   group.quaternion.setFromUnitVectors(SCENE_UP, direction);
-  group.scale.set(width, BLASTER_BEAM_LENGTH, width);
+  group.scale.set(width, distance, width);
+  return true;
 };
 
 export const calculateFirstContact = (

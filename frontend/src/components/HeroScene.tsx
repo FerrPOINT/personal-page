@@ -5,8 +5,7 @@ import * as THREE from 'three';
 import {
   BLASTER_ATTACK_RANGE,
   calculateFirstContact,
-  captureBlasterDirection,
-  placeBlasterRay,
+  placeBlasterBeam,
   SCENE_UP,
 } from './heroScenePhysics';
 
@@ -184,7 +183,7 @@ interface BlasterState {
   age: number;
   duration: number;
   sourceShipIndex: number;
-  direction: THREE.Vector3;
+  destination: THREE.Vector3;
 }
 
 interface BurstState {
@@ -262,7 +261,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     age: 0,
     duration: 0.28,
     sourceShipIndex: -1,
-    direction: new THREE.Vector3(),
+    destination: new THREE.Vector3(),
   })));
   const bursts = useRef<BurstState[]>(Array.from({ length: BURST_COUNT }, () => ({
     active: false,
@@ -360,16 +359,16 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     if (index < 0) return false;
     const blaster = blasters.current[index];
     const source = ships[sourceShipIndex];
-    // Keep the firing direction stable; only the ray origin follows the orbiting ship.
-    if (!captureBlasterDirection(sourceAtContact, destination, blaster.direction)) return false;
+    if (sourceAtContact.distanceToSquared(destination) <= 1e-6) return false;
     blaster.active = true;
     blaster.age = 0;
     blaster.sourceShipIndex = sourceShipIndex;
+    blaster.destination.copy(destination);
     const group = blasterGroups.current[index];
     const material = blasterMaterials.current[index];
     if (group) {
       group.visible = true;
-      placeBlasterRay(group, source, blaster.direction, 1);
+      placeBlasterBeam(group, source, blaster.destination, 1);
     }
     if (material) material.opacity = 0.95;
     createMeteorExplosion(destination);
@@ -604,7 +603,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       if (group) {
         const source = ships[blaster.sourceShipIndex];
         const width = 1 - progress * 0.65;
-        placeBlasterRay(group, source, blaster.direction, width);
+        placeBlasterBeam(group, source, blaster.destination, width);
       }
       if (material) material.opacity = (1 - progress) * 0.95;
       if (progress >= 1) {

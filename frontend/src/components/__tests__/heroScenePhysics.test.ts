@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import {
-  BLASTER_BEAM_LENGTH,
   calculateFirstContact,
-  captureBlasterDirection,
-  placeBlasterRay,
+  placeBlasterBeam,
 } from '../heroScenePhysics';
 
 const expectVectorClose = (actual: THREE.Vector3, expected: THREE.Vector3) => {
@@ -14,23 +12,18 @@ const expectVectorClose = (actual: THREE.Vector3, expected: THREE.Vector3) => {
 };
 
 describe('hero scene trajectories', () => {
-  it('keeps the firing direction while the ship moves and reanchors the ray at the ship', () => {
-    const sourceAtFire = new THREE.Vector3(0, 0, 0);
+  it('keeps the beam between the moving ship and the actual impact point', () => {
     const destination = new THREE.Vector3(0.5, 0.25, -0.25);
-    const direction = new THREE.Vector3();
-    expect(captureBlasterDirection(sourceAtFire, destination, direction)).toBe(true);
-    const capturedDirection = direction.clone();
-
     const movedSource = new THREE.Vector3(1.2, -0.4, 0.8);
     const group = new THREE.Group();
-    placeBlasterRay(group, movedSource, direction, 1);
+    expect(placeBlasterBeam(group, movedSource, destination, 1)).toBe(true);
     group.updateMatrixWorld(true);
 
     const renderedStart = new THREE.Vector3(0, -0.5, 0).applyMatrix4(group.matrixWorld);
     const renderedEnd = new THREE.Vector3(0, 0.5, 0).applyMatrix4(group.matrixWorld);
     expectVectorClose(renderedStart, movedSource);
-    expectVectorClose(renderedEnd, movedSource.clone().addScaledVector(capturedDirection, BLASTER_BEAM_LENGTH));
-    expectVectorClose(direction, capturedDirection);
+    expectVectorClose(renderedEnd, destination);
+    expect(group.scale.y).toBeCloseTo(movedSource.distanceTo(destination), 6);
   });
 
   it('detects a meteor crossing the interception radius between rendered frames', () => {
@@ -71,6 +64,6 @@ describe('hero scene trajectories', () => {
 
   it('does not create a ray without a valid firing direction', () => {
     const point = new THREE.Vector3(1, 2, 3);
-    expect(captureBlasterDirection(point, point, new THREE.Vector3())).toBe(false);
+    expect(placeBlasterBeam(new THREE.Group(), point, point, 1)).toBe(false);
   });
 });
