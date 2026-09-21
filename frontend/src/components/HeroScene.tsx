@@ -3,7 +3,14 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Billboard, Float, OrbitControls, PerspectiveCamera, Stars, Text } from '@react-three/drei';
 import * as THREE from 'three';
 
-type PlanetData = readonly [distance: number, speed: number, size: number, color: string, label: string];
+type PlanetData = readonly [
+  distance: number,
+  speed: number,
+  size: number,
+  color: string,
+  label: string,
+  offset: number,
+];
 
 const SCENE_PRIMARY = '#00d9ff';
 const SCENE_SECONDARY = '#ff00ff';
@@ -23,10 +30,9 @@ function Sun() {
 }
 
 function Planet({ data }: { data: PlanetData }) {
-  const [distance, speed, size, color, label] = data;
+  const [distance, speed, size, color, label, offset] = data;
   const planet = useRef<THREE.Mesh>(null);
   const labelRef = useRef<THREE.Group>(null);
-  const offset = useMemo(() => Math.random() * Math.PI * 2, []);
   useFrame(({ clock }) => {
     const angle = clock.getElapsedTime() * speed + offset;
     if (!planet.current) return;
@@ -103,13 +109,232 @@ function Spaceship({ radiusX, radiusZ, speed, offset, yOffset }: SpaceshipProps)
   return <group ref={ship}><SciFiShipModel /></group>;
 }
 
+interface MeteorState {
+  active: boolean;
+  position: THREE.Vector3;
+  velocity: THREE.Vector3;
+  age: number;
+  maxAge: number;
+}
+
+interface ImpactState {
+  active: boolean;
+  position: THREE.Vector3;
+  age: number;
+  duration: number;
+}
+
+const METEOR_COUNT = 5;
+const IMPACT_COUNT = 6;
+const METEOR_UP = new THREE.Vector3(0, 1, 0);
+
+const planetPositionAt = (planet: PlanetData, elapsed: number, target: THREE.Vector3): THREE.Vector3 => {
+  const [distance, speed, , , , offset] = planet;
+  const angle = elapsed * speed + offset;
+  return target.set(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
+};
+
+function MeteorField({ planets }: { planets: readonly PlanetData[] }) {
+  const meteorGroups = useRef<Array<THREE.Group | null>>([]);
+  const impactGroups = useRef<Array<THREE.Group | null>>([]);
+  const impactMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
+  const impactLights = useRef<Array<THREE.PointLight | null>>([]);
+  const nextSpawnAt = useRef(1.5 + Math.random() * 1.5);
+  const meteors = useRef<MeteorState[]>(Array.from({ length: METEOR_COUNT }, () => ({
+    active: false,
+    position: new THREE.Vector3(),
+    velocity: new THREE.Vector3(),
+    age: 0,
+    maxAge: 0,
+  })));
+  const impacts = useRef<ImpactState[]>(Array.from({ length: IMPACT_COUNT }, () => ({
+    active: false,
+    position: new THREE.Vector3(),
+    age: 0,
+    duration: 0.45,
+  })));
+  const target = useMemo(() => new THREE.Vector3(), []);
+  const collisionPosition = useMemo(() => new THREE.Vector3(), []);
+  const direction = useMemo(() => new THREE.Vector3(), []);
+
+  const createImpact = (position: THREE.Vector3, color: string) => {
+    const index = impacts.current.findIndex((impact) => !impact.active);
+    if (index < 0) return;
+    const impact = impacts.current[index];
+    impact.active = true;
+    impact.position.copy(position);
+    impact.age = 0;
+    const group = impactGroups.current[index];
+    const material = impactMaterials.current[index];
+    const light = impactLights.current[index];
+    if (group) {
+      group.visible = true;
+      group.position.copy(position);
+      group.scale.setScalar(0.15);
+    }
+    if (material) {
+      material.color.set(color);
+      material.opacity = 0.9;
+    }
+    if (light) {
+      light.color.set(color);
+      light.intensity = 3;
+    }
+  };
+
+  const spawnMeteor = (elapsed: number) => {
+    const index = meteors.current.findIndex((meteor) => !meteor.active);
+    if (index < 0) return;
+    const meteor = meteors.current[index];
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 23 + Math.random() * 6;
+    const speed = 7 + Math.random() * 4;
+    meteor.position.set(Math.cos(angle) * radius, (Math.random() - 0.5) * 7, Math.sin(angle) * radius);
+
+    const aim = Math.random();
+    if (aim < 0.18) {
+      target.set(0, 0, 0);
+    } else if (aim < 0.48) {
+      const planet = planets[Math.floor(Math.random() * planets.length)];
+      planetPositionAt(planet, elapsed, target);
+      let travelEstimate = meteor.position.distanceTo(target) / speed;
+      planetPositionAt(planet, elapsed + travelEstimate, target);
+      travelEstimate = meteor.position.distanceTo(target) / speed;
+      planetPositionAt(planet, elapsed + travelEstimate, target);
+    } else {
+      const targetRadius = Math.sqrt(Math.random()) * 15;
+      const targetAngle = Math.random() * Math.PI * 2;
+      target.set(
+        Math.cos(targetAngle) * targetRadius,
+        (Math.random() - 0.5) * 5,
+        Math.sin(targetAngle) * targetRadius,
+      );
+    }
+
+    meteor.velocity.copy(target).sub(meteor.position).normalize().multiplyScalar(speed);
+    meteor.age = 0;
+    meteor.maxAge = 7.5;
+    meteor.active = true;
+    const group = meteorGroups.current[index];
+    if (group) {
+      group.visible = true;
+      group.position.copy(meteor.position);
+      direction.copy(meteor.velocity).normalize();
+      group.quaternion.setFromUnitVectors(METEOR_UP, direction);
+    }
+  };
+
+  useFrame(({ clock }, delta) => {
+    const elapsed = clock.getElapsedTime();
+    if (elapsed >= nextSpawnAt.current) {
+      spawnMeteor(elapsed);
+      nextSpawnAt.current = elapsed + 1.8 + Math.random() * 3.2;
+    }
+
+    meteors.current.forEach((meteor, index) => {
+      if (!meteor.active) return;
+      meteor.age += delta;
+      meteor.position.addScaledVector(meteor.velocity, delta);
+      const group = meteorGroups.current[index];
+      if (group) group.position.copy(meteor.position);
+
+      let impactColor: string | null = null;
+      if (meteor.position.lengthSq() <= 2.35 ** 2) {
+        impactColor = '#ffaa00';
+      } else {
+        for (const planet of planets) {
+          planetPositionAt(planet, elapsed, collisionPosition);
+          if (meteor.position.distanceToSquared(collisionPosition) <= (planet[2] + 0.28) ** 2) {
+            impactColor = planet[3];
+            break;
+          }
+        }
+      }
+
+      if (impactColor) {
+        createImpact(meteor.position, impactColor);
+        meteor.active = false;
+        if (group) group.visible = false;
+        return;
+      }
+
+      if (meteor.age >= meteor.maxAge || (meteor.age > 0.5 && meteor.position.lengthSq() > 32 ** 2)) {
+        meteor.active = false;
+        if (group) group.visible = false;
+      }
+    });
+
+    impacts.current.forEach((impact, index) => {
+      if (!impact.active) return;
+      impact.age += delta;
+      const progress = Math.min(impact.age / impact.duration, 1);
+      const group = impactGroups.current[index];
+      const material = impactMaterials.current[index];
+      const light = impactLights.current[index];
+      if (group) group.scale.setScalar(0.15 + progress * 1.5);
+      if (material) material.opacity = (1 - progress) * 0.9;
+      if (light) light.intensity = (1 - progress) * 3;
+      if (progress >= 1) {
+        impact.active = false;
+        if (group) group.visible = false;
+      }
+    });
+  });
+
+  return <>
+    {Array.from({ length: METEOR_COUNT }, (_, index) => (
+      <group
+        key={`meteor-${index}`}
+        ref={(node) => { meteorGroups.current[index] = node; }}
+        visible={false}
+      >
+        <mesh>
+          <dodecahedronGeometry args={[0.2, 0]} />
+          <meshStandardMaterial color="#6b3418" emissive="#ff7a18" emissiveIntensity={1.6} roughness={0.9} />
+        </mesh>
+        <mesh position={[0, -0.8, 0]}>
+          <coneGeometry args={[0.22, 1.6, 8, 1, true]} />
+          <meshBasicMaterial color="#ff8a1f" transparent opacity={0.6} depthWrite={false} blending={THREE.AdditiveBlending} />
+        </mesh>
+        <pointLight color="#ff7a18" intensity={0.8} distance={4} />
+      </group>
+    ))}
+    {Array.from({ length: IMPACT_COUNT }, (_, index) => (
+      <group
+        key={`impact-${index}`}
+        ref={(node) => { impactGroups.current[index] = node; }}
+        visible={false}
+      >
+        <mesh>
+          <sphereGeometry args={[0.45, 12, 12]} />
+          <meshBasicMaterial
+            ref={(node) => { impactMaterials.current[index] = node; }}
+            color="#ffaa00"
+            transparent
+            opacity={0}
+            depthWrite={false}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+        <pointLight
+          ref={(node) => { impactLights.current[index] = node; }}
+          color="#ffaa00"
+          intensity={0}
+          distance={7}
+        />
+      </group>
+    ))}
+  </>;
+}
+
 export default function HeroScene({ labels }: { labels: readonly [string, string, string, string, string] }) {
+  const planetOffsets = useMemo(() => Array.from({ length: 5 }, () => Math.random() * Math.PI * 2), []);
   const planets: readonly PlanetData[] = [
-    [6, 0.30, 0.5, SCENE_PRIMARY, labels[0]],
-    [9, 0.25, 0.7, SCENE_SECONDARY, labels[1]],
-    [12, 0.20, 0.65, '#10b981', labels[2]],
-    [15, 0.15, 0.8, '#3b82f6', labels[3]],
-    [19, 0.10, 0.9, '#f97316', labels[4]],
+    [6, 0.30, 0.5, SCENE_PRIMARY, labels[0], planetOffsets[0]],
+    [9, 0.25, 0.7, SCENE_SECONDARY, labels[1], planetOffsets[1]],
+    [12, 0.20, 0.65, '#10b981', labels[2], planetOffsets[2]],
+    [15, 0.15, 0.8, '#3b82f6', labels[3], planetOffsets[3]],
+    [19, 0.10, 0.9, '#f97316', labels[4], planetOffsets[4]],
   ];
   return <div className="absolute top-0 right-0 w-full h-[55vh] md:h-full md:w-[75vw]">
     <Canvas className="w-full h-full">
@@ -126,6 +351,7 @@ export default function HeroScene({ labels }: { labels: readonly [string, string
           <Spaceship radiusX={12} radiusZ={9} speed={0.25} offset={4} yOffset={1} />
           <Spaceship radiusX={16} radiusZ={16} speed={0.15} offset={5} yOffset={0} />
           <Spaceship radiusX={18} radiusZ={14} speed={0.12} offset={3} yOffset={2} />
+          <MeteorField planets={planets} />
         </group>
       </Float>
       <OrbitControls
