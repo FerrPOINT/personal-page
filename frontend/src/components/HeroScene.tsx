@@ -170,7 +170,8 @@ const BLASTER_COUNT = 4;
 const BURST_COUNT = 6;
 const BURST_FRAGMENT_COUNT = 18;
 const BLASTER_RANGE_SQ = 0.75 ** 2;
-const BLASTER_BEAM_LENGTH = 1;
+const BLASTER_BEAM_LENGTH = 3;
+const BLASTER_BEAM_LENGTH_MULTIPLIER = 3;
 const METEOR_UP = new THREE.Vector3(0, 1, 0);
 const METEOR_HEAT_START_DISTANCE = 19;
 const METEOR_HEAT_PEAK_DISTANCE = 3;
@@ -325,7 +326,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     const distance = beamDirection.length();
     if (distance <= 0.001) return;
     beamDirection.multiplyScalar(1 / distance);
-    const length = Math.min(distance, BLASTER_BEAM_LENGTH);
+    const length = Math.min(distance * BLASTER_BEAM_LENGTH_MULTIPLIER, BLASTER_BEAM_LENGTH);
     beamMidpoint.copy(source).addScaledVector(beamDirection, length * 0.5);
     group.position.copy(beamMidpoint);
     group.quaternion.setFromUnitVectors(METEOR_UP, beamDirection);
