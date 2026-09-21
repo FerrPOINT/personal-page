@@ -49,7 +49,7 @@ const Hero: React.FC = () => {
             <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-6 tracking-tight">
               {t('hero.name')}<br /><span className="accent-gradient-flow text-transparent bg-clip-text bg-gradient-to-r from-accent-primary to-accent-secondary filter drop-shadow-accent-secondary">{t('hero.surname')}</span>
             </h1>
-            <p className="text-xl md:text-2xl text-secondary mb-8 leading-relaxed max-w-lg">{description}</p>
+            <p className="hero-description-outline text-xl md:text-2xl text-secondary mb-8 leading-relaxed max-w-lg">{description}</p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a href="#projects" onClick={(event) => scrollToSection(event, 'projects')}
                 className="group flex items-center justify-center px-8 py-4 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition-all cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)]">

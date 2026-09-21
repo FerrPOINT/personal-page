@@ -15,6 +15,16 @@
 }
 
 @layer utilities {
+  .hero-description-outline {
+    -webkit-text-stroke: 0.6px rgb(0 0 0 / 0.95);
+    text-shadow:
+      -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000,
+      0 2px 4px #000;
+  }
+
   .accent-gradient-flow {
     background-size: 100% 100%;
   }
