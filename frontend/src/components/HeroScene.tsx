@@ -169,9 +169,8 @@ const IMPACT_COUNT = 6;
 const BLASTER_COUNT = 4;
 const BURST_COUNT = 6;
 const BURST_FRAGMENT_COUNT = 26;
-const BLASTER_RANGE_SQ = 0.75 ** 2;
+const BLASTER_ATTACK_RANGE_SQ = 0.75 ** 2;
 const BLASTER_BEAM_LENGTH = 9;
-const BLASTER_BEAM_LENGTH_MULTIPLIER = 9;
 const METEOR_UP = new THREE.Vector3(0, 1, 0);
 const METEOR_HEAT_START_DISTANCE = 19;
 const METEOR_HEAT_PEAK_DISTANCE = 3;
@@ -331,7 +330,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     const distance = beamDirection.length();
     if (distance <= 0.001) return;
     beamDirection.multiplyScalar(1 / distance);
-    const length = Math.min(distance * BLASTER_BEAM_LENGTH_MULTIPLIER, BLASTER_BEAM_LENGTH);
+    const length = BLASTER_BEAM_LENGTH;
     beamMidpoint.copy(source).addScaledVector(beamDirection, length * 0.5);
     group.position.copy(beamMidpoint);
     group.quaternion.setFromUnitVectors(METEOR_UP, beamDirection);
@@ -507,7 +506,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       }
 
       let defendingShip = -1;
-      let closestShipDistanceSq = BLASTER_RANGE_SQ;
+      let closestShipDistanceSq = BLASTER_ATTACK_RANGE_SQ;
       ships.forEach((shipPosition, shipIndex) => {
         if (elapsed < shipCooldowns.current[shipIndex]) return;
         const distanceSq = meteor.position.distanceToSquared(shipPosition);
