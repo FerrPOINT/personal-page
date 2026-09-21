@@ -168,7 +168,7 @@ const METEOR_COUNT = 5;
 const IMPACT_COUNT = 6;
 const BLASTER_COUNT = 4;
 const BURST_COUNT = 6;
-const BURST_FRAGMENT_COUNT = 18;
+const BURST_FRAGMENT_COUNT = 26;
 const BLASTER_RANGE_SQ = 0.75 ** 2;
 const BLASTER_BEAM_LENGTH = 9;
 const BLASTER_BEAM_LENGTH_MULTIPLIER = 9;
@@ -240,7 +240,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
   const bursts = useRef<BurstState[]>(Array.from({ length: BURST_COUNT }, () => ({
     active: false,
     age: 0,
-    duration: 1.8,
+    duration: 2.2,
     velocities: Array.from({ length: BURST_FRAGMENT_COUNT }, () => new THREE.Vector3()),
     scales: Array.from({ length: BURST_FRAGMENT_COUNT }, () => 1),
   })));
@@ -305,8 +305,8 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         Math.random() * 2 - 1,
         Math.random() * 2 - 1,
         Math.random() * 2 - 1,
-      ).normalize().multiplyScalar(2.5 + Math.random() * 3);
-      burst.scales[fragmentIndex] = 0.9 + Math.random() * 0.9;
+      ).normalize().multiplyScalar(3.8 + Math.random() * 5);
+      burst.scales[fragmentIndex] = 0.65 + Math.random() * 0.85;
       const fragment = burstFragments.current[index]?.[fragmentIndex];
       if (fragment) {
         fragment.position.set(0, 0, 0);
@@ -314,6 +314,11 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         fragment.scale.setScalar(burst.scales[fragmentIndex]);
       }
     });
+  };
+
+  const createMeteorExplosion = (position: THREE.Vector3) => {
+    createImpact(position, '#ff6a18', 2);
+    createBurst(position);
   };
 
   const placeBlaster = (
@@ -349,8 +354,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       placeBlaster(group, source, destination, 1);
     }
     if (material) material.opacity = 0.95;
-    createImpact(destination, '#ff6a18', 2);
-    createBurst(destination);
+    createMeteorExplosion(destination);
     return true;
   };
 
@@ -482,21 +486,21 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         light.distance = 2.5 + meteor.heat * 4.5;
       }
 
-      let impactColor: string | null = null;
+      let collided = false;
       if (meteor.position.lengthSq() <= 2.35 ** 2) {
-        impactColor = '#ffaa00';
+        collided = true;
       } else {
         for (const planet of planets) {
           planetPositionAt(planet, elapsed, collisionPosition);
           if (meteor.position.distanceToSquared(collisionPosition) <= (planet[2] + 0.28) ** 2) {
-            impactColor = planet[3];
+            collided = true;
             break;
           }
         }
       }
 
-      if (impactColor) {
-        createImpact(meteor.position, impactColor);
+      if (collided) {
+        createMeteorExplosion(meteor.position);
         meteor.active = false;
         if (group) group.visible = false;
         return;
@@ -586,7 +590,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         const fragment = burstFragments.current[burstIndex]?.[fragmentIndex];
         if (!fragment) return;
         fragment.position.addScaledVector(velocity, delta);
-        velocity.multiplyScalar(Math.exp(-1.15 * delta));
+        velocity.multiplyScalar(Math.exp(-0.85 * delta));
         fragment.rotation.x += delta * (3 + fragmentIndex * 0.25);
         fragment.rotation.z += delta * (2 + fragmentIndex * 0.18);
         fragment.scale.setScalar(Math.max(0.05, burst.scales[fragmentIndex] * (1 - progress) ** 1.2));
@@ -798,7 +802,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
               burstFragments.current[burstIndex][fragmentIndex] = node;
             }}
           >
-            <tetrahedronGeometry args={[0.13 + (fragmentIndex % 4) * 0.025, 0]} />
+            <tetrahedronGeometry args={[0.09 + (fragmentIndex % 4) * 0.018, 0]} />
             <meshStandardMaterial
               color={fragmentIndex % 3 === 0 ? '#3a1b0e' : '#21130f'}
               emissive={fragmentIndex % 3 === 0 ? '#ffc15c' : fragmentIndex % 2 === 0 ? '#ff6a18' : '#b83212'}
@@ -808,9 +812,9 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
             />
           </mesh>
         ))}
-        <Sparkles count={48} scale={2.3} size={5.2} speed={1.3} color="#ff6a18" opacity={0.95} />
-        <Sparkles count={28} scale={1.55} size={3.2} speed={0.75} color="#ffe0a3" opacity={0.9} />
-        <Sparkles count={20} scale={2.7} size={6} speed={0.35} color="#6f4639" opacity={0.2} />
+        <Sparkles count={64} scale={3.3} size={4.4} speed={1.3} color="#ff6a18" opacity={0.95} />
+        <Sparkles count={38} scale={2.5} size={2.8} speed={0.75} color="#ffe0a3" opacity={0.9} />
+        <Sparkles count={26} scale={4} size={5} speed={0.35} color="#6f4639" opacity={0.2} />
         <pointLight
           ref={(node) => { burstLights.current[burstIndex] = node; }}
           color="#ff7a18"
