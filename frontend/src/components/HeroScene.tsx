@@ -127,6 +127,23 @@ interface ImpactState {
 const METEOR_COUNT = 5;
 const IMPACT_COUNT = 6;
 const METEOR_UP = new THREE.Vector3(0, 1, 0);
+const METEOR_FLAME_LAYERS = [
+  [0, -0.36, 0, 0.14, 0.4, 0.14, '#ffe0a0', 0.72],
+  [0.035, -0.68, -0.02, 0.19, 0.5, 0.17, '#ff9a2f', 0.54],
+  [-0.045, -1.02, 0.035, 0.22, 0.55, 0.19, '#ff531c', 0.38],
+  [0.06, -1.36, -0.04, 0.2, 0.48, 0.17, '#d93612', 0.24],
+  [-0.055, -1.68, 0.025, 0.17, 0.4, 0.15, '#74281c', 0.14],
+] as const;
+const METEOR_SMOKE_LAYERS = [
+  [0.08, -1.62, -0.02, 0.21, 0.52, 0.18, 0.1],
+  [-0.1, -2.0, 0.06, 0.24, 0.58, 0.2, 0.065],
+] as const;
+const METEOR_SPARKS = [
+  [0.1, -0.72, 0.03, 0.055],
+  [-0.08, -1.05, 0.06, 0.04],
+  [0.13, -1.38, -0.05, 0.032],
+  [-0.06, -1.72, -0.03, 0.025],
+] as const;
 
 const planetPositionAt = (planet: PlanetData, elapsed: number, target: THREE.Vector3): THREE.Vector3 => {
   const [distance, speed, , , , offset] = planet;
@@ -136,6 +153,8 @@ const planetPositionAt = (planet: PlanetData, elapsed: number, target: THREE.Vec
 
 function MeteorField({ planets }: { planets: readonly PlanetData[] }) {
   const meteorGroups = useRef<Array<THREE.Group | null>>([]);
+  const meteorCores = useRef<Array<THREE.Mesh | null>>([]);
+  const meteorFireGroups = useRef<Array<THREE.Group | null>>([]);
   const impactGroups = useRef<Array<THREE.Group | null>>([]);
   const impactMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
   const impactLights = useRef<Array<THREE.PointLight | null>>([]);
@@ -237,6 +256,16 @@ function MeteorField({ planets }: { planets: readonly PlanetData[] }) {
       meteor.position.addScaledVector(meteor.velocity, delta);
       const group = meteorGroups.current[index];
       if (group) group.position.copy(meteor.position);
+      const core = meteorCores.current[index];
+      if (core) {
+        core.rotation.x += delta * 2.2;
+        core.rotation.z += delta * 1.4;
+      }
+      const fire = meteorFireGroups.current[index];
+      if (fire) {
+        const flicker = 0.9 + Math.sin(elapsed * 19 + index * 1.7) * 0.12;
+        fire.scale.set(flicker, 0.94 + flicker * 0.08, flicker);
+      }
 
       let impactColor: string | null = null;
       if (meteor.position.lengthSq() <= 2.35 ** 2) {
@@ -288,15 +317,64 @@ function MeteorField({ planets }: { planets: readonly PlanetData[] }) {
         ref={(node) => { meteorGroups.current[index] = node; }}
         visible={false}
       >
-        <mesh>
-          <dodecahedronGeometry args={[0.2, 0]} />
-          <meshStandardMaterial color="#6b3418" emissive="#ff7a18" emissiveIntensity={1.6} roughness={0.9} />
+        <mesh ref={(node) => { meteorCores.current[index] = node; }} scale={[1, 0.82, 0.9]}>
+          <icosahedronGeometry args={[0.28, 1]} />
+          <meshStandardMaterial
+            color="#24130d"
+            emissive="#c83f12"
+            emissiveIntensity={0.55}
+            roughness={1}
+            metalness={0.05}
+            flatShading
+          />
         </mesh>
-        <mesh position={[0, -0.8, 0]}>
-          <coneGeometry args={[0.22, 1.6, 8, 1, true]} />
-          <meshBasicMaterial color="#ff8a1f" transparent opacity={0.6} depthWrite={false} blending={THREE.AdditiveBlending} />
+        <mesh position={[0, 0.16, 0]} scale={[0.88, 1.2, 0.88]}>
+          <icosahedronGeometry args={[0.34, 1]} />
+          <meshBasicMaterial
+            color="#ff6a18"
+            transparent
+            opacity={0.26}
+            depthWrite={false}
+            blending={THREE.AdditiveBlending}
+          />
         </mesh>
-        <pointLight color="#ff7a18" intensity={0.8} distance={4} />
+        <mesh position={[0, 0.28, 0]}>
+          <sphereGeometry args={[0.13, 10, 8]} />
+          <meshBasicMaterial color="#ffd08a" toneMapped={false} />
+        </mesh>
+        <group ref={(node) => { meteorFireGroups.current[index] = node; }}>
+          {METEOR_FLAME_LAYERS.map(([x, y, z, scaleX, scaleY, scaleZ, color, opacity], flameIndex) => (
+            <mesh key={`flame-${flameIndex}`} position={[x, y, z]} scale={[scaleX, scaleY, scaleZ]}>
+              <sphereGeometry args={[1, 10, 8]} />
+              <meshBasicMaterial
+                color={color}
+                transparent
+                opacity={opacity}
+                depthWrite={false}
+                blending={THREE.AdditiveBlending}
+              />
+            </mesh>
+          ))}
+          {METEOR_SMOKE_LAYERS.map(([x, y, z, scaleX, scaleY, scaleZ, opacity], smokeIndex) => (
+            <mesh key={`smoke-${smokeIndex}`} position={[x, y, z]} scale={[scaleX, scaleY, scaleZ]}>
+              <sphereGeometry args={[1, 8, 6]} />
+              <meshBasicMaterial color="#6a5149" transparent opacity={opacity} depthWrite={false} />
+            </mesh>
+          ))}
+          {METEOR_SPARKS.map(([x, y, z, size], sparkIndex) => (
+            <mesh key={sparkIndex} position={[x, y, z]}>
+              <sphereGeometry args={[size, 6, 6]} />
+              <meshBasicMaterial
+                color={sparkIndex < 2 ? '#ffd27a' : '#ff5a1f'}
+                transparent
+                opacity={0.8 - sparkIndex * 0.13}
+                depthWrite={false}
+                blending={THREE.AdditiveBlending}
+              />
+            </mesh>
+          ))}
+        </group>
+        <pointLight color="#ff6a18" intensity={1.25} distance={5} />
       </group>
     ))}
     {Array.from({ length: IMPACT_COUNT }, (_, index) => (
