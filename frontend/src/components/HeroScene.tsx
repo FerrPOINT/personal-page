@@ -2,6 +2,13 @@ import React, { useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Billboard, Float, OrbitControls, PerspectiveCamera, Sparkles, Stars, Text } from '@react-three/drei';
 import * as THREE from 'three';
+import {
+  BLASTER_ATTACK_RANGE,
+  calculateFirstContact,
+  captureBlasterDirection,
+  placeBlasterRay,
+  SCENE_UP,
+} from './heroScenePhysics';
 
 type PlanetData = readonly [
   distance: number,
@@ -153,7 +160,7 @@ interface BlasterState {
   age: number;
   duration: number;
   sourceShipIndex: number;
-  destination: THREE.Vector3;
+  direction: THREE.Vector3;
 }
 
 interface BurstState {
@@ -169,9 +176,6 @@ const IMPACT_COUNT = 6;
 const BLASTER_COUNT = 4;
 const BURST_COUNT = 6;
 const BURST_FRAGMENT_COUNT = 26;
-const BLASTER_ATTACK_RANGE_SQ = 0.75 ** 2;
-const BLASTER_BEAM_LENGTH = 9;
-const METEOR_UP = new THREE.Vector3(0, 1, 0);
 const METEOR_HEAT_START_DISTANCE = 19;
 const METEOR_HEAT_PEAK_DISTANCE = 3;
 const METEOR_CORE_COLD = new THREE.Color('#292421');
@@ -234,7 +238,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     age: 0,
     duration: 0.28,
     sourceShipIndex: -1,
-    destination: new THREE.Vector3(),
+    direction: new THREE.Vector3(),
   })));
   const bursts = useRef<BurstState[]>(Array.from({ length: BURST_COUNT }, () => ({
     active: false,
@@ -245,9 +249,12 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
   })));
   const target = useMemo(() => new THREE.Vector3(), []);
   const collisionPosition = useMemo(() => new THREE.Vector3(), []);
+  const previousMeteorPosition = useMemo(() => new THREE.Vector3(), []);
+  const previousTargetPosition = useMemo(() => new THREE.Vector3(), []);
+  const impactPosition = useMemo(() => new THREE.Vector3(), []);
+  const firingSourcePosition = useMemo(() => new THREE.Vector3(), []);
+  const sceneOrigin = useMemo(() => new THREE.Vector3(), []);
   const direction = useMemo(() => new THREE.Vector3(), []);
-  const beamDirection = useMemo(() => new THREE.Vector3(), []);
-  const beamMidpoint = useMemo(() => new THREE.Vector3(), []);
 
   const createImpact = (position: THREE.Vector3, color: string, magnitude = 1) => {
     const index = impacts.current.findIndex((impact) => !impact.active);
@@ -320,37 +327,25 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     createBurst(position);
   };
 
-  const placeBlaster = (
-    group: THREE.Group,
-    source: THREE.Vector3,
+  const fireBlaster = (
+    sourceShipIndex: number,
+    sourceAtContact: THREE.Vector3,
     destination: THREE.Vector3,
-    width: number,
-  ) => {
-    beamDirection.copy(destination).sub(source);
-    const distance = beamDirection.length();
-    if (distance <= 0.001) return;
-    beamDirection.multiplyScalar(1 / distance);
-    const length = BLASTER_BEAM_LENGTH;
-    beamMidpoint.copy(source).addScaledVector(beamDirection, length * 0.5);
-    group.position.copy(beamMidpoint);
-    group.quaternion.setFromUnitVectors(METEOR_UP, beamDirection);
-    group.scale.set(width, length, width);
-  };
-
-  const fireBlaster = (sourceShipIndex: number, destination: THREE.Vector3): boolean => {
+  ): boolean => {
     const index = blasters.current.findIndex((blaster) => !blaster.active);
     if (index < 0) return false;
     const blaster = blasters.current[index];
+    const source = ships[sourceShipIndex];
+    // Keep the firing direction stable; only the ray origin follows the orbiting ship.
+    if (!captureBlasterDirection(sourceAtContact, destination, blaster.direction)) return false;
     blaster.active = true;
     blaster.age = 0;
     blaster.sourceShipIndex = sourceShipIndex;
-    blaster.destination.copy(destination);
-    const source = ships[sourceShipIndex];
     const group = blasterGroups.current[index];
     const material = blasterMaterials.current[index];
     if (group) {
       group.visible = true;
-      placeBlaster(group, source, destination, 1);
+      placeBlasterRay(group, source, blaster.direction, 1);
     }
     if (material) material.opacity = 0.95;
     createMeteorExplosion(destination);
@@ -424,7 +419,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       group.visible = true;
       group.position.copy(meteor.position);
       direction.copy(meteor.velocity).normalize();
-      group.quaternion.setFromUnitVectors(METEOR_UP, direction);
+      group.quaternion.setFromUnitVectors(SCENE_UP, direction);
     }
   };
 
@@ -438,6 +433,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     meteors.current.forEach((meteor, index) => {
       if (!meteor.active) return;
       meteor.age += delta;
+      previousMeteorPosition.copy(meteor.position);
       meteor.position.addScaledVector(meteor.velocity, delta);
       const distanceToSun = meteor.position.length();
       const targetHeat = 1 - THREE.MathUtils.smoothstep(
@@ -485,38 +481,69 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         light.distance = 2.5 + meteor.heat * 4.5;
       }
 
-      let collided = false;
-      if (meteor.position.lengthSq() <= 2.35 ** 2) {
-        collided = true;
-      } else {
-        for (const planet of planets) {
-          planetPositionAt(planet, elapsed, collisionPosition);
-          if (meteor.position.distanceToSquared(collisionPosition) <= (planet[2] + 0.28) ** 2) {
-            collided = true;
-            break;
-          }
+      let collisionTime = calculateFirstContact(
+        previousMeteorPosition,
+        meteor.position,
+        sceneOrigin,
+        sceneOrigin,
+        2.35,
+      );
+      for (const planet of planets) {
+        planetPositionAt(planet, elapsed - delta, previousTargetPosition);
+        planetPositionAt(planet, elapsed, collisionPosition);
+        const planetCollisionTime = calculateFirstContact(
+          previousMeteorPosition,
+          meteor.position,
+          previousTargetPosition,
+          collisionPosition,
+          planet[2] + 0.28,
+        );
+        if (planetCollisionTime !== null && (collisionTime === null || planetCollisionTime < collisionTime)) {
+          collisionTime = planetCollisionTime;
         }
       }
 
-      if (collided) {
-        createMeteorExplosion(meteor.position);
+      let defendingShip = -1;
+      let interceptionTime = Number.POSITIVE_INFINITY;
+      SHIP_ORBITS.forEach((orbit, shipIndex) => {
+        if (elapsed < shipCooldowns.current[shipIndex]) return;
+        shipPositionAt(orbit, elapsed - delta, previousTargetPosition);
+        shipPositionAt(orbit, elapsed, collisionPosition);
+        const contactTime = calculateFirstContact(
+          previousMeteorPosition,
+          meteor.position,
+          previousTargetPosition,
+          collisionPosition,
+          BLASTER_ATTACK_RANGE,
+        );
+        if (contactTime !== null && contactTime < interceptionTime) {
+          interceptionTime = contactTime;
+          firingSourcePosition.lerpVectors(previousTargetPosition, collisionPosition, contactTime);
+          defendingShip = shipIndex;
+        }
+      });
+
+      if (collisionTime !== null && collisionTime <= interceptionTime) {
+        impactPosition.lerpVectors(previousMeteorPosition, meteor.position, collisionTime);
+        createMeteorExplosion(impactPosition);
         meteor.active = false;
         if (group) group.visible = false;
         return;
       }
 
-      let defendingShip = -1;
-      let closestShipDistanceSq = BLASTER_ATTACK_RANGE_SQ;
-      ships.forEach((shipPosition, shipIndex) => {
-        if (elapsed < shipCooldowns.current[shipIndex]) return;
-        const distanceSq = meteor.position.distanceToSquared(shipPosition);
-        if (distanceSq < closestShipDistanceSq) {
-          closestShipDistanceSq = distanceSq;
-          defendingShip = shipIndex;
-        }
-      });
-      if (defendingShip >= 0 && fireBlaster(defendingShip, meteor.position)) {
+      if (defendingShip >= 0) {
+        impactPosition.lerpVectors(previousMeteorPosition, meteor.position, interceptionTime);
+      }
+      if (defendingShip >= 0 && fireBlaster(defendingShip, firingSourcePosition, impactPosition)) {
         shipCooldowns.current[defendingShip] = elapsed + 1.2 + Math.random() * 0.8;
+        meteor.active = false;
+        if (group) group.visible = false;
+        return;
+      }
+
+      if (collisionTime !== null) {
+        impactPosition.lerpVectors(previousMeteorPosition, meteor.position, collisionTime);
+        createMeteorExplosion(impactPosition);
         meteor.active = false;
         if (group) group.visible = false;
         return;
@@ -553,7 +580,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       if (group) {
         const source = ships[blaster.sourceShipIndex];
         const width = 1 - progress * 0.65;
-        placeBlaster(group, source, blaster.destination, width);
+        placeBlasterRay(group, source, blaster.direction, width);
       }
       if (material) material.opacity = (1 - progress) * 0.95;
       if (progress >= 1) {
