@@ -7,9 +7,46 @@ export const METEOR_SURFACE_OFFSET = 0.22;
 export const SCENE_UP = new THREE.Vector3(0, 1, 0);
 const BLASTER_DIRECTION = new THREE.Vector3();
 
-export const PLANET_IMPACT_SPEED_LIMIT = 0.975;
+export const PLANET_IMPACT_MAX_RATIO = 0.975;
 export const STARFIELD_DRIFT_SPEED = 0.012;
 export const STARFIELD_IMPACT_SPEED = 0.06;
+export const STARFIELD_RECOVERY_RATE = 0.45;
+
+export interface PlanetDefinition {
+  orbitRadius: number;
+  orbitSpeed: number;
+  size: number;
+  color: string;
+  label: string;
+}
+
+export interface PlanetMotionState {
+  angle: number;
+  speedOffset: number;
+}
+
+export interface StarfieldMotionState {
+  yawVelocity: number;
+  pitchVelocity: number;
+  rollVelocity: number;
+}
+
+export interface ShipOrbit {
+  radiusX: number;
+  radiusZ: number;
+  speed: number;
+  offset: number;
+  yOffset: number;
+}
+
+export const SHIP_ORBITS: readonly ShipOrbit[] = [
+  { radiusX: 6, radiusZ: 6, speed: 0.6, offset: 0, yOffset: 0.5 },
+  { radiusX: 7, radiusZ: 5, speed: 0.5, offset: 2, yOffset: -0.5 },
+  { radiusX: 10, radiusZ: 11, speed: 0.3, offset: 1, yOffset: -1.5 },
+  { radiusX: 12, radiusZ: 9, speed: 0.25, offset: 4, yOffset: 1 },
+  { radiusX: 16, radiusZ: 16, speed: 0.15, offset: 5, yOffset: 0 },
+  { radiusX: 18, radiusZ: 14, speed: 0.12, offset: 3, yOffset: 2 },
+];
 
 export interface StarfieldImpulse {
   yaw: number;
@@ -35,7 +72,29 @@ export const calculatePlanetOrbitImpulse = (
   const alignment = (
     impactVelocity.x * tangentX + impactVelocity.z * tangentZ
   ) / planarImpactSpeed;
-  return baseOrbitSpeed * PLANET_IMPACT_SPEED_LIMIT * THREE.MathUtils.clamp(alignment, -1, 1);
+  return baseOrbitSpeed * PLANET_IMPACT_MAX_RATIO * THREE.MathUtils.clamp(alignment, -1, 1);
+};
+
+export const applyPlanetOrbitImpact = (
+  motion: PlanetMotionState,
+  planetPosition: THREE.Vector3,
+  impactVelocity: THREE.Vector3,
+  baseOrbitSpeed: number,
+): void => {
+  const impulse = calculatePlanetOrbitImpulse(planetPosition, impactVelocity, baseOrbitSpeed);
+  const maxOffset = baseOrbitSpeed * PLANET_IMPACT_MAX_RATIO;
+  motion.speedOffset = THREE.MathUtils.clamp(motion.speedOffset + impulse, -maxOffset, maxOffset);
+};
+
+export const advancePlanetMotion = (
+  motion: PlanetMotionState,
+  baseOrbitSpeed: number,
+  delta: number,
+): number => {
+  const effectiveSpeed = baseOrbitSpeed + motion.speedOffset;
+  motion.angle = (motion.angle + effectiveSpeed * delta) % (Math.PI * 2);
+  motion.speedOffset = THREE.MathUtils.damp(motion.speedOffset, 0, 0.7, delta);
+  return effectiveSpeed;
 };
 
 export const calculateStarfieldImpulse = (impactVelocity: THREE.Vector3): StarfieldImpulse => {
@@ -47,6 +106,67 @@ export const calculateStarfieldImpulse = (impactVelocity: THREE.Vector3): Starfi
     pitch: -impactVelocity.y * driftScale,
     roll: -impactVelocity.z * driftScale,
   };
+};
+
+export const applyStarfieldImpulse = (
+  motion: StarfieldMotionState,
+  impactVelocity: THREE.Vector3,
+): void => {
+  const impulse = calculateStarfieldImpulse(impactVelocity);
+  if (Math.hypot(impulse.yaw, impulse.pitch, impulse.roll) <= 1e-6) return;
+  motion.yawVelocity = impulse.yaw;
+  motion.pitchVelocity = impulse.pitch;
+  motion.rollVelocity = impulse.roll;
+};
+
+export const createInitialStarfieldMotion = (): StarfieldMotionState => {
+  const yaw = 0.8;
+  const pitch = -0.3;
+  const roll = 0.52;
+  const scale = STARFIELD_DRIFT_SPEED / Math.hypot(yaw, pitch, roll);
+  return {
+    yawVelocity: yaw * scale,
+    pitchVelocity: pitch * scale,
+    rollVelocity: roll * scale,
+  };
+};
+
+export const recoverStarfieldSpeed = (motion: StarfieldMotionState, delta: number): void => {
+  const currentSpeed = Math.hypot(motion.yawVelocity, motion.pitchVelocity, motion.rollVelocity);
+  if (currentSpeed <= 1e-6 || Math.abs(currentSpeed - STARFIELD_DRIFT_SPEED) <= 1e-6) return;
+  const nextSpeed = THREE.MathUtils.damp(
+    currentSpeed,
+    STARFIELD_DRIFT_SPEED,
+    STARFIELD_RECOVERY_RATE,
+    delta,
+  );
+  const speedScale = nextSpeed / currentSpeed;
+  motion.yawVelocity *= speedScale;
+  motion.pitchVelocity *= speedScale;
+  motion.rollVelocity *= speedScale;
+};
+
+export const placePlanetAtAngle = (
+  planet: Pick<PlanetDefinition, 'orbitRadius'>,
+  angle: number,
+  target: THREE.Vector3,
+): THREE.Vector3 => target.set(
+  Math.cos(angle) * planet.orbitRadius,
+  0,
+  Math.sin(angle) * planet.orbitRadius,
+);
+
+export const placeShipAtTime = (
+  orbit: ShipOrbit,
+  elapsed: number,
+  target: THREE.Vector3,
+): THREE.Vector3 => {
+  const angle = elapsed * orbit.speed + orbit.offset;
+  return target.set(
+    Math.cos(angle) * orbit.radiusX,
+    Math.sin(angle * 2) * orbit.yOffset,
+    Math.sin(angle) * orbit.radiusZ,
+  );
 };
 
 export const calculateBlasterSegment = (

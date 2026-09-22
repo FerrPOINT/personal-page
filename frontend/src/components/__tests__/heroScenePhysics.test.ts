@@ -1,15 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import {
+  advancePlanetMotion,
+  applyPlanetOrbitImpact,
+  applyStarfieldImpulse,
   BLASTER_ATTACK_RANGE,
   BLASTER_MUZZLE_OFFSET,
   calculateBlasterSegment,
   calculateFirstContact,
   calculatePlanetOrbitImpulse,
   calculateStarfieldImpulse,
+  createInitialStarfieldMotion,
   getCollisionMotionScale,
   METEOR_SURFACE_OFFSET,
   placeBlasterBeam,
+  placePlanetAtAngle,
+  placeShipAtTime,
+  recoverStarfieldSpeed,
   STARFIELD_DRIFT_SPEED,
   STARFIELD_IMPACT_SPEED,
 } from '../heroScenePhysics';
@@ -217,6 +224,19 @@ describe('hero scene trajectories', () => {
     expect(calculatePlanetOrbitImpulse(planet, new THREE.Vector3(-5, 0, 0), baseSpeed)).toBeCloseTo(0, 6);
   });
 
+  it('applies signed planet impacts within the safe orbital-speed range', () => {
+    const planet = new THREE.Vector3(10, 0, 0);
+    const motion = { angle: 0, speedOffset: 0 };
+
+    applyPlanetOrbitImpact(motion, planet, new THREE.Vector3(0, 0, -5), 0.2);
+    expect(motion.speedOffset).toBeCloseTo(-0.195, 6);
+
+    applyPlanetOrbitImpact(motion, planet, new THREE.Vector3(0, 0, -5), 0.2);
+    expect(motion.speedOffset).toBeCloseTo(-0.195, 6);
+    expect(advancePlanetMotion(motion, 0.2, 1)).toBeCloseTo(0.005, 6);
+    expect(motion.speedOffset).toBeGreaterThan(-0.195);
+  });
+
   it('maps a star impact to a faster background drift in the same direction', () => {
     const impulse = calculateStarfieldImpulse(new THREE.Vector3(4, -2, 3));
 
@@ -225,5 +245,49 @@ describe('hero scene trajectories', () => {
     expect(impulse.roll).toBeLessThan(0);
     expect(Math.hypot(impulse.yaw, impulse.pitch, impulse.roll)).toBeCloseTo(STARFIELD_IMPACT_SPEED, 8);
     expect(STARFIELD_IMPACT_SPEED).toBeGreaterThan(STARFIELD_DRIFT_SPEED);
+  });
+
+  it('keeps the impact trajectory while starfield speed recovers to its persistent drift', () => {
+    const motion = { yawVelocity: 0, pitchVelocity: 0, rollVelocity: 0 };
+    applyStarfieldImpulse(motion, new THREE.Vector3(4, -2, 3));
+    const direction = new THREE.Vector3(
+      motion.yawVelocity,
+      motion.pitchVelocity,
+      motion.rollVelocity,
+    ).normalize();
+
+    for (let frame = 0; frame < 1800; frame += 1) recoverStarfieldSpeed(motion, 1 / 60);
+
+    const recovered = new THREE.Vector3(
+      motion.yawVelocity,
+      motion.pitchVelocity,
+      motion.rollVelocity,
+    );
+    expect(recovered.length()).toBeGreaterThanOrEqual(STARFIELD_DRIFT_SPEED);
+    expect(recovered.length()).toBeCloseTo(STARFIELD_DRIFT_SPEED, 3);
+    expect(recovered.normalize().dot(direction)).toBeCloseTo(1, 8);
+  });
+
+  it('starts at the persistent drift speed and ignores an invalid zero-speed impact', () => {
+    const motion = createInitialStarfieldMotion();
+    const initial = { ...motion };
+
+    expect(Math.hypot(motion.yawVelocity, motion.pitchVelocity, motion.rollVelocity))
+      .toBeCloseTo(STARFIELD_DRIFT_SPEED, 8);
+    applyStarfieldImpulse(motion, new THREE.Vector3());
+    expect(motion).toEqual(initial);
+  });
+
+  it('uses the same orbital equations for rendering and collision prediction', () => {
+    const target = new THREE.Vector3();
+    placePlanetAtAngle({ orbitRadius: 10 }, Math.PI / 2, target);
+    expectVectorClose(target, new THREE.Vector3(0, 0, 10));
+
+    placeShipAtTime(
+      { radiusX: 8, radiusZ: 6, speed: 0.5, offset: 0, yOffset: 2 },
+      Math.PI,
+      target,
+    );
+    expectVectorClose(target, new THREE.Vector3(0, 0, 6));
   });
 });
