@@ -26,6 +26,9 @@ const SCENE_PRIMARY = '#00d9ff';
 const SCENE_SECONDARY = '#ff00ff';
 const MAX_SCENE_FPS = 60;
 
+// Master multiplier for the sun surface, corona and emitted light.
+export const SUN_BRIGHTNESS = 1;
+
 function SceneFrameLoop({ active }: { active: boolean }) {
   const invalidate = useThree((state) => state.invalidate);
   const clock = useThree((state) => state.clock);
@@ -139,7 +142,7 @@ function Sun({ motion }: { motion: SunRotationState }) {
         map={glowTexture}
         color="#ff5a16"
         transparent
-        opacity={0.16}
+        opacity={Math.min(1, 0.16 * SUN_BRIGHTNESS)}
         depthWrite={false}
         toneMapped={false}
         blending={THREE.AdditiveBlending}
@@ -150,7 +153,7 @@ function Sun({ motion }: { motion: SunRotationState }) {
         map={glowTexture}
         color="#ffb02e"
         transparent
-        opacity={0.42}
+        opacity={Math.min(1, 0.42 * SUN_BRIGHTNESS)}
         depthWrite={false}
         toneMapped={false}
         blending={THREE.AdditiveBlending}
@@ -158,13 +161,18 @@ function Sun({ motion }: { motion: SunRotationState }) {
     </sprite>
     <mesh>
       <sphereGeometry args={[2, 32, 32]} />
-      <meshStandardMaterial color="#ffaa00" emissive="#ff5500" emissiveIntensity={3} roughness={0.4} />
+      <meshStandardMaterial
+        color="#ffaa00"
+        emissive="#ff5500"
+        emissiveIntensity={3 * SUN_BRIGHTNESS}
+        roughness={0.4}
+      />
     </mesh>
     <mesh scale={[1.2, 1.2, 1.2]}>
       <sphereGeometry args={[2, 16, 16]} />
       <meshStandardMaterial color="#ffaa00" wireframe transparent opacity={0.15} />
     </mesh>
-    <pointLight distance={100} intensity={2} color="#ffaa00" />
+    <pointLight distance={100} intensity={2 * SUN_BRIGHTNESS} color="#ffaa00" />
   </group>;
 }
 
