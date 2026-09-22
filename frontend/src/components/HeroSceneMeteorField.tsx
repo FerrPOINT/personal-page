@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
@@ -17,6 +17,11 @@ import {
   SCENE_UP,
   SHIP_ORBITS,
 } from './heroScenePhysics';
+import {
+  createMeteorNucleusGeometry,
+  createMeteorTailGeometry,
+  createRadialGlowTexture,
+} from './heroSceneVisuals';
 
 type BurstKind = 'collision' | 'blaster';
 type CollisionTarget = 'none' | 'sun' | 'planet';
@@ -85,11 +90,9 @@ const METEOR_HEAT_PEAK_DISTANCE = 3;
 const METEOR_CORE_COLD = new THREE.Color('#292421');
 const METEOR_CORE_HOT = new THREE.Color('#ff7a18');
 const METEOR_EMISSIVE_COLD = new THREE.Color('#321109');
-const METEOR_EMISSIVE_HOT = new THREE.Color('#fff1c7');
+const METEOR_EMISSIVE_HOT = new THREE.Color('#ffb45c');
 const METEOR_GLOW_COLD = new THREE.Color('#7a2511');
-const METEOR_GLOW_HOT = new THREE.Color('#fff0b0');
-const METEOR_HEAD_COLD = new THREE.Color('#8d2c12');
-const METEOR_HEAD_HOT = new THREE.Color('#fff7dc');
+const METEOR_GLOW_HOT = new THREE.Color('#ff9a38');
 
 export default function HeroSceneMeteorField({
   planets,
@@ -103,14 +106,13 @@ export default function HeroSceneMeteorField({
   onSunImpact: (impactPosition: THREE.Vector3, impactVelocity: THREE.Vector3) => void;
 }) {
   const meteorGroups = useRef<Array<THREE.Group | null>>([]);
-  const meteorCores = useRef<Array<THREE.Mesh | null>>([]);
+  const meteorCores = useRef<Array<THREE.Group | null>>([]);
   const meteorCoreMaterials = useRef<Array<THREE.MeshStandardMaterial | null>>([]);
-  const meteorGlowMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
-  const meteorHeadMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
-  const meteorInnerTailMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
-  const meteorOuterTailMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
+  const meteorComaMaterials = useRef<Array<THREE.SpriteMaterial | null>>([]);
+  const meteorPlasmaTailMaterials = useRef<Array<THREE.PointsMaterial | null>>([]);
+  const meteorDustTailMaterials = useRef<Array<THREE.PointsMaterial | null>>([]);
   const meteorLights = useRef<Array<THREE.PointLight | null>>([]);
-  const meteorFireGroups = useRef<Array<THREE.Group | null>>([]);
+  const meteorTailGroups = useRef<Array<THREE.Group | null>>([]);
   const blasterGroups = useRef<Array<THREE.Group | null>>([]);
   const blasterMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
   const burstGroups = useRef<Array<THREE.Group | null>>([]);
@@ -157,6 +159,23 @@ export default function HeroSceneMeteorField({
   const sceneOrigin = useMemo(() => new THREE.Vector3(), []);
   const direction = useMemo(() => new THREE.Vector3(), []);
   const fragmentTransform = useMemo(() => new THREE.Object3D(), []);
+  const meteorNucleusGeometry = useMemo(createMeteorNucleusGeometry, []);
+  const meteorPlasmaTailGeometry = useMemo(
+    () => createMeteorTailGeometry(58, 3.2, 0.34, 0x8f23ab17),
+    [],
+  );
+  const meteorDustTailGeometry = useMemo(
+    () => createMeteorTailGeometry(42, 4.8, 0.72, 0x3d91e5c9),
+    [],
+  );
+  const meteorGlowTexture = useMemo(createRadialGlowTexture, []);
+
+  useEffect(() => () => {
+    meteorNucleusGeometry.dispose();
+    meteorPlasmaTailGeometry.dispose();
+    meteorDustTailGeometry.dispose();
+    meteorGlowTexture.dispose();
+  }, [meteorDustTailGeometry, meteorGlowTexture, meteorNucleusGeometry, meteorPlasmaTailGeometry]);
 
   const setBurstFragmentMatrix = (
     burstIndex: number,
@@ -448,27 +467,23 @@ export default function HeroSceneMeteorField({
       if (coreMaterial) {
         coreMaterial.color.lerpColors(METEOR_CORE_COLD, METEOR_CORE_HOT, meteor.heat);
         coreMaterial.emissive.lerpColors(METEOR_EMISSIVE_COLD, METEOR_EMISSIVE_HOT, meteor.heat);
-        coreMaterial.emissiveIntensity = 0.12 + meteor.heat * 2.7;
+        coreMaterial.emissiveIntensity = 0.12 + meteor.heat * 1.7;
       }
-      const glowMaterial = meteorGlowMaterials.current[index];
-      if (glowMaterial) {
-        glowMaterial.color.lerpColors(METEOR_GLOW_COLD, METEOR_GLOW_HOT, meteor.heat);
-        glowMaterial.opacity = 0.08 + meteor.heat * 0.5;
+      const comaMaterial = meteorComaMaterials.current[index];
+      if (comaMaterial) {
+        comaMaterial.color.lerpColors(METEOR_GLOW_COLD, METEOR_GLOW_HOT, meteor.heat);
+        comaMaterial.opacity = 0.04 + meteor.heat * 0.22;
       }
-      const headMaterial = meteorHeadMaterials.current[index];
-      if (headMaterial) {
-        headMaterial.color.lerpColors(METEOR_HEAD_COLD, METEOR_HEAD_HOT, meteor.heat);
-        headMaterial.opacity = 0.3 + meteor.heat * 0.7;
-      }
-      const innerTailMaterial = meteorInnerTailMaterials.current[index];
-      if (innerTailMaterial) innerTailMaterial.opacity = 0.16 + meteor.heat * 0.62;
-      const outerTailMaterial = meteorOuterTailMaterials.current[index];
-      if (outerTailMaterial) outerTailMaterial.opacity = 0.08 + meteor.heat * 0.34;
-      const fire = meteorFireGroups.current[index];
-      if (fire) {
+      const plasmaTailMaterial = meteorPlasmaTailMaterials.current[index];
+      if (plasmaTailMaterial) plasmaTailMaterial.opacity = 0.22 + meteor.heat * 0.48;
+      const dustTailMaterial = meteorDustTailMaterials.current[index];
+      if (dustTailMaterial) dustTailMaterial.opacity = 0.08 + meteor.heat * 0.2;
+      const tail = meteorTailGroups.current[index];
+      if (tail) {
         const flicker = 0.9 + Math.sin(elapsed * 19 + index * 1.7) * 0.12;
-        const heatScale = 0.38 + meteor.heat * 0.9;
-        fire.scale.set(flicker * heatScale, heatScale, flicker * heatScale);
+        const widthScale = 0.72 + meteor.heat * 0.38;
+        const lengthScale = 0.78 + meteor.heat * 0.58;
+        tail.scale.set(flicker * widthScale, lengthScale, flicker * widthScale);
       }
       const light = meteorLights.current[index];
       if (light) {
@@ -635,83 +650,68 @@ export default function HeroSceneMeteorField({
         ref={(node) => { meteorGroups.current[index] = node; }}
         visible={false}
       >
-        <mesh ref={(node) => { meteorCores.current[index] = node; }} scale={[1, 0.82, 0.9]}>
-          <icosahedronGeometry args={[0.28, 1]} />
-          <meshStandardMaterial
-            ref={(node) => { meteorCoreMaterials.current[index] = node; }}
-            color="#24130d"
-            emissive="#c83f12"
-            emissiveIntensity={0.12}
-            roughness={1}
-            metalness={0.05}
-            flatShading
-          />
-        </mesh>
-        <mesh position={[0, 0.16, 0]} scale={[0.88, 1.2, 0.88]}>
-          <icosahedronGeometry args={[0.34, 1]} />
-          <meshBasicMaterial
-            ref={(node) => { meteorGlowMaterials.current[index] = node; }}
-            color="#ff6a18"
+        <group
+          ref={(node) => { meteorCores.current[index] = node; }}
+          rotation={[index * 0.71, index * 1.17, index * 0.43]}
+        >
+          <mesh>
+            <primitive object={meteorNucleusGeometry} attach="geometry" />
+            <meshStandardMaterial
+              ref={(node) => { meteorCoreMaterials.current[index] = node; }}
+              color="#24130d"
+              emissive="#c83f12"
+              emissiveIntensity={0.12}
+              roughness={1}
+              metalness={0.05}
+              flatShading
+            />
+          </mesh>
+          <mesh position={[0.25, 0.07, 0.17]} scale={[0.085, 0.045, 0.07]}>
+            <dodecahedronGeometry args={[1, 0]} />
+            <meshStandardMaterial color="#0d0908" roughness={1} flatShading />
+          </mesh>
+          <mesh position={[-0.17, -0.19, 0.2]} scale={[0.06, 0.09, 0.045]}>
+            <dodecahedronGeometry args={[1, 0]} />
+            <meshStandardMaterial color="#493027" roughness={1} flatShading />
+          </mesh>
+        </group>
+        <sprite scale={[1.08, 1.08, 1]}>
+          <spriteMaterial
+            ref={(node) => { meteorComaMaterials.current[index] = node; }}
+            map={meteorGlowTexture}
+            color="#7a2511"
             transparent
             opacity={0.08}
             depthWrite={false}
+            toneMapped={false}
             blending={THREE.AdditiveBlending}
           />
-        </mesh>
-        <mesh position={[0, 0.28, 0]}>
-          <sphereGeometry args={[0.13, 10, 8]} />
-          <meshBasicMaterial
-            ref={(node) => { meteorHeadMaterials.current[index] = node; }}
-            color="#8d2c12"
-            transparent
-            opacity={0.3}
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </mesh>
-        <group ref={(node) => { meteorFireGroups.current[index] = node; }}>
-          <mesh position={[0, -0.3, 0]} scale={[0.12, 0.38, 0.12]}>
-            <sphereGeometry args={[1, 12, 8]} />
-            <meshBasicMaterial
-              ref={(node) => { meteorInnerTailMaterials.current[index] = node; }}
-              color="#ffe2a3"
+        </sprite>
+        <group ref={(node) => { meteorTailGroups.current[index] = node; }}>
+          <points geometry={meteorPlasmaTailGeometry} rotation={[0, index * 0.37, 0]}>
+            <pointsMaterial
+              ref={(node) => { meteorPlasmaTailMaterials.current[index] = node; }}
+              color="#ffbd5b"
+              size={0.09}
+              sizeAttenuation
               transparent
-              opacity={0.16}
+              opacity={0.22}
               depthWrite={false}
               blending={THREE.AdditiveBlending}
             />
-          </mesh>
-          <mesh position={[0.02, -0.52, -0.01]} scale={[0.2, 0.62, 0.18]}>
-            <sphereGeometry args={[1, 12, 8]} />
-            <meshBasicMaterial
-              ref={(node) => { meteorOuterTailMaterials.current[index] = node; }}
-              color="#ff5a18"
+          </points>
+          <points geometry={meteorDustTailGeometry} rotation={[0, -0.12 + index * 0.19, 0]}>
+            <pointsMaterial
+              ref={(node) => { meteorDustTailMaterials.current[index] = node; }}
+              color="#a85b32"
+              size={0.065}
+              sizeAttenuation
               transparent
               opacity={0.08}
               depthWrite={false}
               blending={THREE.AdditiveBlending}
             />
-          </mesh>
-          <Sparkles
-            count={22}
-            position={[0, -1.35, 0]}
-            scale={[0.48, 2.45, 0.48]}
-            size={2.4}
-            speed={0.35}
-            noise={[0.35, 0.2, 0.35]}
-            color="#ff6a18"
-            opacity={0.72}
-          />
-          <Sparkles
-            count={12}
-            position={[0, -1.55, 0]}
-            scale={[0.62, 2.8, 0.62]}
-            size={4}
-            speed={0.18}
-            noise={[0.42, 0.18, 0.42]}
-            color="#6a5149"
-            opacity={0.14}
-          />
+          </points>
         </group>
         <pointLight
           ref={(node) => { meteorLights.current[index] = node; }}

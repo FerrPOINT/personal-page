@@ -20,6 +20,7 @@ import {
   type SunRotationState,
 } from './heroScenePhysics';
 import HeroSceneMeteorField from './HeroSceneMeteorField';
+import { createRadialGlowTexture } from './heroSceneVisuals';
 
 const SCENE_PRIMARY = '#00d9ff';
 const SCENE_SECONDARY = '#ff00ff';
@@ -115,6 +116,9 @@ function Sun({ motion }: { motion: SunRotationState }) {
   const sun = useRef<THREE.Group>(null);
   const rotationAxis = useMemo(() => new THREE.Vector3(), []);
   const rotationStep = useMemo(() => new THREE.Quaternion(), []);
+  const glowTexture = useMemo(createRadialGlowTexture, []);
+
+  useEffect(() => () => glowTexture.dispose(), [glowTexture]);
 
   useFrame((_, delta) => {
     if (!sun.current) return;
@@ -130,6 +134,28 @@ function Sun({ motion }: { motion: SunRotationState }) {
   });
 
   return <group ref={sun}>
+    <sprite scale={[11, 11, 1]} renderOrder={-2}>
+      <spriteMaterial
+        map={glowTexture}
+        color="#ff5a16"
+        transparent
+        opacity={0.16}
+        depthWrite={false}
+        toneMapped={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </sprite>
+    <sprite scale={[7.2, 7.2, 1]} renderOrder={-1}>
+      <spriteMaterial
+        map={glowTexture}
+        color="#ffb02e"
+        transparent
+        opacity={0.42}
+        depthWrite={false}
+        toneMapped={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </sprite>
     <mesh>
       <sphereGeometry args={[2, 32, 32]} />
       <meshStandardMaterial color="#ffaa00" emissive="#ff5500" emissiveIntensity={3} roughness={0.4} />
