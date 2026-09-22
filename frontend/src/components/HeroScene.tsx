@@ -5,15 +5,19 @@ import * as THREE from 'three';
 import {
   advancePlanetMotion,
   applyStarfieldImpulse,
+  applySunAngularImpulse,
   createInitialStarfieldMotion,
+  createInitialSunRotation,
   placePlanetAtAngle,
   placeShipAtTime,
   type PlanetDefinition,
   type PlanetMotionState,
   recoverStarfieldSpeed,
+  recoverSunRotation,
   SHIP_ORBITS,
   type ShipOrbit,
   type StarfieldMotionState,
+  type SunRotationState,
 } from './heroScenePhysics';
 import HeroSceneMeteorField from './HeroSceneMeteorField';
 
@@ -107,8 +111,25 @@ function SceneCamera() {
   return <PerspectiveCamera ref={camera} makeDefault position={[0, 20, 42]} fov={40} />;
 }
 
-function Sun() {
-  return <group>
+function Sun({ motion }: { motion: SunRotationState }) {
+  const sun = useRef<THREE.Group>(null);
+  const rotationAxis = useMemo(() => new THREE.Vector3(), []);
+  const rotationStep = useMemo(() => new THREE.Quaternion(), []);
+
+  useFrame((_, delta) => {
+    if (!sun.current) return;
+    const frameDelta = Math.min(delta, 0.05);
+    rotationAxis.set(motion.xVelocity, motion.yVelocity, motion.zVelocity);
+    const angularSpeed = rotationAxis.length();
+    if (angularSpeed > 1e-6) {
+      rotationAxis.multiplyScalar(1 / angularSpeed);
+      rotationStep.setFromAxisAngle(rotationAxis, angularSpeed * frameDelta);
+      sun.current.quaternion.multiply(rotationStep);
+    }
+    recoverSunRotation(motion, frameDelta);
+  });
+
+  return <group ref={sun}>
     <mesh>
       <sphereGeometry args={[2, 32, 32]} />
       <meshStandardMaterial color="#ffaa00" emissive="#ff5500" emissiveIntensity={3} roughness={0.4} />
@@ -206,10 +227,12 @@ export default function HeroScene({
     planetOffsets.map((angle) => ({ angle, speedOffset: 0 }))
   ), [planetOffsets]);
   const starfieldMotion = useRef<StarfieldMotionState>(createInitialStarfieldMotion());
+  const sunRotation = useRef<SunRotationState>(createInitialSunRotation());
   const systemRef = useRef<THREE.Group>(null);
   const worldImpactDirection = useMemo(() => new THREE.Vector3(), []);
   const systemWorldQuaternion = useMemo(() => new THREE.Quaternion(), []);
-  const handleSunImpact = useCallback((impactVelocity: THREE.Vector3) => {
+  const handleSunImpact = useCallback((impactPosition: THREE.Vector3, impactVelocity: THREE.Vector3) => {
+    applySunAngularImpulse(sunRotation.current, impactPosition, impactVelocity);
     worldImpactDirection.copy(impactVelocity);
     if (systemRef.current) {
       systemRef.current.getWorldQuaternion(systemWorldQuaternion);
@@ -231,7 +254,7 @@ export default function HeroScene({
       <ambientLight intensity={0.2} />
       <ReactiveStarfield motion={starfieldMotion.current} />
       <RotatingSystem systemRef={systemRef}>
-          <Sun />
+          <Sun motion={sunRotation.current} />
           {planets.map((planet, index) => (
             <Planet key={planet.label} data={planet} motion={planetMotions[index]} />
           ))}

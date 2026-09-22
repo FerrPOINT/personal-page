@@ -11,6 +11,15 @@ export const PLANET_IMPACT_MAX_RATIO = 0.975;
 export const STARFIELD_DRIFT_SPEED = 0.012;
 export const STARFIELD_IMPACT_SPEED = 0.06;
 export const STARFIELD_RECOVERY_RATE = 0.45;
+export const SUN_IMPACT_ANGULAR_SCALE = 0.09;
+export const SUN_MAX_ANGULAR_SPEED = 1.2;
+export const SUN_ROTATION_RECOVERY_RATE = 0.3;
+
+const SUN_BASE_ANGULAR_VELOCITY = {
+  x: 0.025,
+  y: 0.16,
+  z: 0.018,
+} as const;
 
 export interface PlanetDefinition {
   orbitRadius: number;
@@ -29,6 +38,12 @@ export interface StarfieldMotionState {
   yawVelocity: number;
   pitchVelocity: number;
   rollVelocity: number;
+}
+
+export interface SunRotationState {
+  xVelocity: number;
+  yVelocity: number;
+  zVelocity: number;
 }
 
 export interface ShipOrbit {
@@ -144,6 +159,63 @@ export const recoverStarfieldSpeed = (motion: StarfieldMotionState, delta: numbe
   motion.yawVelocity *= speedScale;
   motion.pitchVelocity *= speedScale;
   motion.rollVelocity *= speedScale;
+};
+
+export const createInitialSunRotation = (): SunRotationState => ({
+  xVelocity: SUN_BASE_ANGULAR_VELOCITY.x,
+  yVelocity: SUN_BASE_ANGULAR_VELOCITY.y,
+  zVelocity: SUN_BASE_ANGULAR_VELOCITY.z,
+});
+
+export const calculateSunAngularImpulse = (
+  impactPosition: THREE.Vector3,
+  impactVelocity: THREE.Vector3,
+): THREE.Vector3 => {
+  const radius = impactPosition.length();
+  const speed = impactVelocity.length();
+  if (radius <= 1e-6 || speed <= 1e-6) return new THREE.Vector3();
+
+  return new THREE.Vector3().crossVectors(impactPosition, impactVelocity)
+    .multiplyScalar(SUN_IMPACT_ANGULAR_SCALE / radius);
+};
+
+export const applySunAngularImpulse = (
+  motion: SunRotationState,
+  impactPosition: THREE.Vector3,
+  impactVelocity: THREE.Vector3,
+): void => {
+  const impulse = calculateSunAngularImpulse(impactPosition, impactVelocity);
+  const nextX = motion.xVelocity + impulse.x;
+  const nextY = motion.yVelocity + impulse.y;
+  const nextZ = motion.zVelocity + impulse.z;
+  const nextSpeed = Math.hypot(nextX, nextY, nextZ);
+  const speedScale = nextSpeed > SUN_MAX_ANGULAR_SPEED
+    ? SUN_MAX_ANGULAR_SPEED / nextSpeed
+    : 1;
+  motion.xVelocity = nextX * speedScale;
+  motion.yVelocity = nextY * speedScale;
+  motion.zVelocity = nextZ * speedScale;
+};
+
+export const recoverSunRotation = (motion: SunRotationState, delta: number): void => {
+  motion.xVelocity = THREE.MathUtils.damp(
+    motion.xVelocity,
+    SUN_BASE_ANGULAR_VELOCITY.x,
+    SUN_ROTATION_RECOVERY_RATE,
+    delta,
+  );
+  motion.yVelocity = THREE.MathUtils.damp(
+    motion.yVelocity,
+    SUN_BASE_ANGULAR_VELOCITY.y,
+    SUN_ROTATION_RECOVERY_RATE,
+    delta,
+  );
+  motion.zVelocity = THREE.MathUtils.damp(
+    motion.zVelocity,
+    SUN_BASE_ANGULAR_VELOCITY.z,
+    SUN_ROTATION_RECOVERY_RATE,
+    delta,
+  );
 };
 
 export const placePlanetAtAngle = (

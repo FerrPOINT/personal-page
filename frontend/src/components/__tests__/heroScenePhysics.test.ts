@@ -4,6 +4,7 @@ import {
   advancePlanetMotion,
   applyPlanetOrbitImpact,
   applyStarfieldImpulse,
+  applySunAngularImpulse,
   BLASTER_ATTACK_RANGE,
   BLASTER_MUZZLE_OFFSET,
   calculateBlasterSegment,
@@ -11,14 +12,17 @@ import {
   calculatePlanetOrbitImpulse,
   calculateStarfieldImpulse,
   createInitialStarfieldMotion,
+  createInitialSunRotation,
   getCollisionMotionScale,
   METEOR_SURFACE_OFFSET,
   placeBlasterBeam,
   placePlanetAtAngle,
   placeShipAtTime,
   recoverStarfieldSpeed,
+  recoverSunRotation,
   STARFIELD_DRIFT_SPEED,
   STARFIELD_IMPACT_SPEED,
+  SUN_MAX_ANGULAR_SPEED,
 } from '../heroScenePhysics';
 
 const expectVectorClose = (actual: THREE.Vector3, expected: THREE.Vector3) => {
@@ -276,6 +280,44 @@ describe('hero scene trajectories', () => {
       .toBeCloseTo(STARFIELD_DRIFT_SPEED, 8);
     applyStarfieldImpulse(motion, new THREE.Vector3());
     expect(motion).toEqual(initial);
+  });
+
+  it('transfers tangential impact momentum to the sun rotation', () => {
+    const motion = createInitialSunRotation();
+    const initialY = motion.yVelocity;
+
+    applySunAngularImpulse(
+      motion,
+      new THREE.Vector3(2, 0, 0),
+      new THREE.Vector3(0, 0, 4),
+    );
+
+    expect(motion.yVelocity).toBeLessThan(initialY);
+    expect(Math.hypot(motion.xVelocity, motion.yVelocity, motion.zVelocity))
+      .toBeLessThanOrEqual(SUN_MAX_ANGULAR_SPEED);
+  });
+
+  it('does not invent torque for a direct central sun impact and recovers after a glancing hit', () => {
+    const motion = createInitialSunRotation();
+    const initial = { ...motion };
+    applySunAngularImpulse(
+      motion,
+      new THREE.Vector3(2, 0, 0),
+      new THREE.Vector3(-4, 0, 0),
+    );
+    expect(motion).toEqual(initial);
+
+    applySunAngularImpulse(
+      motion,
+      new THREE.Vector3(2, 0, 0),
+      new THREE.Vector3(0, 0, -100),
+    );
+    expect(Math.hypot(motion.xVelocity, motion.yVelocity, motion.zVelocity))
+      .toBeCloseTo(SUN_MAX_ANGULAR_SPEED, 8);
+    for (let frame = 0; frame < 1800; frame += 1) recoverSunRotation(motion, 1 / 60);
+    expect(motion.xVelocity).toBeCloseTo(initial.xVelocity, 3);
+    expect(motion.yVelocity).toBeCloseTo(initial.yVelocity, 3);
+    expect(motion.zVelocity).toBeCloseTo(initial.zVelocity, 3);
   });
 
   it('uses the same orbital equations for rendering and collision prediction', () => {

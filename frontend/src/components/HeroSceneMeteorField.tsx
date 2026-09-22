@@ -100,7 +100,7 @@ export default function HeroSceneMeteorField({
   planets: readonly PlanetDefinition[];
   planetMotions: readonly PlanetMotionState[];
   ships: readonly THREE.Vector3[];
-  onSunImpact: (impactVelocity: THREE.Vector3) => void;
+  onSunImpact: (impactPosition: THREE.Vector3, impactVelocity: THREE.Vector3) => void;
 }) {
   const meteorGroups = useRef<Array<THREE.Group | null>>([]);
   const meteorCores = useRef<Array<THREE.Mesh | null>>([]);
@@ -278,11 +278,12 @@ export default function HeroSceneMeteorField({
   const applyCollisionResponse = (
     collisionTarget: CollisionTarget,
     collisionPlanetIndex: number,
+    collisionPoint: THREE.Vector3,
     planetPosition: THREE.Vector3,
     impactVelocity: THREE.Vector3,
   ) => {
     if (collisionTarget === 'sun') {
-      onSunImpact(impactVelocity);
+      onSunImpact(collisionPoint, impactVelocity);
       return;
     }
     if (collisionTarget !== 'planet' || collisionPlanetIndex < 0) return;
@@ -305,7 +306,13 @@ export default function HeroSceneMeteorField({
   ) => {
     impactPosition.lerpVectors(previousMeteorPosition, meteor.position, collisionTime);
     createMeteorExplosion(impactPosition, meteor.velocity);
-    applyCollisionResponse(collisionTarget, collisionPlanetIndex, impactedPlanetPosition, meteor.velocity);
+    applyCollisionResponse(
+      collisionTarget,
+      collisionPlanetIndex,
+      impactPosition,
+      impactedPlanetPosition,
+      meteor.velocity,
+    );
     deactivateMeteor(meteor, group);
   };
 
@@ -364,7 +371,12 @@ export default function HeroSceneMeteorField({
       target.y += (Math.random() - 0.5) * 0.2;
       target.z += (Math.random() - 0.5) * 0.3;
     } else if (aim < 0.18) {
-      target.set(0, 0, 0);
+      target.set(
+        (Math.random() - 0.5) * 2.4,
+        (Math.random() - 0.5) * 2,
+        (Math.random() - 0.5) * 2.4,
+      );
+      if (target.lengthSq() > 1.4 ** 2) target.normalize().multiplyScalar(1.4);
     } else if (aim < 0.48) {
       const planetIndex = Math.floor(Math.random() * planets.length);
       const planet = planets[planetIndex];
