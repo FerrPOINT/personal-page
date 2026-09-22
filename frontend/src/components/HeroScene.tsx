@@ -27,13 +27,17 @@ const MAX_SCENE_FPS = 60;
 
 function SceneFrameLoop({ active }: { active: boolean }) {
   const invalidate = useThree((state) => state.invalidate);
+  const clock = useThree((state) => state.clock);
 
   useEffect(() => {
     if (!active) return;
+    // Demand rendering leaves the Three clock untouched while the hero is offscreen.
+    // Reset its frame origin so the first resumed frame does not receive the whole pause as delta.
+    clock.oldTime = performance.now();
     invalidate();
     const interval = window.setInterval(invalidate, 1000 / MAX_SCENE_FPS);
     return () => window.clearInterval(interval);
-  }, [active, invalidate]);
+  }, [active, clock, invalidate]);
 
   return null;
 }
@@ -98,7 +102,7 @@ function Planet({ data }: { data: PlanetData }) {
   const planet = useRef<THREE.Mesh>(null);
   const labelRef = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
-    const angle = clock.getElapsedTime() * speed + offset;
+    const angle = clock.elapsedTime * speed + offset;
     if (!planet.current) return;
     planet.current.position.set(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
     planet.current.rotation.y += 0.01;
@@ -178,7 +182,7 @@ const shipPositionAt = (orbit: ShipOrbit, elapsed: number, target: THREE.Vector3
 function Spaceship({ radiusX, radiusZ, speed, offset, yOffset, positionTarget }: SpaceshipProps) {
   const ship = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
-    const angle = clock.getElapsedTime() * speed + offset;
+    const angle = clock.elapsedTime * speed + offset;
     if (!ship.current) return;
     ship.current.position.set(
       Math.cos(angle) * radiusX,
@@ -236,6 +240,9 @@ const BURST_FRAGMENT_STYLES = Array.from({ length: BURST_FRAGMENT_COUNT }, (_, i
 ));
 const BURST_FRAGMENT_STYLE_OFFSETS = BURST_FRAGMENT_STYLES.map((style, index) => (
   BURST_FRAGMENT_STYLES.slice(0, index).filter((candidate) => candidate === style).length
+));
+const BURST_FRAGMENT_SIZE_FACTORS = Array.from({ length: BURST_FRAGMENT_COUNT }, (_, index) => (
+  (0.09 + (index % 4) * 0.018) / BURST_FRAGMENT_RADIUS
 ));
 const METEOR_HEAT_START_DISTANCE = 19;
 const METEOR_HEAT_PEAK_DISTANCE = 3;
@@ -358,7 +365,8 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     }
     const light = burstLights.current[index];
     if (light) light.intensity = 8.5;
-    burst.velocities.forEach((velocity, fragmentIndex) => {
+    for (let fragmentIndex = 0; fragmentIndex < BURST_FRAGMENT_COUNT; fragmentIndex += 1) {
+      const velocity = burst.velocities[fragmentIndex];
       velocity.set(
         Math.random() * 2 - 1,
         Math.random() * 2 - 1,
@@ -378,7 +386,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         Math.random() * Math.PI,
         Math.random() * Math.PI,
       );
-    });
+    }
   };
 
   const createMeteorExplosion = (position: THREE.Vector3, impactVelocity: THREE.Vector3) =>
@@ -478,14 +486,15 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
   };
 
   useFrame(({ clock }, delta) => {
-    const elapsed = clock.getElapsedTime();
+    const elapsed = clock.elapsedTime;
     if (elapsed >= nextSpawnAt.current) {
       spawnMeteor(elapsed);
       nextSpawnAt.current = elapsed + 1.8 + Math.random() * 3.2;
     }
 
-    meteors.current.forEach((meteor, index) => {
-      if (!meteor.active) return;
+    for (let index = 0; index < METEOR_COUNT; index += 1) {
+      const meteor = meteors.current[index];
+      if (!meteor.active) continue;
       meteor.age += delta;
       previousMeteorPosition.copy(meteor.position);
       meteor.position.addScaledVector(meteor.velocity, delta);
@@ -559,8 +568,9 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
 
       let defendingShip = -1;
       let interceptionTime = Number.POSITIVE_INFINITY;
-      SHIP_ORBITS.forEach((orbit, shipIndex) => {
-        if (elapsed < shipCooldowns.current[shipIndex]) return;
+      for (let shipIndex = 0; shipIndex < SHIP_ORBITS.length; shipIndex += 1) {
+        if (elapsed < shipCooldowns.current[shipIndex]) continue;
+        const orbit = SHIP_ORBITS[shipIndex];
         shipPositionAt(orbit, elapsed - delta, previousTargetPosition);
         shipPositionAt(orbit, elapsed, collisionPosition);
         const contactTime = calculateFirstContact(
@@ -575,14 +585,14 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
           firingSourcePosition.lerpVectors(previousTargetPosition, collisionPosition, contactTime);
           defendingShip = shipIndex;
         }
-      });
+      }
 
       if (collisionTime !== null && collisionTime <= interceptionTime) {
         impactPosition.lerpVectors(previousMeteorPosition, meteor.position, collisionTime);
         createMeteorExplosion(impactPosition, meteor.velocity);
         meteor.active = false;
         if (group) group.visible = false;
-        return;
+        continue;
       }
 
       if (defendingShip >= 0) {
@@ -596,7 +606,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         shipCooldowns.current[defendingShip] = elapsed + 1.2 + Math.random() * 0.8;
         meteor.active = false;
         if (group) group.visible = false;
-        return;
+        continue;
       }
 
       if (collisionTime !== null) {
@@ -604,17 +614,18 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         createMeteorExplosion(impactPosition, meteor.velocity);
         meteor.active = false;
         if (group) group.visible = false;
-        return;
+        continue;
       }
 
       if (meteor.age >= meteor.maxAge || (meteor.age > 0.5 && meteor.position.lengthSq() > 32 ** 2)) {
         meteor.active = false;
         if (group) group.visible = false;
       }
-    });
+    }
 
-    blasters.current.forEach((blaster, index) => {
-      if (!blaster.active) return;
+    for (let index = 0; index < BLASTER_COUNT; index += 1) {
+      const blaster = blasters.current[index];
+      if (!blaster.active) continue;
       blaster.age += delta;
       const progress = Math.min(blaster.age / blaster.duration, 1);
       const group = blasterGroups.current[index];
@@ -628,45 +639,55 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         blaster.active = false;
         if (group) group.visible = false;
       }
-    });
+    }
 
     let burstInstancesChanged = false;
     let hasActiveBurst = false;
-    bursts.current.forEach((burst, burstIndex) => {
-      if (!burst.active) return;
-      hasActiveBurst = true;
+    let dampingReady = false;
+    let velocityDamping = 1;
+    let angularDamping = 1;
+    for (let burstIndex = 0; burstIndex < BURST_COUNT; burstIndex += 1) {
+      const burst = bursts.current[burstIndex];
+      if (!burst.active) continue;
+      if (!dampingReady) {
+        velocityDamping = Math.exp(-0.85 * delta);
+        angularDamping = Math.exp(-0.6 * delta);
+        dampingReady = true;
+      }
       burst.age += delta;
       const progress = Math.min(burst.age / burst.duration, 1);
+      hasActiveBurst ||= progress < 1;
       const fade = (1 - progress) ** 1.7;
       const light = burstLights.current[burstIndex];
       if (light) light.intensity = fade * 8.5;
-      burst.velocities.forEach((velocity, fragmentIndex) => {
+      for (let fragmentIndex = 0; fragmentIndex < BURST_FRAGMENT_COUNT; fragmentIndex += 1) {
+        const velocity = burst.velocities[fragmentIndex];
         const fragmentPosition = burst.fragmentPositions[fragmentIndex];
         const fragmentRotation = burst.fragmentRotations[fragmentIndex];
         const angularVelocity = burst.angularVelocities[fragmentIndex];
         fragmentPosition.addScaledVector(velocity, delta);
-        velocity.multiplyScalar(Math.exp(-0.85 * delta));
+        velocity.multiplyScalar(velocityDamping);
         fragmentRotation.addScaledVector(angularVelocity, delta);
-        angularVelocity.multiplyScalar(Math.exp(-0.6 * delta));
-        const sizeVariation = (0.09 + (fragmentIndex % 4) * 0.018) / BURST_FRAGMENT_RADIUS;
+        angularVelocity.multiplyScalar(angularDamping);
         const fragmentScale = progress >= 1
           ? 0
-          : Math.max(0.05, burst.scales[fragmentIndex] * sizeVariation * (1 - progress) ** 1.2);
+          : Math.max(0.05, burst.scales[fragmentIndex] * BURST_FRAGMENT_SIZE_FACTORS[fragmentIndex] * (1 - progress) ** 1.2);
         impactPosition.copy(burst.position).add(fragmentPosition);
         setBurstFragmentMatrix(burstIndex, fragmentIndex, impactPosition, fragmentRotation, fragmentScale);
         burstInstancesChanged = true;
-      });
+      }
       if (progress >= 1) {
         burst.active = false;
         const group = burstGroups.current[burstIndex];
         if (group) group.visible = false;
       }
-    });
-    burstFragmentMeshes.current.forEach((mesh) => {
-      if (!mesh) return;
+    }
+    for (let index = 0; index < BURST_STYLE_COUNT; index += 1) {
+      const mesh = burstFragmentMeshes.current[index];
+      if (!mesh) continue;
       mesh.visible = hasActiveBurst;
       if (burstInstancesChanged) mesh.instanceMatrix.needsUpdate = true;
-    });
+    }
   });
 
   return <>
