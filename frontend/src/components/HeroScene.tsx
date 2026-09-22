@@ -13,6 +13,7 @@ import {
   PLANET_IMPACT_SPEED_LIMIT,
   placeBlasterBeam,
   SCENE_UP,
+  STARFIELD_DRIFT_SPEED,
 } from './heroScenePhysics';
 
 type PlanetData = readonly [
@@ -85,9 +86,15 @@ function ReactiveStarfield({ motion }: { motion: StarfieldMotionState }) {
     starfield.current.rotation.y += motion.yawVelocity * frameDelta;
     starfield.current.rotation.x += motion.pitchVelocity * frameDelta;
     starfield.current.rotation.z += motion.rollVelocity * frameDelta;
-    motion.yawVelocity = THREE.MathUtils.damp(motion.yawVelocity, 0, 0.55, frameDelta);
-    motion.pitchVelocity = THREE.MathUtils.damp(motion.pitchVelocity, 0, 0.55, frameDelta);
-    motion.rollVelocity = THREE.MathUtils.damp(motion.rollVelocity, 0, 0.55, frameDelta);
+
+    const currentSpeed = Math.hypot(motion.yawVelocity, motion.pitchVelocity, motion.rollVelocity);
+    if (currentSpeed > STARFIELD_DRIFT_SPEED) {
+      const nextSpeed = THREE.MathUtils.damp(currentSpeed, STARFIELD_DRIFT_SPEED, 0.45, frameDelta);
+      const speedScale = nextSpeed / currentSpeed;
+      motion.yawVelocity *= speedScale;
+      motion.pitchVelocity *= speedScale;
+      motion.rollVelocity *= speedScale;
+    }
   });
 
   return <group ref={starfield}>
@@ -1028,7 +1035,11 @@ export default function HeroScene({
   const planetMotions = useMemo<PlanetMotionState[]>(() => (
     planetOffsets.map((angle) => ({ angle, speedOffset: 0 }))
   ), [planetOffsets]);
-  const starfieldMotion = useRef<StarfieldMotionState>({ yawVelocity: 0, pitchVelocity: 0, rollVelocity: 0 });
+  const starfieldMotion = useRef<StarfieldMotionState>({
+    yawVelocity: 0.0096,
+    pitchVelocity: -0.0036,
+    rollVelocity: 0.0062,
+  });
   const systemRef = useRef<THREE.Group>(null);
   const worldImpactDirection = useMemo(() => new THREE.Vector3(), []);
   const systemWorldQuaternion = useMemo(() => new THREE.Quaternion(), []);
@@ -1040,9 +1051,9 @@ export default function HeroScene({
     }
     const impulse = calculateStarfieldImpulse(worldImpactDirection);
     const motion = starfieldMotion.current;
-    motion.yawVelocity = THREE.MathUtils.clamp(motion.yawVelocity + impulse.yaw, -0.18, 0.18);
-    motion.pitchVelocity = THREE.MathUtils.clamp(motion.pitchVelocity + impulse.pitch, -0.12, 0.12);
-    motion.rollVelocity = THREE.MathUtils.clamp(motion.rollVelocity + impulse.roll, -0.08, 0.08);
+    motion.yawVelocity = impulse.yaw;
+    motion.pitchVelocity = impulse.pitch;
+    motion.rollVelocity = impulse.roll;
   }, [systemWorldQuaternion, worldImpactDirection]);
   const planets: readonly PlanetData[] = [
     [6, 0.30, 0.5, SCENE_PRIMARY, labels[0], planetOffsets[0]],

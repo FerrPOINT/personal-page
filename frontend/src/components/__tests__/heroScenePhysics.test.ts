@@ -10,6 +10,8 @@ import {
   getCollisionMotionScale,
   METEOR_SURFACE_OFFSET,
   placeBlasterBeam,
+  STARFIELD_DRIFT_SPEED,
+  STARFIELD_IMPACT_SPEED,
 } from '../heroScenePhysics';
 
 const expectVectorClose = (actual: THREE.Vector3, expected: THREE.Vector3) => {
@@ -215,14 +217,13 @@ describe('hero scene trajectories', () => {
     expect(calculatePlanetOrbitImpulse(planet, new THREE.Vector3(-5, 0, 0), baseSpeed)).toBeCloseTo(0, 6);
   });
 
-  it('maps a star impact to a bounded background drift in the same direction', () => {
+  it('maps a star impact to a faster background drift in the same direction', () => {
     const impulse = calculateStarfieldImpulse(new THREE.Vector3(4, -2, 3));
 
     expect(impulse.yaw).toBeGreaterThan(0);
     expect(impulse.pitch).toBeGreaterThan(0);
     expect(impulse.roll).toBeLessThan(0);
-    expect(Math.abs(impulse.yaw)).toBeLessThanOrEqual(0.11);
-    expect(Math.abs(impulse.pitch)).toBeLessThanOrEqual(0.075);
-    expect(Math.abs(impulse.roll)).toBeLessThanOrEqual(0.04);
+    expect(Math.hypot(impulse.yaw, impulse.pitch, impulse.roll)).toBeCloseTo(STARFIELD_IMPACT_SPEED, 8);
+    expect(STARFIELD_IMPACT_SPEED).toBeGreaterThan(STARFIELD_DRIFT_SPEED);
   });
 });

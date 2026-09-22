@@ -8,6 +8,8 @@ export const SCENE_UP = new THREE.Vector3(0, 1, 0);
 const BLASTER_DIRECTION = new THREE.Vector3();
 
 export const PLANET_IMPACT_SPEED_LIMIT = 0.65;
+export const STARFIELD_DRIFT_SPEED = 0.012;
+export const STARFIELD_IMPACT_SPEED = 0.06;
 
 export interface StarfieldImpulse {
   yaw: number;
@@ -39,11 +41,11 @@ export const calculatePlanetOrbitImpulse = (
 export const calculateStarfieldImpulse = (impactVelocity: THREE.Vector3): StarfieldImpulse => {
   const length = impactVelocity.length();
   if (length <= 1e-6) return { yaw: 0, pitch: 0, roll: 0 };
-  const inverseLength = 1 / length;
+  const driftScale = STARFIELD_IMPACT_SPEED / length;
   return {
-    yaw: THREE.MathUtils.clamp(impactVelocity.x * inverseLength * 0.11, -0.11, 0.11),
-    pitch: THREE.MathUtils.clamp(-impactVelocity.y * inverseLength * 0.075, -0.075, 0.075),
-    roll: THREE.MathUtils.clamp(-impactVelocity.z * inverseLength * 0.04, -0.04, 0.04),
+    yaw: impactVelocity.x * driftScale,
+    pitch: -impactVelocity.y * driftScale,
+    roll: -impactVelocity.z * driftScale,
   };
 };
 
