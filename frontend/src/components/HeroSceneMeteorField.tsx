@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import {
@@ -107,6 +107,8 @@ export default function HeroSceneMeteorField({
   ships: readonly THREE.Vector3[];
   onSunImpact: (impactPosition: THREE.Vector3, impactVelocity: THREE.Vector3) => void;
 }) {
+  const renderer = useThree((state) => state.gl);
+  const camera = useThree((state) => state.camera);
   const meteorGroups = useRef<Array<THREE.Group | null>>([]);
   const meteorCores = useRef<Array<THREE.Group | null>>([]);
   const meteorCoreMaterials = useRef<Array<THREE.MeshStandardMaterial | null>>([]);
@@ -120,6 +122,7 @@ export default function HeroSceneMeteorField({
   const burstFragmentMeshes = useRef<Array<THREE.InstancedMesh | null>>([]);
   const burstSparkles = useRef<Array<Array<THREE.Points | null>>>([]);
   const shipCooldowns = useRef(Array.from({ length: ships.length }, () => 0));
+  const effectsReady = useRef(false);
   const spawnSequence = useRef(0);
   const nextSpawnAt = useRef(1.5 + Math.random() * 1.5);
   const meteors = useRef<MeteorState[]>(Array.from({ length: METEOR_COUNT }, () => ({
@@ -232,6 +235,43 @@ export default function HeroSceneMeteorField({
       mesh.visible = false;
     });
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const prewarmScene = new THREE.Scene();
+    prewarmScene.add(new THREE.AmbientLight('#ffffff', 0.2));
+    prewarmScene.add(new THREE.PointLight('#ffaa00', 2, 100));
+
+    const addVisibleClone = (object: THREE.Object3D | null | undefined) => {
+      if (!object) return;
+      const clone = object.clone(true);
+      clone.traverse((child) => {
+        child.visible = true;
+        child.frustumCulled = false;
+      });
+      prewarmScene.add(clone);
+    };
+
+    addVisibleClone(meteorGroups.current[0]);
+    addVisibleClone(blasterGroups.current[0]);
+    addVisibleClone(burstGroups.current[0]);
+    burstFragmentMeshes.current.forEach(addVisibleClone);
+
+    const prewarmEffects = async () => {
+      try {
+        await renderer.compileAsync(prewarmScene, camera);
+      } finally {
+        prewarmScene.clear();
+        if (!cancelled) effectsReady.current = true;
+      }
+    };
+
+    void prewarmEffects();
+    return () => {
+      cancelled = true;
+      prewarmScene.clear();
+    };
+  }, [camera, renderer]);
 
   const createBurst = (position: THREE.Vector3, impactVelocity: THREE.Vector3, kind: BurstKind) => {
     const index = bursts.current.findIndex((burst) => !burst.active);
@@ -432,7 +472,7 @@ export default function HeroSceneMeteorField({
 
   useFrame(({ clock }, delta) => {
     const elapsed = clock.elapsedTime;
-    if (elapsed >= nextSpawnAt.current) {
+    if (effectsReady.current && elapsed >= nextSpawnAt.current) {
       spawnMeteor(elapsed);
       nextSpawnAt.current = elapsed + 1.8 + Math.random() * 3.2;
     }
