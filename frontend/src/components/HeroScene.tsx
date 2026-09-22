@@ -27,7 +27,7 @@ const SCENE_SECONDARY = '#ff00ff';
 const MAX_SCENE_FPS = 60;
 
 // Master multiplier for the sun surface, corona and emitted light.
-export const SUN_BRIGHTNESS = 1;
+export const SUN_BRIGHTNESS = 1.3;
 
 function SceneFrameLoop({ active }: { active: boolean }) {
   const invalidate = useThree((state) => state.invalidate);

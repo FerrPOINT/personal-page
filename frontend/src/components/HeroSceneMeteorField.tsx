@@ -90,12 +90,12 @@ const PLANET_METEOR_CONTACT_RADIUS = 0.28;
 const METEOR_HEAT_START_DISTANCE = 19;
 const METEOR_HEAT_PEAK_DISTANCE = 3;
 const METEOR_IMPACT_GLOW_DISTANCE = 3.5;
-const METEOR_CORE_COLD = new THREE.Color('#171412');
-const METEOR_CORE_HOT = new THREE.Color('#ff7a18');
-const METEOR_EMISSIVE_COLD = new THREE.Color('#120503');
-const METEOR_EMISSIVE_HOT = new THREE.Color('#ffb45c');
-const METEOR_GLOW_COLD = new THREE.Color('#351109');
-const METEOR_GLOW_HOT = new THREE.Color('#ff9a38');
+const METEOR_CORE_COLD = new THREE.Color('#130d0d');
+const METEOR_CORE_HOT = new THREE.Color('#d94a18');
+const METEOR_EMISSIVE_COLD = new THREE.Color('#0b0202');
+const METEOR_EMISSIVE_HOT = new THREE.Color('#ff6730');
+const METEOR_GLOW_COLD = new THREE.Color('#270607');
+const METEOR_GLOW_HOT = new THREE.Color('#e34b22');
 
 export default function HeroSceneMeteorField({
   planets,
@@ -674,8 +674,8 @@ export default function HeroSceneMeteorField({
             <primitive object={meteorNucleusGeometry} attach="geometry" />
             <meshStandardMaterial
               ref={(node) => { meteorCoreMaterials.current[index] = node; }}
-              color="#171412"
-              emissive="#120503"
+              color="#130d0d"
+              emissive="#0b0202"
               emissiveIntensity={0.02}
               roughness={1}
               metalness={0.05}
@@ -695,7 +695,7 @@ export default function HeroSceneMeteorField({
           <spriteMaterial
             ref={(node) => { meteorComaMaterials.current[index] = node; }}
             map={meteorGlowTexture}
-            color="#351109"
+            color="#270607"
             transparent
             opacity={0.008}
             depthWrite={false}
