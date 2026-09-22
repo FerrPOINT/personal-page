@@ -5,6 +5,8 @@ import {
   BLASTER_MUZZLE_OFFSET,
   calculateBlasterSegment,
   calculateFirstContact,
+  calculatePlanetOrbitImpulse,
+  calculateStarfieldImpulse,
   getCollisionMotionScale,
   METEOR_SURFACE_OFFSET,
   placeBlasterBeam,
@@ -202,5 +204,25 @@ describe('hero scene trajectories', () => {
     expect(getCollisionMotionScale(new THREE.Vector3(5.5, 0, 0))).toBe(5.5);
     expect(getCollisionMotionScale(new THREE.Vector3())).toBe(2.5);
     expect(getCollisionMotionScale(new THREE.Vector3(20, 0, 0))).toBe(7);
+  });
+
+  it('accelerates or slows a planet according to the tangential side of impact', () => {
+    const planet = new THREE.Vector3(10, 0, 0);
+    const baseSpeed = 0.2;
+
+    expect(calculatePlanetOrbitImpulse(planet, new THREE.Vector3(0, 0, 5), baseSpeed)).toBeCloseTo(0.13, 6);
+    expect(calculatePlanetOrbitImpulse(planet, new THREE.Vector3(0, 0, -5), baseSpeed)).toBeCloseTo(-0.13, 6);
+    expect(calculatePlanetOrbitImpulse(planet, new THREE.Vector3(-5, 0, 0), baseSpeed)).toBeCloseTo(0, 6);
+  });
+
+  it('maps a star impact to a bounded background drift in the same direction', () => {
+    const impulse = calculateStarfieldImpulse(new THREE.Vector3(4, -2, 3));
+
+    expect(impulse.yaw).toBeGreaterThan(0);
+    expect(impulse.pitch).toBeGreaterThan(0);
+    expect(impulse.roll).toBeLessThan(0);
+    expect(Math.abs(impulse.yaw)).toBeLessThanOrEqual(0.11);
+    expect(Math.abs(impulse.pitch)).toBeLessThanOrEqual(0.075);
+    expect(Math.abs(impulse.roll)).toBeLessThanOrEqual(0.04);
   });
 });

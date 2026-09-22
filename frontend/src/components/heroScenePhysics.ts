@@ -7,8 +7,45 @@ export const METEOR_SURFACE_OFFSET = 0.22;
 export const SCENE_UP = new THREE.Vector3(0, 1, 0);
 const BLASTER_DIRECTION = new THREE.Vector3();
 
+export const PLANET_IMPACT_SPEED_LIMIT = 0.65;
+
+export interface StarfieldImpulse {
+  yaw: number;
+  pitch: number;
+  roll: number;
+}
+
 export const getCollisionMotionScale = (impactVelocity: THREE.Vector3): number =>
   THREE.MathUtils.clamp(impactVelocity.length(), 2.5, 7);
+
+export const calculatePlanetOrbitImpulse = (
+  planetPosition: THREE.Vector3,
+  impactVelocity: THREE.Vector3,
+  baseOrbitSpeed: number,
+): number => {
+  const radius = Math.hypot(planetPosition.x, planetPosition.z);
+  const planarImpactSpeed = Math.hypot(impactVelocity.x, impactVelocity.z);
+  if (radius <= 1e-6 || planarImpactSpeed <= 1e-6) return 0;
+
+  // Positive alignment pushes along the orbit, negative alignment pushes against it.
+  const tangentX = -planetPosition.z / radius;
+  const tangentZ = planetPosition.x / radius;
+  const alignment = (
+    impactVelocity.x * tangentX + impactVelocity.z * tangentZ
+  ) / planarImpactSpeed;
+  return baseOrbitSpeed * PLANET_IMPACT_SPEED_LIMIT * THREE.MathUtils.clamp(alignment, -1, 1);
+};
+
+export const calculateStarfieldImpulse = (impactVelocity: THREE.Vector3): StarfieldImpulse => {
+  const length = impactVelocity.length();
+  if (length <= 1e-6) return { yaw: 0, pitch: 0, roll: 0 };
+  const inverseLength = 1 / length;
+  return {
+    yaw: THREE.MathUtils.clamp(impactVelocity.x * inverseLength * 0.11, -0.11, 0.11),
+    pitch: THREE.MathUtils.clamp(-impactVelocity.y * inverseLength * 0.075, -0.075, 0.075),
+    roll: THREE.MathUtils.clamp(-impactVelocity.z * inverseLength * 0.04, -0.04, 0.04),
+  };
+};
 
 export const calculateBlasterSegment = (
   sourceCenter: THREE.Vector3,
