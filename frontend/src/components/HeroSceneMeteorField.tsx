@@ -29,10 +29,12 @@ type CollisionTarget = 'none' | 'sun' | 'planet';
 interface MeteorState {
   active: boolean;
   position: THREE.Vector3;
+  collisionPosition: THREE.Vector3;
   velocity: THREE.Vector3;
   age: number;
   maxAge: number;
   heat: number;
+  impactHeat: number;
 }
 
 interface BlasterState {
@@ -45,6 +47,7 @@ interface BlasterState {
 
 interface BurstState {
   active: boolean;
+  kind: BurstKind;
   age: number;
   duration: number;
   position: THREE.Vector3;
@@ -60,6 +63,7 @@ const METEOR_COUNT = 5;
 const BLASTER_COUNT = 4;
 const BURST_COUNT = 6;
 const BURST_FRAGMENT_COUNT = 26;
+const COLLISION_STEP = 1 / 30;
 const BURST_STYLE_COUNT = 3;
 const BURST_STYLE_COUNTS = [9, 8, 9] as const;
 const BURST_FRAGMENT_RADIUS = 0.11;
@@ -122,16 +126,19 @@ export default function HeroSceneMeteorField({
   const burstFragmentMeshes = useRef<Array<THREE.InstancedMesh | null>>([]);
   const burstSparkles = useRef<Array<Array<THREE.Points | null>>>([]);
   const shipCooldowns = useRef(Array.from({ length: ships.length }, () => 0));
+  const collisionAccumulator = useRef(0);
   const effectsReady = useRef(false);
   const spawnSequence = useRef(0);
   const nextSpawnAt = useRef(1.5 + Math.random() * 1.5);
   const meteors = useRef<MeteorState[]>(Array.from({ length: METEOR_COUNT }, () => ({
     active: false,
     position: new THREE.Vector3(),
+    collisionPosition: new THREE.Vector3(),
     velocity: new THREE.Vector3(),
     age: 0,
     maxAge: 0,
     heat: 0,
+    impactHeat: 0,
   })));
   const blasters = useRef<BlasterState[]>(Array.from({ length: BLASTER_COUNT }, () => ({
     active: false,
@@ -140,8 +147,9 @@ export default function HeroSceneMeteorField({
     start: new THREE.Vector3(),
     end: new THREE.Vector3(),
   })));
-  const bursts = useRef<BurstState[]>(Array.from({ length: BURST_COUNT }, () => ({
+  const bursts = useRef<BurstState[]>(Array.from({ length: BURST_COUNT }, (_, index) => ({
     active: false,
+    kind: index % 2 === 0 ? 'collision' : 'blaster',
     age: 0,
     duration: 2.2,
     position: new THREE.Vector3(),
@@ -153,15 +161,29 @@ export default function HeroSceneMeteorField({
     visualScale: 1,
   })));
   const target = useMemo(() => new THREE.Vector3(), []);
-  const collisionPosition = useMemo(() => new THREE.Vector3(), []);
   const previousMeteorPosition = useMemo(() => new THREE.Vector3(), []);
-  const previousTargetPosition = useMemo(() => new THREE.Vector3(), []);
   const impactPosition = useMemo(() => new THREE.Vector3(), []);
   const impactedPlanetPosition = useMemo(() => new THREE.Vector3(), []);
   const firingSourcePosition = useMemo(() => new THREE.Vector3(), []);
   const sceneOrigin = useMemo(() => new THREE.Vector3(), []);
   const direction = useMemo(() => new THREE.Vector3(), []);
   const fragmentTransform = useMemo(() => new THREE.Object3D(), []);
+  const previousPlanetPositions = useMemo(
+    () => planets.map(() => new THREE.Vector3()),
+    [planets],
+  );
+  const currentPlanetPositions = useMemo(
+    () => planets.map(() => new THREE.Vector3()),
+    [planets],
+  );
+  const previousShipPositions = useMemo(
+    () => ships.map(() => new THREE.Vector3()),
+    [ships],
+  );
+  const currentShipPositions = useMemo(
+    () => ships.map(() => new THREE.Vector3()),
+    [ships],
+  );
   const meteorNucleusGeometry = useMemo(createMeteorNucleusGeometry, []);
   const meteorPlasmaTailGeometry = useMemo(
     () => createMeteorTailGeometry(58, 3.2, 0.34, 0x8f23ab17),
@@ -224,7 +246,15 @@ export default function HeroSceneMeteorField({
     const hiddenPosition = new THREE.Vector3();
     const hiddenRotation = new THREE.Vector3();
     for (let burstIndex = 0; burstIndex < BURST_COUNT; burstIndex += 1) {
+      const burstKind = bursts.current[burstIndex].kind;
+      const sparkleColors = BURST_SPARKLE_COLORS[burstKind];
+      for (let layerIndex = 0; layerIndex < sparkleColors.length; layerIndex += 1) {
+        setSparkleColor(burstSparkles.current[burstIndex]?.[layerIndex] ?? null, sparkleColors[layerIndex]);
+      }
+      const fragmentColors = BURST_FRAGMENT_COLORS[burstKind];
       for (let fragmentIndex = 0; fragmentIndex < BURST_FRAGMENT_COUNT; fragmentIndex += 1) {
+        const styleIndex = BURST_FRAGMENT_STYLES[fragmentIndex];
+        setBurstFragmentColor(burstIndex, fragmentIndex, fragmentColors[styleIndex]);
         setBurstFragmentMatrix(burstIndex, fragmentIndex, hiddenPosition, hiddenRotation, 0);
       }
     }
@@ -232,6 +262,7 @@ export default function HeroSceneMeteorField({
       if (!mesh) return;
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
       mesh.visible = false;
     });
   }, []);
@@ -274,7 +305,7 @@ export default function HeroSceneMeteorField({
   }, [camera, renderer]);
 
   const createBurst = (position: THREE.Vector3, impactVelocity: THREE.Vector3, kind: BurstKind) => {
-    const index = bursts.current.findIndex((burst) => !burst.active);
+    const index = bursts.current.findIndex((burst) => !burst.active && burst.kind === kind);
     if (index < 0) return;
     const burst = bursts.current[index];
     const visualScale = BURST_VISUAL_SCALE[kind];
@@ -290,14 +321,7 @@ export default function HeroSceneMeteorField({
       group.position.copy(position);
       group.scale.setScalar(visualScale);
     }
-    const sparkleColors = BURST_SPARKLE_COLORS[kind];
-    for (let layerIndex = 0; layerIndex < sparkleColors.length; layerIndex += 1) {
-      setSparkleColor(burstSparkles.current[index]?.[layerIndex] ?? null, sparkleColors[layerIndex]);
-    }
-    const fragmentColors = BURST_FRAGMENT_COLORS[kind];
     for (let fragmentIndex = 0; fragmentIndex < BURST_FRAGMENT_COUNT; fragmentIndex += 1) {
-      const styleIndex = BURST_FRAGMENT_STYLES[fragmentIndex];
-      setBurstFragmentColor(index, fragmentIndex, fragmentColors[styleIndex]);
       const velocity = burst.velocities[fragmentIndex];
       velocity.set(
         Math.random() * 2 - 1,
@@ -318,10 +342,6 @@ export default function HeroSceneMeteorField({
         Math.random() * Math.PI,
         Math.random() * Math.PI,
       );
-    }
-    for (let styleIndex = 0; styleIndex < BURST_STYLE_COUNT; styleIndex += 1) {
-      const mesh = burstFragmentMeshes.current[styleIndex];
-      if (mesh?.instanceColor) mesh.instanceColor.needsUpdate = true;
     }
   };
 
@@ -457,9 +477,11 @@ export default function HeroSceneMeteorField({
     }
 
     meteor.velocity.copy(target).sub(meteor.position).normalize().multiplyScalar(speed);
+    meteor.collisionPosition.copy(meteor.position);
     meteor.age = 0;
     meteor.maxAge = 14;
     meteor.heat = 0;
+    meteor.impactHeat = 0;
     meteor.active = true;
     const group = meteorGroups.current[index];
     if (group) {
@@ -472,17 +494,42 @@ export default function HeroSceneMeteorField({
 
   useFrame(({ clock }, delta) => {
     const elapsed = clock.elapsedTime;
+    const frameDelta = delta;
+    // Keep visual motion at display cadence while sweeping collisions over a fixed-rate interval.
+    collisionAccumulator.current += frameDelta;
+    const collisionDelta = collisionAccumulator.current >= COLLISION_STEP
+      ? collisionAccumulator.current
+      : 0;
+    if (collisionDelta > 0) collisionAccumulator.current = 0;
     if (effectsReady.current && elapsed >= nextSpawnAt.current) {
       spawnMeteor(elapsed);
       nextSpawnAt.current = elapsed + 1.8 + Math.random() * 3.2;
     }
 
+    if (collisionDelta > 0) {
+      for (let planetIndex = 0; planetIndex < planets.length; planetIndex += 1) {
+        const planet = planets[planetIndex];
+        const motion = planetMotions[planetIndex];
+        const effectiveSpeed = planet.orbitSpeed + motion.speedOffset;
+        placePlanetAtAngle(
+          planet,
+          motion.angle - effectiveSpeed * collisionDelta,
+          previousPlanetPositions[planetIndex],
+        );
+        placePlanetAtAngle(planet, motion.angle, currentPlanetPositions[planetIndex]);
+      }
+      for (let shipIndex = 0; shipIndex < SHIP_ORBITS.length; shipIndex += 1) {
+        const orbit = SHIP_ORBITS[shipIndex];
+        placeShipAtTime(orbit, elapsed - collisionDelta, previousShipPositions[shipIndex]);
+        placeShipAtTime(orbit, elapsed, currentShipPositions[shipIndex]);
+      }
+    }
+
     for (let index = 0; index < METEOR_COUNT; index += 1) {
       const meteor = meteors.current[index];
       if (!meteor.active) continue;
-      meteor.age += delta;
-      previousMeteorPosition.copy(meteor.position);
-      meteor.position.addScaledVector(meteor.velocity, delta);
+      meteor.age += frameDelta;
+      meteor.position.addScaledVector(meteor.velocity, frameDelta);
       const distanceToSun = meteor.position.length();
       const solarHeat = 1 - THREE.MathUtils.smoothstep(
         distanceToSun,
@@ -493,52 +540,11 @@ export default function HeroSceneMeteorField({
       if (group) group.position.copy(meteor.position);
       const core = meteorCores.current[index];
       if (core) {
-        core.rotation.x += delta * 2.2;
-        core.rotation.z += delta * 1.4;
+        core.rotation.x += frameDelta * 2.2;
+        core.rotation.z += frameDelta * 1.4;
       }
-      let collisionTime = calculateFirstContact(
-        previousMeteorPosition,
-        meteor.position,
-        sceneOrigin,
-        sceneOrigin,
-        SUN_CONTACT_RADIUS,
-      );
-      let collisionTarget: CollisionTarget = collisionTime === null ? 'none' : 'sun';
-      let collisionPlanetIndex = -1;
-      let nearestImpactClearance = Math.max(0, distanceToSun - SUN_CONTACT_RADIUS);
-      for (let planetIndex = 0; planetIndex < planets.length; planetIndex += 1) {
-        const planet = planets[planetIndex];
-        const motion = planetMotions[planetIndex];
-        const effectiveSpeed = planet.orbitSpeed + motion.speedOffset;
-        placePlanetAtAngle(planet, motion.angle - effectiveSpeed * delta, previousTargetPosition);
-        placePlanetAtAngle(planet, motion.angle, collisionPosition);
-        const contactRadius = planet.size + PLANET_METEOR_CONTACT_RADIUS;
-        nearestImpactClearance = Math.min(
-          nearestImpactClearance,
-          Math.max(0, meteor.position.distanceTo(collisionPosition) - contactRadius),
-        );
-        const planetCollisionTime = calculateFirstContact(
-          previousMeteorPosition,
-          meteor.position,
-          previousTargetPosition,
-          collisionPosition,
-          contactRadius,
-        );
-        if (planetCollisionTime !== null && (collisionTime === null || planetCollisionTime < collisionTime)) {
-          collisionTime = planetCollisionTime;
-          collisionTarget = 'planet';
-          collisionPlanetIndex = planetIndex;
-          impactedPlanetPosition.lerpVectors(previousTargetPosition, collisionPosition, planetCollisionTime);
-        }
-      }
-
-      const impactHeat = 1 - THREE.MathUtils.smoothstep(
-        nearestImpactClearance,
-        0,
-        METEOR_IMPACT_GLOW_DISTANCE,
-      );
-      const targetHeat = Math.max(solarHeat * 0.45, impactHeat);
-      meteor.heat = THREE.MathUtils.damp(meteor.heat, targetHeat, 6.5, delta);
+      const targetHeat = Math.max(solarHeat * 0.45, meteor.impactHeat);
+      meteor.heat = THREE.MathUtils.damp(meteor.heat, targetHeat, 6.5, frameDelta);
       const coreMaterial = meteorCoreMaterials.current[index];
       if (coreMaterial) {
         coreMaterial.color.lerpColors(METEOR_CORE_COLD, METEOR_CORE_HOT, meteor.heat);
@@ -561,48 +567,94 @@ export default function HeroSceneMeteorField({
         const lengthScale = 0.72 + meteor.heat * 0.64;
         tail.scale.set(flicker * widthScale, lengthScale, flicker * widthScale);
       }
-      let defendingShip = -1;
-      let interceptionTime = Number.POSITIVE_INFINITY;
-      for (let shipIndex = 0; shipIndex < SHIP_ORBITS.length; shipIndex += 1) {
-        if (elapsed < shipCooldowns.current[shipIndex]) continue;
-        const orbit = SHIP_ORBITS[shipIndex];
-        placeShipAtTime(orbit, elapsed - delta, previousTargetPosition);
-        placeShipAtTime(orbit, elapsed, collisionPosition);
-        const contactTime = calculateFirstContact(
+      if (collisionDelta > 0) {
+        previousMeteorPosition.copy(meteor.collisionPosition);
+        let collisionTime = calculateFirstContact(
           previousMeteorPosition,
           meteor.position,
-          previousTargetPosition,
-          collisionPosition,
-          BLASTER_ATTACK_RANGE,
+          sceneOrigin,
+          sceneOrigin,
+          SUN_CONTACT_RADIUS,
         );
-        if (contactTime !== null && contactTime < interceptionTime) {
-          interceptionTime = contactTime;
-          firingSourcePosition.lerpVectors(previousTargetPosition, collisionPosition, contactTime);
-          defendingShip = shipIndex;
+        let collisionTarget: CollisionTarget = collisionTime === null ? 'none' : 'sun';
+        let collisionPlanetIndex = -1;
+        let nearestImpactClearance = Math.max(0, distanceToSun - SUN_CONTACT_RADIUS);
+        for (let planetIndex = 0; planetIndex < planets.length; planetIndex += 1) {
+          const planet = planets[planetIndex];
+          const previousPlanetPosition = previousPlanetPositions[planetIndex];
+          const currentPlanetPosition = currentPlanetPositions[planetIndex];
+          const contactRadius = planet.size + PLANET_METEOR_CONTACT_RADIUS;
+          nearestImpactClearance = Math.min(
+            nearestImpactClearance,
+            Math.max(0, meteor.position.distanceTo(currentPlanetPosition) - contactRadius),
+          );
+          const planetCollisionTime = calculateFirstContact(
+            previousMeteorPosition,
+            meteor.position,
+            previousPlanetPosition,
+            currentPlanetPosition,
+            contactRadius,
+          );
+          if (planetCollisionTime !== null && (collisionTime === null || planetCollisionTime < collisionTime)) {
+            collisionTime = planetCollisionTime;
+            collisionTarget = 'planet';
+            collisionPlanetIndex = planetIndex;
+            impactedPlanetPosition.lerpVectors(
+              previousPlanetPosition,
+              currentPlanetPosition,
+              planetCollisionTime,
+            );
+          }
         }
-      }
+        meteor.impactHeat = 1 - THREE.MathUtils.smoothstep(
+          nearestImpactClearance,
+          0,
+          METEOR_IMPACT_GLOW_DISTANCE,
+        );
 
-      if (collisionTime !== null && collisionTime <= interceptionTime) {
-        resolveMeteorCollision(meteor, group, collisionTime, collisionTarget, collisionPlanetIndex);
-        continue;
-      }
+        let defendingShip = -1;
+        let interceptionTime = Number.POSITIVE_INFINITY;
+        for (let shipIndex = 0; shipIndex < SHIP_ORBITS.length; shipIndex += 1) {
+          if (elapsed < shipCooldowns.current[shipIndex]) continue;
+          const previousShipPosition = previousShipPositions[shipIndex];
+          const currentShipPosition = currentShipPositions[shipIndex];
+          const contactTime = calculateFirstContact(
+            previousMeteorPosition,
+            meteor.position,
+            previousShipPosition,
+            currentShipPosition,
+            BLASTER_ATTACK_RANGE,
+          );
+          if (contactTime !== null && contactTime < interceptionTime) {
+            interceptionTime = contactTime;
+            firingSourcePosition.lerpVectors(previousShipPosition, currentShipPosition, contactTime);
+            defendingShip = shipIndex;
+          }
+        }
 
-      if (defendingShip >= 0) {
-        impactPosition.lerpVectors(previousMeteorPosition, meteor.position, interceptionTime);
-      }
-      if (defendingShip >= 0 && fireBlaster(
-        firingSourcePosition,
-        impactPosition,
-        meteor.velocity,
-      )) {
-        shipCooldowns.current[defendingShip] = elapsed + 1.2 + Math.random() * 0.8;
-        deactivateMeteor(meteor, group);
-        continue;
-      }
+        if (collisionTime !== null && collisionTime <= interceptionTime) {
+          resolveMeteorCollision(meteor, group, collisionTime, collisionTarget, collisionPlanetIndex);
+          continue;
+        }
 
-      if (collisionTime !== null) {
-        resolveMeteorCollision(meteor, group, collisionTime, collisionTarget, collisionPlanetIndex);
-        continue;
+        if (defendingShip >= 0) {
+          impactPosition.lerpVectors(previousMeteorPosition, meteor.position, interceptionTime);
+        }
+        if (defendingShip >= 0 && fireBlaster(
+          firingSourcePosition,
+          impactPosition,
+          meteor.velocity,
+        )) {
+          shipCooldowns.current[defendingShip] = elapsed + 1.2 + Math.random() * 0.8;
+          deactivateMeteor(meteor, group);
+          continue;
+        }
+
+        if (collisionTime !== null) {
+          resolveMeteorCollision(meteor, group, collisionTime, collisionTarget, collisionPlanetIndex);
+          continue;
+        }
+        meteor.collisionPosition.copy(meteor.position);
       }
 
       if (meteor.age >= meteor.maxAge || (meteor.age > 0.5 && meteor.position.lengthSq() > 32 ** 2)) {
@@ -613,7 +665,7 @@ export default function HeroSceneMeteorField({
     for (let index = 0; index < BLASTER_COUNT; index += 1) {
       const blaster = blasters.current[index];
       if (!blaster.active) continue;
-      blaster.age += delta;
+      blaster.age += frameDelta;
       const progress = Math.min(blaster.age / blaster.duration, 1);
       const group = blasterGroups.current[index];
       const material = blasterMaterials.current[index];
@@ -637,11 +689,11 @@ export default function HeroSceneMeteorField({
       const burst = bursts.current[burstIndex];
       if (!burst.active) continue;
       if (!dampingReady) {
-        velocityDamping = Math.exp(-0.85 * delta);
-        angularDamping = Math.exp(-0.6 * delta);
+        velocityDamping = Math.exp(-0.85 * frameDelta);
+        angularDamping = Math.exp(-0.6 * frameDelta);
         dampingReady = true;
       }
-      burst.age += delta;
+      burst.age += frameDelta;
       const progress = Math.min(burst.age / burst.duration, 1);
       hasActiveBurst ||= progress < 1;
       for (let fragmentIndex = 0; fragmentIndex < BURST_FRAGMENT_COUNT; fragmentIndex += 1) {
@@ -649,9 +701,9 @@ export default function HeroSceneMeteorField({
         const fragmentPosition = burst.fragmentPositions[fragmentIndex];
         const fragmentRotation = burst.fragmentRotations[fragmentIndex];
         const angularVelocity = burst.angularVelocities[fragmentIndex];
-        fragmentPosition.addScaledVector(velocity, delta);
+        fragmentPosition.addScaledVector(velocity, frameDelta);
         velocity.multiplyScalar(velocityDamping);
-        fragmentRotation.addScaledVector(angularVelocity, delta);
+        fragmentRotation.addScaledVector(angularVelocity, frameDelta);
         angularVelocity.multiplyScalar(angularDamping);
         const fragmentScale = progress >= 1
           ? 0
