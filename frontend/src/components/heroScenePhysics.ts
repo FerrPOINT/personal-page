@@ -7,7 +7,7 @@ export const METEOR_SURFACE_OFFSET = 0.22;
 export const SCENE_UP = new THREE.Vector3(0, 1, 0);
 const BLASTER_DIRECTION = new THREE.Vector3();
 
-export const PLANET_IMPACT_SPEED_LIMIT = 0.65;
+export const PLANET_IMPACT_SPEED_LIMIT = 0.975;
 export const STARFIELD_DRIFT_SPEED = 0.012;
 export const STARFIELD_IMPACT_SPEED = 0.06;
 

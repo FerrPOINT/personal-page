@@ -212,8 +212,8 @@ describe('hero scene trajectories', () => {
     const planet = new THREE.Vector3(10, 0, 0);
     const baseSpeed = 0.2;
 
-    expect(calculatePlanetOrbitImpulse(planet, new THREE.Vector3(0, 0, 5), baseSpeed)).toBeCloseTo(0.13, 6);
-    expect(calculatePlanetOrbitImpulse(planet, new THREE.Vector3(0, 0, -5), baseSpeed)).toBeCloseTo(-0.13, 6);
+    expect(calculatePlanetOrbitImpulse(planet, new THREE.Vector3(0, 0, 5), baseSpeed)).toBeCloseTo(0.195, 6);
+    expect(calculatePlanetOrbitImpulse(planet, new THREE.Vector3(0, 0, -5), baseSpeed)).toBeCloseTo(-0.195, 6);
     expect(calculatePlanetOrbitImpulse(planet, new THREE.Vector3(-5, 0, 0), baseSpeed)).toBeCloseTo(0, 6);
   });
 
