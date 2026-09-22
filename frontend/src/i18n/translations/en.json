@@ -46,6 +46,8 @@
       "fullStackCycle": "Full Cycle"
     },
     "planets": {
+      "pdlc": "PDLC",
+      "automation": "AUTOMATION",
       "reactTS": "REACT / TS",
       "javaSpring": "JAVA / SPRING",
       "pythonAI": "PYTHON / AI",

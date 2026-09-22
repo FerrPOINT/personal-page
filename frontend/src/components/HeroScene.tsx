@@ -26,6 +26,19 @@ const SCENE_PRIMARY = '#00d9ff';
 const SCENE_SECONDARY = '#ff00ff';
 const MAX_SCENE_FPS = 60;
 
+interface PlanetSatelliteDefinition {
+  orbitRadius: number;
+  orbitSpeed: number;
+  size: number;
+  color: string;
+  label: string;
+  initialAngle: number;
+}
+
+interface PlanetVisualDefinition extends PlanetDefinition {
+  satellite?: PlanetSatelliteDefinition;
+}
+
 // Master multiplier for the sun surface, corona and emitted light.
 export const SUN_BRIGHTNESS = 1.3;
 
@@ -176,9 +189,15 @@ function Sun({ motion }: { motion: SunRotationState }) {
   </group>;
 }
 
-function Planet({ data, motion }: { data: PlanetDefinition; motion: PlanetMotionState }) {
+function Planet({ data, motion }: { data: PlanetVisualDefinition; motion: PlanetMotionState }) {
   const planet = useRef<THREE.Mesh>(null);
   const labelRef = useRef<THREE.Group>(null);
+  const satelliteOrbitRef = useRef<THREE.Group>(null);
+  const satelliteRef = useRef<THREE.Mesh>(null);
+  const satelliteLabelRef = useRef<THREE.Group>(null);
+  const satelliteAngle = useRef(data.satellite?.initialAngle ?? 0);
+  const satelliteOrbitTilt = useMemo(() => new THREE.Euler(0.45, 0, 0.18), []);
+  const satellitePosition = useMemo(() => new THREE.Vector3(), []);
   useFrame((_, delta) => {
     if (!planet.current) return;
     const effectiveSpeed = advancePlanetMotion(motion, data.orbitSpeed, delta);
@@ -186,6 +205,22 @@ function Planet({ data, motion }: { data: PlanetDefinition; motion: PlanetMotion
     planet.current.rotation.y += delta * 0.6 * (effectiveSpeed / data.orbitSpeed);
     if (labelRef.current) {
       labelRef.current.position.set(planet.current.position.x, data.size + 0.8, planet.current.position.z);
+    }
+    if (data.satellite && satelliteOrbitRef.current && satelliteRef.current) {
+      satelliteAngle.current = (satelliteAngle.current + delta * data.satellite.orbitSpeed) % (Math.PI * 2);
+      satelliteOrbitRef.current.position.copy(planet.current.position);
+      satellitePosition.set(
+        Math.cos(satelliteAngle.current) * data.satellite.orbitRadius,
+        0,
+        Math.sin(satelliteAngle.current) * data.satellite.orbitRadius,
+      ).applyEuler(satelliteOrbitTilt);
+      satelliteRef.current.position.copy(satellitePosition);
+      satelliteRef.current.rotation.y += delta * 0.9;
+      satelliteLabelRef.current?.position.set(
+        satellitePosition.x,
+        satellitePosition.y - 0.62,
+        satellitePosition.z,
+      );
     }
   }, -1);
   return <>
@@ -197,7 +232,34 @@ function Planet({ data, motion }: { data: PlanetDefinition; motion: PlanetMotion
       <sphereGeometry args={[data.size, 32, 32]} />
       <meshStandardMaterial color={data.color} roughness={0.7} metalness={0.6} emissive={data.color} emissiveIntensity={0.1} />
     </mesh>
-    <group ref={labelRef}><Billboard><Text fontSize={0.6} color="white" outlineWidth={0.04} outlineColor="#000">{data.label}</Text></Billboard></group>
+    <group ref={labelRef}><Billboard><Text fontSize={data.size < 0.45 ? 0.46 : 0.6} color="white" outlineWidth={0.04} outlineColor="#000">{data.label}</Text></Billboard></group>
+    {data.satellite && (
+      <group ref={satelliteOrbitRef}>
+        <group rotation={[0.45, 0, 0.18]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[data.satellite.orbitRadius - 0.012, data.satellite.orbitRadius + 0.012, 64]} />
+            <meshBasicMaterial color={data.satellite.color} transparent opacity={0.2} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+        <mesh ref={satelliteRef}>
+          <sphereGeometry args={[data.satellite.size, 20, 20]} />
+          <meshStandardMaterial
+            color={data.satellite.color}
+            roughness={0.45}
+            metalness={0.7}
+            emissive={data.satellite.color}
+            emissiveIntensity={0.18}
+          />
+        </mesh>
+        <group ref={satelliteLabelRef}>
+          <Billboard>
+            <Text fontSize={0.26} color="#a5f3fc" outlineWidth={0.025} outlineColor="#000">
+              {data.satellite.label}
+            </Text>
+          </Billboard>
+        </group>
+      </group>
+    )}
   </>;
 }
 
@@ -252,10 +314,10 @@ export default function HeroScene({
   labels,
   active,
 }: {
-  labels: readonly [string, string, string, string, string];
+  labels: readonly [string, string, string, string, string, string, string];
   active: boolean;
 }) {
-  const planetOffsets = useMemo(() => Array.from({ length: 5 }, () => Math.random() * Math.PI * 2), []);
+  const planetOffsets = useMemo(() => Array.from({ length: 6 }, () => Math.random() * Math.PI * 2), []);
   const shipPositions = useMemo(() => SHIP_ORBITS.map(() => new THREE.Vector3()), []);
   const planetMotions = useMemo<PlanetMotionState[]>(() => (
     planetOffsets.map((angle) => ({ angle, speedOffset: 0 }))
@@ -274,12 +336,27 @@ export default function HeroScene({
     }
     applyStarfieldImpulse(starfieldMotion.current, worldImpactDirection);
   }, [systemWorldQuaternion, worldImpactDirection]);
-  const planets = useMemo<readonly PlanetDefinition[]>(() => [
-    { orbitRadius: 6, orbitSpeed: 0.30, size: 0.5, color: SCENE_PRIMARY, label: labels[0] },
-    { orbitRadius: 9, orbitSpeed: 0.25, size: 0.7, color: SCENE_SECONDARY, label: labels[1] },
-    { orbitRadius: 12, orbitSpeed: 0.20, size: 0.65, color: '#10b981', label: labels[2] },
-    { orbitRadius: 15, orbitSpeed: 0.15, size: 0.8, color: '#3b82f6', label: labels[3] },
-    { orbitRadius: 19, orbitSpeed: 0.10, size: 0.9, color: '#f97316', label: labels[4] },
+  const planets = useMemo<readonly PlanetVisualDefinition[]>(() => [
+    {
+      orbitRadius: 4.1,
+      orbitSpeed: 0.38,
+      size: 0.34,
+      color: '#a58b72',
+      label: labels[0],
+      satellite: {
+        orbitRadius: 1.25,
+        orbitSpeed: 1.35,
+        size: 0.13,
+        color: '#22d3ee',
+        label: labels[1],
+        initialAngle: 2.2,
+      },
+    },
+    { orbitRadius: 6, orbitSpeed: 0.30, size: 0.5, color: SCENE_PRIMARY, label: labels[2] },
+    { orbitRadius: 9, orbitSpeed: 0.25, size: 0.7, color: SCENE_SECONDARY, label: labels[3] },
+    { orbitRadius: 12, orbitSpeed: 0.20, size: 0.65, color: '#10b981', label: labels[4] },
+    { orbitRadius: 15, orbitSpeed: 0.15, size: 0.8, color: '#3b82f6', label: labels[5] },
+    { orbitRadius: 19, orbitSpeed: 0.10, size: 0.9, color: '#f97316', label: labels[6] },
   ], [labels]);
   return <div className="absolute inset-0 w-full h-[55vh] md:h-full">
     <Canvas className="w-full h-full" frameloop="demand" dpr={[1, 1.5]}>

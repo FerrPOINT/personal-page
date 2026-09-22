@@ -60,6 +60,8 @@ const Hero: React.FC = () => {
         {showScene && (
           <Suspense fallback={null}>
             <HeroScene labels={[
+              t('hero.planets.pdlc'),
+              t('hero.planets.automation'),
               t('hero.planets.reactTS'),
               t('hero.planets.javaSpring'),
               t('hero.planets.pythonAI'),
