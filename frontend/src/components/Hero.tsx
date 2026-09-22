@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Mail } from 'lucide-react';
 import { useLanguage } from '../i18n/hooks/useLanguage';
@@ -9,13 +9,40 @@ const HeroScene = lazyWithReload('hero-scene', () => import('./HeroScene'));
 
 const Hero: React.FC = () => {
   const { t, language } = useLanguage();
+  const heroRef = useRef<HTMLElement>(null);
   const [showScene, setShowScene] = useState(false);
+  const [sceneActive, setSceneActive] = useState(false);
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const frame = requestAnimationFrame(() => setShowScene(true));
     return () => cancelAnimationFrame(frame);
   }, []);
+
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!showScene || !hero) return;
+
+    const margin = 100;
+    const bounds = hero.getBoundingClientRect();
+    let isNearViewport = bounds.bottom >= -margin && bounds.top <= window.innerHeight + margin;
+    const updateSceneActivity = () => {
+      setSceneActive(isNearViewport && document.visibilityState === 'visible');
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      isNearViewport = entry.isIntersecting;
+      updateSceneActivity();
+    }, { rootMargin: `${margin}px 0px` });
+
+    observer.observe(hero);
+    document.addEventListener('visibilitychange', updateSceneActivity);
+    updateSceneActivity();
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', updateSceneActivity);
+    };
+  }, [showScene]);
 
   const scrollToSection = (event: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     event.preventDefault();
@@ -28,7 +55,7 @@ const Hero: React.FC = () => {
   });
 
   return (
-    <section id="hero" className="relative w-full min-h-screen bg-background overflow-hidden selection:bg-accent-primary/30">
+    <section ref={heroRef} id="hero" className="relative w-full min-h-screen bg-background overflow-hidden selection:bg-accent-primary/30">
       <div className="absolute inset-0 z-0 pointer-events-none md:pointer-events-auto">
         {showScene && (
           <Suspense fallback={null}>
@@ -38,7 +65,7 @@ const Hero: React.FC = () => {
               t('hero.planets.pythonAI'),
               t('hero.planets.kubernetes'),
               t('hero.planets.cloudAWS'),
-            ]} />
+            ]} active={sceneActive} />
           </Suspense>
         )}
       </div>

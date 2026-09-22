@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Billboard, Float, OrbitControls, PerspectiveCamera, Sparkles, Stars, Text } from '@react-three/drei';
 import * as THREE from 'three';
@@ -23,6 +23,37 @@ type PlanetData = readonly [
 
 const SCENE_PRIMARY = '#00d9ff';
 const SCENE_SECONDARY = '#ff00ff';
+const MAX_SCENE_FPS = 60;
+
+function SceneFrameLoop({ active }: { active: boolean }) {
+  const invalidate = useThree((state) => state.invalidate);
+
+  useEffect(() => {
+    if (!active) return;
+    invalidate();
+    const interval = window.setInterval(invalidate, 1000 / MAX_SCENE_FPS);
+    return () => window.clearInterval(interval);
+  }, [active, invalidate]);
+
+  return null;
+}
+
+function RotatingSystem({ children }: React.PropsWithChildren) {
+  const system = useRef<THREE.Group>(null);
+
+  useFrame((_, delta) => {
+    if (!system.current) return;
+    system.current.rotation.y = (system.current.rotation.y + delta * 0.04) % (Math.PI * 2);
+  });
+
+  return (
+    <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.2}>
+      <group ref={system} rotation={[0.2, 0, 0]} position={[0, 0, 0]}>
+        {children}
+      </group>
+    </Float>
+  );
+}
 
 function SceneCamera() {
   const camera = useRef<THREE.PerspectiveCamera>(null);
@@ -79,7 +110,7 @@ function Planet({ data }: { data: PlanetData }) {
       <meshBasicMaterial color={color} transparent opacity={0.08} side={THREE.DoubleSide} />
     </mesh>
     <mesh ref={planet}>
-      <sphereGeometry args={[size, 64, 64]} />
+      <sphereGeometry args={[size, 32, 32]} />
       <meshStandardMaterial color={color} roughness={0.7} metalness={0.6} emissive={color} emissiveIntensity={0.1} />
     </mesh>
     <group ref={labelRef}><Billboard><Text fontSize={0.6} color="white" outlineWidth={0.04} outlineColor="#000">{label}</Text></Billboard></group>
@@ -185,6 +216,9 @@ interface BurstState {
   active: boolean;
   age: number;
   duration: number;
+  position: THREE.Vector3;
+  fragmentPositions: THREE.Vector3[];
+  fragmentRotations: THREE.Vector3[];
   velocities: THREE.Vector3[];
   angularVelocities: THREE.Vector3[];
   scales: number[];
@@ -194,6 +228,15 @@ const METEOR_COUNT = 5;
 const BLASTER_COUNT = 4;
 const BURST_COUNT = 6;
 const BURST_FRAGMENT_COUNT = 26;
+const BURST_STYLE_COUNT = 3;
+const BURST_STYLE_COUNTS = [9, 8, 9] as const;
+const BURST_FRAGMENT_RADIUS = 0.11;
+const BURST_FRAGMENT_STYLES = Array.from({ length: BURST_FRAGMENT_COUNT }, (_, index) => (
+  index % 3 === 0 ? 0 : index % 2 === 0 ? 1 : 2
+));
+const BURST_FRAGMENT_STYLE_OFFSETS = BURST_FRAGMENT_STYLES.map((style, index) => (
+  BURST_FRAGMENT_STYLES.slice(0, index).filter((candidate) => candidate === style).length
+));
 const METEOR_HEAT_START_DISTANCE = 19;
 const METEOR_HEAT_PEAK_DISTANCE = 3;
 const METEOR_CORE_COLD = new THREE.Color('#292421');
@@ -224,7 +267,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
   const blasterGroups = useRef<Array<THREE.Group | null>>([]);
   const blasterMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
   const burstGroups = useRef<Array<THREE.Group | null>>([]);
-  const burstFragments = useRef<Array<Array<THREE.Mesh | null>>>([]);
+  const burstFragmentMeshes = useRef<Array<THREE.InstancedMesh | null>>([]);
   const burstLights = useRef<Array<THREE.PointLight | null>>([]);
   const shipCooldowns = useRef(Array.from({ length: ships.length }, () => 0));
   const spawnSequence = useRef(0);
@@ -248,6 +291,9 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     active: false,
     age: 0,
     duration: 2.2,
+    position: new THREE.Vector3(),
+    fragmentPositions: Array.from({ length: BURST_FRAGMENT_COUNT }, () => new THREE.Vector3()),
+    fragmentRotations: Array.from({ length: BURST_FRAGMENT_COUNT }, () => new THREE.Vector3()),
     velocities: Array.from({ length: BURST_FRAGMENT_COUNT }, () => new THREE.Vector3()),
     angularVelocities: Array.from({ length: BURST_FRAGMENT_COUNT }, () => new THREE.Vector3()),
     scales: Array.from({ length: BURST_FRAGMENT_COUNT }, () => 1),
@@ -260,6 +306,41 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
   const firingSourcePosition = useMemo(() => new THREE.Vector3(), []);
   const sceneOrigin = useMemo(() => new THREE.Vector3(), []);
   const direction = useMemo(() => new THREE.Vector3(), []);
+  const fragmentTransform = useMemo(() => new THREE.Object3D(), []);
+
+  const setBurstFragmentMatrix = (
+    burstIndex: number,
+    fragmentIndex: number,
+    position: THREE.Vector3,
+    rotation: THREE.Vector3,
+    scale: number,
+  ) => {
+    const styleIndex = BURST_FRAGMENT_STYLES[fragmentIndex];
+    const mesh = burstFragmentMeshes.current[styleIndex];
+    if (!mesh) return;
+    const instanceIndex = burstIndex * BURST_STYLE_COUNTS[styleIndex] + BURST_FRAGMENT_STYLE_OFFSETS[fragmentIndex];
+    fragmentTransform.position.copy(position);
+    fragmentTransform.rotation.set(rotation.x, rotation.y, rotation.z);
+    fragmentTransform.scale.setScalar(scale);
+    fragmentTransform.updateMatrix();
+    mesh.setMatrixAt(instanceIndex, fragmentTransform.matrix);
+  };
+
+  useLayoutEffect(() => {
+    const hiddenPosition = new THREE.Vector3();
+    const hiddenRotation = new THREE.Vector3();
+    for (let burstIndex = 0; burstIndex < BURST_COUNT; burstIndex += 1) {
+      for (let fragmentIndex = 0; fragmentIndex < BURST_FRAGMENT_COUNT; fragmentIndex += 1) {
+        setBurstFragmentMatrix(burstIndex, fragmentIndex, hiddenPosition, hiddenRotation, 0);
+      }
+    }
+    burstFragmentMeshes.current.forEach((mesh) => {
+      if (!mesh) return;
+      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.visible = false;
+    });
+  }, []);
 
   const createBurst = (position: THREE.Vector3, impactVelocity: THREE.Vector3) => {
     const index = bursts.current.findIndex((burst) => !burst.active);
@@ -269,6 +350,7 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
     const impactDirection = direction.copy(impactVelocity).normalize();
     burst.active = true;
     burst.age = 0;
+    burst.position.copy(position);
     const group = burstGroups.current[index];
     if (group) {
       group.visible = true;
@@ -290,12 +372,12 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         Math.random() * 2 - 1,
       ).normalize().multiplyScalar(collisionMotionScale * (0.8 + Math.random() * 1.4));
       burst.scales[fragmentIndex] = 0.65 + Math.random() * 0.85;
-      const fragment = burstFragments.current[index]?.[fragmentIndex];
-      if (fragment) {
-        fragment.position.set(0, 0, 0);
-        fragment.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-        fragment.scale.setScalar(burst.scales[fragmentIndex]);
-      }
+      burst.fragmentPositions[fragmentIndex].set(0, 0, 0);
+      burst.fragmentRotations[fragmentIndex].set(
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+      );
     });
   };
 
@@ -548,30 +630,42 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
       }
     });
 
+    let burstInstancesChanged = false;
+    let hasActiveBurst = false;
     bursts.current.forEach((burst, burstIndex) => {
       if (!burst.active) return;
+      hasActiveBurst = true;
       burst.age += delta;
       const progress = Math.min(burst.age / burst.duration, 1);
       const fade = (1 - progress) ** 1.7;
       const light = burstLights.current[burstIndex];
       if (light) light.intensity = fade * 8.5;
       burst.velocities.forEach((velocity, fragmentIndex) => {
-        const fragment = burstFragments.current[burstIndex]?.[fragmentIndex];
+        const fragmentPosition = burst.fragmentPositions[fragmentIndex];
+        const fragmentRotation = burst.fragmentRotations[fragmentIndex];
         const angularVelocity = burst.angularVelocities[fragmentIndex];
-        if (!fragment) return;
-        fragment.position.addScaledVector(velocity, delta);
+        fragmentPosition.addScaledVector(velocity, delta);
         velocity.multiplyScalar(Math.exp(-0.85 * delta));
-        fragment.rotation.x += angularVelocity.x * delta;
-        fragment.rotation.y += angularVelocity.y * delta;
-        fragment.rotation.z += angularVelocity.z * delta;
+        fragmentRotation.addScaledVector(angularVelocity, delta);
         angularVelocity.multiplyScalar(Math.exp(-0.6 * delta));
-        fragment.scale.setScalar(Math.max(0.05, burst.scales[fragmentIndex] * (1 - progress) ** 1.2));
+        const sizeVariation = (0.09 + (fragmentIndex % 4) * 0.018) / BURST_FRAGMENT_RADIUS;
+        const fragmentScale = progress >= 1
+          ? 0
+          : Math.max(0.05, burst.scales[fragmentIndex] * sizeVariation * (1 - progress) ** 1.2);
+        impactPosition.copy(burst.position).add(fragmentPosition);
+        setBurstFragmentMatrix(burstIndex, fragmentIndex, impactPosition, fragmentRotation, fragmentScale);
+        burstInstancesChanged = true;
       });
       if (progress >= 1) {
         burst.active = false;
         const group = burstGroups.current[burstIndex];
         if (group) group.visible = false;
       }
+    });
+    burstFragmentMeshes.current.forEach((mesh) => {
+      if (!mesh) return;
+      mesh.visible = hasActiveBurst;
+      if (burstInstancesChanged) mesh.instanceMatrix.needsUpdate = true;
     });
   });
 
@@ -699,30 +793,30 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
         <pointLight color="#52eaff" intensity={1.4} distance={4} />
       </group>
     ))}
+    {Array.from({ length: BURST_STYLE_COUNT }, (_, styleIndex) => (
+      <instancedMesh
+        key={`burst-fragments-${styleIndex}`}
+        ref={(node) => { burstFragmentMeshes.current[styleIndex] = node; }}
+        args={[undefined, undefined, BURST_STYLE_COUNTS[styleIndex] * BURST_COUNT]}
+        frustumCulled={false}
+        visible={false}
+      >
+        <tetrahedronGeometry args={[BURST_FRAGMENT_RADIUS, 0]} />
+        <meshStandardMaterial
+          color={styleIndex === 0 ? '#3a1b0e' : '#21130f'}
+          emissive={styleIndex === 0 ? '#ffc15c' : styleIndex === 1 ? '#ff6a18' : '#b83212'}
+          emissiveIntensity={styleIndex === 0 ? 2.1 : 1.45}
+          roughness={1}
+          flatShading
+        />
+      </instancedMesh>
+    ))}
     {Array.from({ length: BURST_COUNT }, (_, burstIndex) => (
       <group
         key={`burst-${burstIndex}`}
         ref={(node) => { burstGroups.current[burstIndex] = node; }}
         visible={false}
       >
-        {Array.from({ length: BURST_FRAGMENT_COUNT }, (_, fragmentIndex) => (
-          <mesh
-            key={fragmentIndex}
-            ref={(node) => {
-              if (!burstFragments.current[burstIndex]) burstFragments.current[burstIndex] = [];
-              burstFragments.current[burstIndex][fragmentIndex] = node;
-            }}
-          >
-            <tetrahedronGeometry args={[0.09 + (fragmentIndex % 4) * 0.018, 0]} />
-            <meshStandardMaterial
-              color={fragmentIndex % 3 === 0 ? '#3a1b0e' : '#21130f'}
-              emissive={fragmentIndex % 3 === 0 ? '#ffc15c' : fragmentIndex % 2 === 0 ? '#ff6a18' : '#b83212'}
-              emissiveIntensity={fragmentIndex % 3 === 0 ? 2.1 : 1.45}
-              roughness={1}
-              flatShading
-            />
-          </mesh>
-        ))}
         <Sparkles count={64} scale={3.3} size={4.4} speed={1.3} color="#ff6a18" opacity={0.95} />
         <Sparkles count={38} scale={2.5} size={2.8} speed={0.75} color="#ffe0a3" opacity={0.9} />
         <Sparkles count={26} scale={4} size={5} speed={0.35} color="#6f4639" opacity={0.2} />
@@ -738,7 +832,13 @@ function MeteorField({ planets, ships }: { planets: readonly PlanetData[]; ships
   </>;
 }
 
-export default function HeroScene({ labels }: { labels: readonly [string, string, string, string, string] }) {
+export default function HeroScene({
+  labels,
+  active,
+}: {
+  labels: readonly [string, string, string, string, string];
+  active: boolean;
+}) {
   const planetOffsets = useMemo(() => Array.from({ length: 5 }, () => Math.random() * Math.PI * 2), []);
   const shipPositions = useMemo(() => SHIP_ORBITS.map(() => new THREE.Vector3()), []);
   const planets: readonly PlanetData[] = [
@@ -749,25 +849,23 @@ export default function HeroScene({ labels }: { labels: readonly [string, string
     [19, 0.10, 0.9, '#f97316', labels[4], planetOffsets[4]],
   ];
   return <div className="absolute inset-0 w-full h-[55vh] md:h-full">
-    <Canvas className="w-full h-full">
+    <Canvas className="w-full h-full" frameloop="demand" dpr={[1, 1.5]}>
+      <SceneFrameLoop active={active} />
       <SceneCamera />
       <ambientLight intensity={0.2} />
       <Stars radius={120} depth={60} count={5000} factor={4} saturation={0} fade speed={0.3} />
-      <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.2}>
-        <group rotation={[0.2, 0, 0]} position={[0, 0, 0]}>
+      <RotatingSystem>
           <Sun />
           {planets.map((planet) => <Planet key={planet[4]} data={planet} />)}
           {SHIP_ORBITS.map((orbit, index) => (
             <Spaceship key={index} {...orbit} positionTarget={shipPositions[index]} />
           ))}
           <MeteorField planets={planets} ships={shipPositions} />
-        </group>
-      </Float>
+      </RotatingSystem>
       <OrbitControls
+        enabled={active}
         enableZoom={false}
         enablePan={false}
-        autoRotate
-        autoRotateSpeed={0.4}
         maxPolarAngle={Math.PI / 1.8}
         minPolarAngle={Math.PI / 3}
       />
