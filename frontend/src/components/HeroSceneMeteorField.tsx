@@ -84,10 +84,6 @@ const BURST_SPARKLE_COLORS: Record<BurstKind, readonly THREE.Color[]> = {
   collision: [new THREE.Color('#ff6a18'), new THREE.Color('#ffe0a3'), new THREE.Color('#6f4639')],
   blaster: [new THREE.Color('#43e6ff'), new THREE.Color('#e4fbff'), new THREE.Color('#286ab8')],
 };
-const BURST_LIGHT_COLORS: Record<BurstKind, THREE.Color> = {
-  collision: new THREE.Color('#ff7a18'),
-  blaster: new THREE.Color('#36dfff'),
-};
 const SUN_CONTACT_RADIUS = 2.35;
 const PLANET_METEOR_CONTACT_RADIUS = 0.28;
 const METEOR_HEAT_START_DISTANCE = 19;
@@ -117,13 +113,11 @@ export default function HeroSceneMeteorField({
   const meteorComaMaterials = useRef<Array<THREE.SpriteMaterial | null>>([]);
   const meteorPlasmaTailMaterials = useRef<Array<THREE.PointsMaterial | null>>([]);
   const meteorDustTailMaterials = useRef<Array<THREE.PointsMaterial | null>>([]);
-  const meteorLights = useRef<Array<THREE.PointLight | null>>([]);
   const meteorTailGroups = useRef<Array<THREE.Group | null>>([]);
   const blasterGroups = useRef<Array<THREE.Group | null>>([]);
   const blasterMaterials = useRef<Array<THREE.MeshBasicMaterial | null>>([]);
   const burstGroups = useRef<Array<THREE.Group | null>>([]);
   const burstFragmentMeshes = useRef<Array<THREE.InstancedMesh | null>>([]);
-  const burstLights = useRef<Array<THREE.PointLight | null>>([]);
   const burstSparkles = useRef<Array<Array<THREE.Points | null>>>([]);
   const shipCooldowns = useRef(Array.from({ length: ships.length }, () => 0));
   const spawnSequence = useRef(0);
@@ -255,12 +249,6 @@ export default function HeroSceneMeteorField({
       group.visible = true;
       group.position.copy(position);
       group.scale.setScalar(visualScale);
-    }
-    const light = burstLights.current[index];
-    if (light) {
-      light.color.copy(BURST_LIGHT_COLORS[kind]);
-      light.intensity = 8.5 * visualScale;
-      light.distance = 12 * visualScale;
     }
     const sparkleColors = BURST_SPARKLE_COLORS[kind];
     for (let layerIndex = 0; layerIndex < sparkleColors.length; layerIndex += 1) {
@@ -533,12 +521,6 @@ export default function HeroSceneMeteorField({
         const lengthScale = 0.72 + meteor.heat * 0.64;
         tail.scale.set(flicker * widthScale, lengthScale, flicker * widthScale);
       }
-      const light = meteorLights.current[index];
-      if (light) {
-        light.intensity = meteor.heat * 2.6;
-        light.distance = 1.2 + meteor.heat * 5.2;
-      }
-
       let defendingShip = -1;
       let interceptionTime = Number.POSITIVE_INFINITY;
       for (let shipIndex = 0; shipIndex < SHIP_ORBITS.length; shipIndex += 1) {
@@ -622,9 +604,6 @@ export default function HeroSceneMeteorField({
       burst.age += delta;
       const progress = Math.min(burst.age / burst.duration, 1);
       hasActiveBurst ||= progress < 1;
-      const fade = (1 - progress) ** 1.7;
-      const light = burstLights.current[burstIndex];
-      if (light) light.intensity = fade * 8.5 * burst.visualScale;
       for (let fragmentIndex = 0; fragmentIndex < BURST_FRAGMENT_COUNT; fragmentIndex += 1) {
         const velocity = burst.velocities[fragmentIndex];
         const fragmentPosition = burst.fragmentPositions[fragmentIndex];
@@ -732,12 +711,6 @@ export default function HeroSceneMeteorField({
             />
           </points>
         </group>
-        <pointLight
-          ref={(node) => { meteorLights.current[index] = node; }}
-          color="#ff8a2a"
-          intensity={0}
-          distance={1.2}
-        />
       </group>
     ))}
     {Array.from({ length: BLASTER_COUNT }, (_, index) => (
@@ -768,7 +741,6 @@ export default function HeroSceneMeteorField({
             blending={THREE.AdditiveBlending}
           />
         </mesh>
-        <pointLight color="#52eaff" intensity={1.4} distance={4} />
       </group>
     ))}
     {Array.from({ length: BURST_STYLE_COUNT }, (_, styleIndex) => (
@@ -815,13 +787,6 @@ export default function HeroSceneMeteorField({
           speed={0.35}
           color="#6f4639"
           opacity={0.2}
-        />
-        <pointLight
-          ref={(node) => { burstLights.current[burstIndex] = node; }}
-          color="#ff7a18"
-          intensity={0}
-          distance={12}
-          decay={1.5}
         />
       </group>
     ))}
