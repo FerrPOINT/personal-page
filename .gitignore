@@ -17,6 +17,11 @@ autotests/results/
 *.png
 *.jpg
 
+# Reviewed README evidence is source-controlled; all other PNG/JPG captures remain local.
+!docs/
+!docs/screenshots/
+!docs/screenshots/main-page.png
+
 # Coverage reports
 coverage/
 

@@ -20,6 +20,13 @@ build:
 	cd frontend && npm run build
 
 compose-config:
-	IMAGE_TAG=local docker compose config >/dev/null
+	@if [ -f .env ]; then \
+		IMAGE_TAG=local docker compose config >/dev/null; \
+	else \
+		cp .env.example .env; \
+		IMAGE_TAG=local docker compose config >/dev/null; status=$$?; \
+		rm -f .env; \
+		exit $$status; \
+	fi
 
 check: typecheck test build compose-config
