@@ -85,13 +85,16 @@ const BURST_LIGHT_COLORS: Record<BurstKind, THREE.Color> = {
   collision: new THREE.Color('#ff7a18'),
   blaster: new THREE.Color('#36dfff'),
 };
+const SUN_CONTACT_RADIUS = 2.35;
+const PLANET_METEOR_CONTACT_RADIUS = 0.28;
 const METEOR_HEAT_START_DISTANCE = 19;
 const METEOR_HEAT_PEAK_DISTANCE = 3;
-const METEOR_CORE_COLD = new THREE.Color('#292421');
+const METEOR_IMPACT_GLOW_DISTANCE = 3.5;
+const METEOR_CORE_COLD = new THREE.Color('#171412');
 const METEOR_CORE_HOT = new THREE.Color('#ff7a18');
-const METEOR_EMISSIVE_COLD = new THREE.Color('#321109');
+const METEOR_EMISSIVE_COLD = new THREE.Color('#120503');
 const METEOR_EMISSIVE_HOT = new THREE.Color('#ffb45c');
-const METEOR_GLOW_COLD = new THREE.Color('#7a2511');
+const METEOR_GLOW_COLD = new THREE.Color('#351109');
 const METEOR_GLOW_HOT = new THREE.Color('#ff9a38');
 
 export default function HeroSceneMeteorField({
@@ -450,12 +453,11 @@ export default function HeroSceneMeteorField({
       previousMeteorPosition.copy(meteor.position);
       meteor.position.addScaledVector(meteor.velocity, delta);
       const distanceToSun = meteor.position.length();
-      const targetHeat = 1 - THREE.MathUtils.smoothstep(
+      const solarHeat = 1 - THREE.MathUtils.smoothstep(
         distanceToSun,
         METEOR_HEAT_PEAK_DISTANCE,
         METEOR_HEAT_START_DISTANCE,
       );
-      meteor.heat = THREE.MathUtils.damp(meteor.heat, targetHeat, 4.5, delta);
       const group = meteorGroups.current[index];
       if (group) group.position.copy(meteor.position);
       const core = meteorCores.current[index];
@@ -463,55 +465,33 @@ export default function HeroSceneMeteorField({
         core.rotation.x += delta * 2.2;
         core.rotation.z += delta * 1.4;
       }
-      const coreMaterial = meteorCoreMaterials.current[index];
-      if (coreMaterial) {
-        coreMaterial.color.lerpColors(METEOR_CORE_COLD, METEOR_CORE_HOT, meteor.heat);
-        coreMaterial.emissive.lerpColors(METEOR_EMISSIVE_COLD, METEOR_EMISSIVE_HOT, meteor.heat);
-        coreMaterial.emissiveIntensity = 0.12 + meteor.heat * 1.7;
-      }
-      const comaMaterial = meteorComaMaterials.current[index];
-      if (comaMaterial) {
-        comaMaterial.color.lerpColors(METEOR_GLOW_COLD, METEOR_GLOW_HOT, meteor.heat);
-        comaMaterial.opacity = 0.04 + meteor.heat * 0.22;
-      }
-      const plasmaTailMaterial = meteorPlasmaTailMaterials.current[index];
-      if (plasmaTailMaterial) plasmaTailMaterial.opacity = 0.22 + meteor.heat * 0.48;
-      const dustTailMaterial = meteorDustTailMaterials.current[index];
-      if (dustTailMaterial) dustTailMaterial.opacity = 0.08 + meteor.heat * 0.2;
-      const tail = meteorTailGroups.current[index];
-      if (tail) {
-        const flicker = 0.9 + Math.sin(elapsed * 19 + index * 1.7) * 0.12;
-        const widthScale = 0.72 + meteor.heat * 0.38;
-        const lengthScale = 0.78 + meteor.heat * 0.58;
-        tail.scale.set(flicker * widthScale, lengthScale, flicker * widthScale);
-      }
-      const light = meteorLights.current[index];
-      if (light) {
-        light.intensity = 0.12 + meteor.heat * 2.2;
-        light.distance = 2.5 + meteor.heat * 4.5;
-      }
-
       let collisionTime = calculateFirstContact(
         previousMeteorPosition,
         meteor.position,
         sceneOrigin,
         sceneOrigin,
-        2.35,
+        SUN_CONTACT_RADIUS,
       );
       let collisionTarget: CollisionTarget = collisionTime === null ? 'none' : 'sun';
       let collisionPlanetIndex = -1;
+      let nearestImpactClearance = Math.max(0, distanceToSun - SUN_CONTACT_RADIUS);
       for (let planetIndex = 0; planetIndex < planets.length; planetIndex += 1) {
         const planet = planets[planetIndex];
         const motion = planetMotions[planetIndex];
         const effectiveSpeed = planet.orbitSpeed + motion.speedOffset;
         placePlanetAtAngle(planet, motion.angle - effectiveSpeed * delta, previousTargetPosition);
         placePlanetAtAngle(planet, motion.angle, collisionPosition);
+        const contactRadius = planet.size + PLANET_METEOR_CONTACT_RADIUS;
+        nearestImpactClearance = Math.min(
+          nearestImpactClearance,
+          Math.max(0, meteor.position.distanceTo(collisionPosition) - contactRadius),
+        );
         const planetCollisionTime = calculateFirstContact(
           previousMeteorPosition,
           meteor.position,
           previousTargetPosition,
           collisionPosition,
-          planet.size + 0.28,
+          contactRadius,
         );
         if (planetCollisionTime !== null && (collisionTime === null || planetCollisionTime < collisionTime)) {
           collisionTime = planetCollisionTime;
@@ -519,6 +499,41 @@ export default function HeroSceneMeteorField({
           collisionPlanetIndex = planetIndex;
           impactedPlanetPosition.lerpVectors(previousTargetPosition, collisionPosition, planetCollisionTime);
         }
+      }
+
+      const impactHeat = 1 - THREE.MathUtils.smoothstep(
+        nearestImpactClearance,
+        0,
+        METEOR_IMPACT_GLOW_DISTANCE,
+      );
+      const targetHeat = Math.max(solarHeat * 0.45, impactHeat);
+      meteor.heat = THREE.MathUtils.damp(meteor.heat, targetHeat, 6.5, delta);
+      const coreMaterial = meteorCoreMaterials.current[index];
+      if (coreMaterial) {
+        coreMaterial.color.lerpColors(METEOR_CORE_COLD, METEOR_CORE_HOT, meteor.heat);
+        coreMaterial.emissive.lerpColors(METEOR_EMISSIVE_COLD, METEOR_EMISSIVE_HOT, meteor.heat);
+        coreMaterial.emissiveIntensity = 0.02 + meteor.heat * 1.9;
+      }
+      const comaMaterial = meteorComaMaterials.current[index];
+      if (comaMaterial) {
+        comaMaterial.color.lerpColors(METEOR_GLOW_COLD, METEOR_GLOW_HOT, meteor.heat);
+        comaMaterial.opacity = 0.008 + meteor.heat * 0.25;
+      }
+      const plasmaTailMaterial = meteorPlasmaTailMaterials.current[index];
+      if (plasmaTailMaterial) plasmaTailMaterial.opacity = 0.08 + meteor.heat * 0.62;
+      const dustTailMaterial = meteorDustTailMaterials.current[index];
+      if (dustTailMaterial) dustTailMaterial.opacity = 0.035 + meteor.heat * 0.22;
+      const tail = meteorTailGroups.current[index];
+      if (tail) {
+        const flicker = 0.9 + Math.sin(elapsed * 19 + index * 1.7) * 0.12;
+        const widthScale = 0.62 + meteor.heat * 0.48;
+        const lengthScale = 0.72 + meteor.heat * 0.64;
+        tail.scale.set(flicker * widthScale, lengthScale, flicker * widthScale);
+      }
+      const light = meteorLights.current[index];
+      if (light) {
+        light.intensity = meteor.heat * 2.6;
+        light.distance = 1.2 + meteor.heat * 5.2;
       }
 
       let defendingShip = -1;
@@ -653,14 +668,15 @@ export default function HeroSceneMeteorField({
         <group
           ref={(node) => { meteorCores.current[index] = node; }}
           rotation={[index * 0.71, index * 1.17, index * 0.43]}
+          scale={0.5}
         >
           <mesh>
             <primitive object={meteorNucleusGeometry} attach="geometry" />
             <meshStandardMaterial
               ref={(node) => { meteorCoreMaterials.current[index] = node; }}
-              color="#24130d"
-              emissive="#c83f12"
-              emissiveIntensity={0.12}
+              color="#171412"
+              emissive="#120503"
+              emissiveIntensity={0.02}
               roughness={1}
               metalness={0.05}
               flatShading
@@ -675,13 +691,13 @@ export default function HeroSceneMeteorField({
             <meshStandardMaterial color="#493027" roughness={1} flatShading />
           </mesh>
         </group>
-        <sprite scale={[1.08, 1.08, 1]}>
+        <sprite scale={[0.62, 0.62, 1]}>
           <spriteMaterial
             ref={(node) => { meteorComaMaterials.current[index] = node; }}
             map={meteorGlowTexture}
-            color="#7a2511"
+            color="#351109"
             transparent
-            opacity={0.08}
+            opacity={0.008}
             depthWrite={false}
             toneMapped={false}
             blending={THREE.AdditiveBlending}
@@ -695,7 +711,7 @@ export default function HeroSceneMeteorField({
               size={0.09}
               sizeAttenuation
               transparent
-              opacity={0.22}
+              opacity={0.08}
               depthWrite={false}
               blending={THREE.AdditiveBlending}
             />
@@ -707,7 +723,7 @@ export default function HeroSceneMeteorField({
               size={0.065}
               sizeAttenuation
               transparent
-              opacity={0.08}
+              opacity={0.035}
               depthWrite={false}
               blending={THREE.AdditiveBlending}
             />
@@ -716,8 +732,8 @@ export default function HeroSceneMeteorField({
         <pointLight
           ref={(node) => { meteorLights.current[index] = node; }}
           color="#ff8a2a"
-          intensity={0.12}
-          distance={2.5}
+          intensity={0}
+          distance={1.2}
         />
       </group>
     ))}
