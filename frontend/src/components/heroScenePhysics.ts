@@ -8,7 +8,7 @@ export const SCENE_UP = new THREE.Vector3(0, 1, 0);
 const BLASTER_DIRECTION = new THREE.Vector3();
 
 export const PLANET_IMPACT_MAX_RATIO = 0.975;
-export const STARFIELD_DRIFT_SPEED = 0.012;
+export const STARFIELD_DRIFT_SPEED = 0.024;
 export const STARFIELD_IMPACT_SPEED = 0.06;
 export const STARFIELD_RECOVERY_RATE = 0.45;
 export const SUN_IMPACT_ANGULAR_SCALE = 0.09;

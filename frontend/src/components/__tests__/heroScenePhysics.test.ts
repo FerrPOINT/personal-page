@@ -248,7 +248,7 @@ describe('hero scene trajectories', () => {
     expect(impulse.pitch).toBeGreaterThan(0);
     expect(impulse.roll).toBeLessThan(0);
     expect(Math.hypot(impulse.yaw, impulse.pitch, impulse.roll)).toBeCloseTo(STARFIELD_IMPACT_SPEED, 8);
-    expect(STARFIELD_IMPACT_SPEED).toBeGreaterThan(STARFIELD_DRIFT_SPEED);
+    expect(STARFIELD_IMPACT_SPEED).toBeGreaterThan(STARFIELD_DRIFT_SPEED * 2);
   });
 
   it('keeps the impact trajectory while starfield speed recovers to its persistent drift', () => {
