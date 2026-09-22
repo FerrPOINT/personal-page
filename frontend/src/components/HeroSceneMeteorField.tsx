@@ -72,7 +72,10 @@ const BURST_FRAGMENT_STYLE_OFFSETS = BURST_FRAGMENT_STYLES.map((style, index) =>
 const BURST_FRAGMENT_SIZE_FACTORS = Array.from({ length: BURST_FRAGMENT_COUNT }, (_, index) => (
   (0.09 + (index % 4) * 0.018) / BURST_FRAGMENT_RADIUS
 ));
-const BLASTER_BURST_SCALE = 0.6;
+const BURST_VISUAL_SCALE: Record<BurstKind, number> = {
+  collision: 1.2,
+  blaster: 0.6,
+};
 const BURST_FRAGMENT_COLORS: Record<BurstKind, readonly THREE.Color[]> = {
   collision: [new THREE.Color('#ffc15c'), new THREE.Color('#ff6a18'), new THREE.Color('#b83212')],
   blaster: [new THREE.Color('#d9fbff'), new THREE.Color('#42ddff'), new THREE.Color('#126eff')],
@@ -240,7 +243,7 @@ export default function HeroSceneMeteorField({
     const index = bursts.current.findIndex((burst) => !burst.active);
     if (index < 0) return;
     const burst = bursts.current[index];
-    const visualScale = kind === 'blaster' ? BLASTER_BURST_SCALE : 1;
+    const visualScale = BURST_VISUAL_SCALE[kind];
     const collisionMotionScale = getCollisionMotionScale(impactVelocity) * visualScale;
     const impactDirection = direction.copy(impactVelocity).normalize();
     burst.active = true;
