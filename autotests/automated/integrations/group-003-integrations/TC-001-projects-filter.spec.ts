@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Projects - Фильтрация проектов', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:8888');
+    await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000); // Дополнительное ожидание для загрузки React
     
@@ -24,7 +24,7 @@ test.describe('Projects - Фильтрация проектов', () => {
     await aiButton.click();
     await page.waitForTimeout(500);
 
-    await expect(page.locator('section#projects h3')).toHaveCount(3);
+    await expect(page.locator('section#projects h3')).toHaveCount(5);
   });
 
   test('TC-001: Фильтрация проектов по категории DevOps', async ({ page }) => {
@@ -34,7 +34,7 @@ test.describe('Projects - Фильтрация проектов', () => {
     await devopsButton.click();
     await page.waitForTimeout(500);
 
-    await expect(page.locator('section#projects h3')).toHaveCount(5);
+    await expect(page.locator('section#projects h3')).toHaveCount(6);
   });
 
   test('TC-001: Фильтрация проектов по категории FullStack', async ({ page }) => {
@@ -44,7 +44,7 @@ test.describe('Projects - Фильтрация проектов', () => {
     await fullstackButton.click();
     await page.waitForTimeout(500);
 
-    await expect(page.locator('section#projects h3')).toHaveCount(5);
+    await expect(page.locator('section#projects h3')).toHaveCount(6);
   });
 
   test('TC-001: Возврат к фильтру All показывает все проекты', async ({ page }) => {
@@ -60,7 +60,7 @@ test.describe('Projects - Фильтрация проектов', () => {
     await page.waitForTimeout(500);
 
     // Проверка, что все проекты видны
-    await expect(page.locator('section#projects h3')).toHaveCount(5);
+    await expect(page.locator('section#projects h3')).toHaveCount(6);
   });
 });
 

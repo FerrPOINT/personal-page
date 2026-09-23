@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Projects - Модальное окно с деталями проекта', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:8888');
+    await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000); // Дополнительное ожидание для загрузки React
     

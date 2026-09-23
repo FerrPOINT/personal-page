@@ -40,5 +40,11 @@
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vitest": "^4.0.18"
+  },
+  "overrides": {
+    "fflate": "0.8.3",
+    "three-stdlib": {
+      "fflate": "0.6.11"
+    }
   }
 }

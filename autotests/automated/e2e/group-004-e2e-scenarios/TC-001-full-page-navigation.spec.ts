@@ -13,7 +13,7 @@ test.describe('E2E - Полная навигация по странице', () 
       });
     });
 
-    await page.goto('http://localhost:8888');
+    await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000); // Дополнительное ожидание для загрузки React
   });
@@ -24,7 +24,7 @@ test.describe('E2E - Полная навигация по странице', () 
     await expect(page.locator('h1, heading')).toContainText(/Aleksandr|Александр/i);
 
     // 2. Переключение языка на русский
-    const languageButton = page.locator('button[aria-label*="Switch"], button[aria-label*="Переключить"], button:has-text("EN"), button:has-text("RU")').first();
+    const languageButton = page.getByRole('button', { name: /Switch to Russian|Переключить на Английский/ }).first();
     await languageButton.click();
     await page.waitForTimeout(500);
     await expect(page.locator('nav')).toContainText(/А\.\s*ЖУКОВ\s*АРХИТЕКТОР/i);

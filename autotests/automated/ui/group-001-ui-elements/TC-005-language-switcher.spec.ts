@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('LanguageSwitcher - Переключение языка', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:8888');
+    await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000); // Дополнительное ожидание для загрузки React
   });
@@ -13,7 +13,7 @@ test.describe('LanguageSwitcher - Переключение языка', () => {
     await expect(page.locator('h1, heading')).toContainText(/Aleksandr|Александр/i);
     
     // Поиск кнопки переключения языка (используем aria-label из компонента)
-    const languageButton = page.locator('button[aria-label*="Switch"], button[aria-label*="Переключить"], button:has-text("EN"), button:has-text("RU")').first();
+    const languageButton = page.getByRole('button', { name: /Switch to Russian|Переключить на Английский/ }).first();
     await expect(languageButton).toBeVisible();
     
     // Клик на кнопку переключения языка
@@ -44,7 +44,7 @@ test.describe('LanguageSwitcher - Переключение языка', () => {
       }
     });
 
-    const languageButton = page.locator('button[aria-label*="Switch"], button[aria-label*="Переключить"], button:has-text("EN"), button:has-text("RU")').first();
+    const languageButton = page.getByRole('button', { name: /Switch to Russian|Переключить на Английский/ }).first();
     await languageButton.click({ force: true });
     await page.waitForTimeout(500);
     

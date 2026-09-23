@@ -13,7 +13,7 @@ test.describe('Contact Form - Telegram delivery queue', () => {
       });
     });
 
-    await page.goto('http://localhost:8888');
+    await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
     await page.evaluate(() => {
