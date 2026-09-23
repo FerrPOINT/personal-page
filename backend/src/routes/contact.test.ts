@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../index.js';
-import { db } from '../services/database.js';
+import { loadAppConfig } from '../config.js';
+import { testDatabase, testMessages } from '../test/setup.js';
 
 describe('POST /api/contact', () => {
-  const app = createApp();
-  beforeEach(() => db.prepare('DELETE FROM messages').run());
+  const app = createApp({ config: loadAppConfig(), database: testDatabase, messages: testMessages });
+  beforeEach(() => testDatabase.prepare('DELETE FROM messages').run());
 
   it('returns 202 only after a pending row is stored', async () => {
     const response = await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.1').send({
@@ -13,7 +14,7 @@ describe('POST /api/contact', () => {
     });
     expect(response.status).toBe(202);
     expect(response.body).toMatchObject({ success: true, data: { status: 'pending' } });
-    expect(db.prepare('SELECT status FROM messages WHERE id = ?').get(response.body.data.id))
+    expect(testDatabase.prepare('SELECT status FROM messages WHERE id = ?').get(response.body.data.id))
       .toEqual({ status: 'pending' });
   });
 
@@ -23,7 +24,7 @@ describe('POST /api/contact', () => {
     });
 
     expect(response.status).toBe(202);
-    expect(db.prepare('SELECT name, message FROM messages WHERE id = ?').get(response.body.data.id))
+    expect(testDatabase.prepare('SELECT name, message FROM messages WHERE id = ?').get(response.body.data.id))
       .toEqual({ name: 'Generic<T>', message: 'Line 1\n\tList<T>\nПривет' });
   });
 
@@ -54,7 +55,7 @@ describe('POST /api/contact', () => {
   });
 
   it('returns structured 500 when SQLite cannot persist the message', async () => {
-    db.pragma('query_only = ON');
+    testDatabase.pragma('query_only = ON');
     try {
       const response = await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.6').send({
         name: 'A', email: 'write-failure@example.com', message: 'Cannot write',
@@ -66,7 +67,7 @@ describe('POST /api/contact', () => {
       });
       expect(response.body.requestId).toBeTruthy();
     } finally {
-      db.pragma('query_only = OFF');
+      testDatabase.pragma('query_only = OFF');
     }
   });
 

@@ -1,11 +1,11 @@
 import { Router, type NextFunction, type Request, type Response, type Router as ExpressRouter } from 'express';
 import rateLimit from 'express-rate-limit';
-import { createMessage } from '../models/Message.js';
+import type { MessageRepository } from '../models/Message.js';
 import { normalizeContactForm, validateContactForm } from '../services/validation.js';
 import { DuplicateError } from '../utils/errors.js';
 
+export function createContactRouter(repository: MessageRepository): ExpressRouter {
 const router: ExpressRouter = Router();
-
 const contactLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
@@ -30,7 +30,7 @@ router.post('/', contactLimiter, async (req: Request, res: Response, next: NextF
   }
 
   try {
-    const message = await createMessage(formData);
+    const message = repository.create(formData);
     return res.status(202).json({ success: true, data: { id: message.id, status: 'pending' } });
   } catch (error) {
     if (error instanceof DuplicateError) {
@@ -43,5 +43,5 @@ router.post('/', contactLimiter, async (req: Request, res: Response, next: NextF
     next(error);
   }
 });
-
-export default router;
+return router;
+}

@@ -1,60 +1,34 @@
 import Database, { type Database as DatabaseType } from 'better-sqlite3';
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { dbLogger } from '../utils/logger.js';
-import { DatabaseError, toAppError } from '../utils/errors.js';
-import dotenv from 'dotenv';
-import { resolve } from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { toAppError } from '../utils/errors.js';
 
-// Load .env from project root
-// In Docker, variables are already set via docker-compose, dotenv won't override them
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-dotenv.config({ path: resolve(__dirname, '../../../.env') });
+export type AppDatabase = DatabaseType;
 
-// Get database path from env or use default
-const DB_PATH = process.env.DATABASE_PATH || resolve(process.cwd(), 'data/database.db');
-
-// Ensure data directory exists
-const dbDir = resolve(DB_PATH, '..');
-if (!existsSync(dbDir)) {
-  mkdirSync(dbDir, { recursive: true });
+export function createDatabase(databasePath: string): AppDatabase {
+  mkdirSync(dirname(databasePath), { recursive: true });
+  const database = new Database(databasePath);
+  database.pragma('foreign_keys = ON');
+  database.pragma('journal_mode = WAL');
+  dbLogger.info('SQLite database connected', { path: databasePath });
+  return database;
 }
 
-// Create database connection
-const dbInstance: DatabaseType = new Database(DB_PATH);
-
-// Enable foreign keys and WAL mode for better performance
-dbInstance.pragma('foreign_keys = ON');
-dbInstance.pragma('journal_mode = WAL');
-
-dbLogger.info('SQLite database connected', { path: DB_PATH });
-
-// Export database instance
-export const db: DatabaseType = dbInstance;
-
-// Helper function to test connection
-export async function testConnection(): Promise<boolean> {
+export function testConnection(database: AppDatabase): boolean {
   try {
-    const result = db.prepare(`
+    const result = database.prepare(`
       SELECT COUNT(*) AS count FROM sqlite_master
       WHERE type = 'table' AND name IN ('messages', 'schema_migrations')
     `).get() as { count: number };
     return result.count === 2;
   } catch (error: unknown) {
-    const appError = toAppError(error);
-    dbLogger.error('Database connection test failed', { error: appError.message, stack: appError.stack });
+    dbLogger.error('Database connection test failed', { error: toAppError(error).message });
     return false;
   }
 }
 
-// Helper function to get database instance (for transactions)
-export function getDatabase(): DatabaseType {
-  return db;
-}
-
-export async function closeDatabase(): Promise<void> {
-  db.close();
+export function closeDatabase(database: AppDatabase): void {
+  if (database.open) database.close();
   dbLogger.info('Database connection closed');
 }
