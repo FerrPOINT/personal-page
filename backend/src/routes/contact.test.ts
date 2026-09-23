@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../index.js';
 import { loadAppConfig } from '../config.js';
 import { testDatabase, testMessages } from '../test/setup.js';
+import { QueueWorker } from '../workers/telegram-worker.js';
 
 describe('POST /api/contact', () => {
   const app = createApp({ config: loadAppConfig(), database: testDatabase, messages: testMessages });
@@ -26,6 +27,25 @@ describe('POST /api/contact', () => {
     expect(response.status).toBe(202);
     expect(testDatabase.prepare('SELECT name, message FROM messages WHERE id = ?').get(response.body.data.id))
       .toEqual({ name: 'Generic<T>', message: 'Line 1\n\tList<T>\nПривет' });
+  });
+
+  it('delivers an accepted SQLite message after the worker restarts', async () => {
+    const response = await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.12').send({
+      name: 'Queue User', email: 'queue@example.com', message: 'Deliver after restart',
+    });
+    const firstSend = vi.fn().mockRejectedValue(new Error('provider unavailable'));
+    await new QueueWorker(testMessages, { send: firstSend }).processQueue();
+    expect(testMessages.getById(response.body.data.id)?.status).toBe('failed');
+
+    testDatabase.prepare('UPDATE messages SET next_attempt_at = ? WHERE id = ?')
+      .run(new Date(Date.now() - 1_000).toISOString(), response.body.data.id);
+    const restartedSend = vi.fn().mockResolvedValue(undefined);
+    await new QueueWorker(testMessages, { send: restartedSend }).processQueue();
+
+    expect(restartedSend).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Queue User', email: 'queue@example.com', message: 'Deliver after restart',
+    }));
+    expect(testMessages.getById(response.body.data.id)?.status).toBe('sent');
   });
 
   it('returns structured 400 and field errors', async () => {

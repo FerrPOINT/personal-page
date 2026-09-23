@@ -2,6 +2,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
+import { createServer, type Server } from 'node:http';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadAppConfig, type AppConfig } from './config.js';
@@ -18,6 +19,13 @@ export interface AppDependencies {
   config: AppConfig;
   database: AppDatabase;
   messages: MessageRepository;
+}
+
+export interface RunningServer {
+  server: Server;
+  database: AppDatabase;
+  worker: QueueWorker | null;
+  shutdown: (signal: string) => Promise<void>;
 }
 
 export function createApp({ config, database, messages }: AppDependencies): Express {
@@ -73,9 +81,7 @@ export function createApp({ config, database, messages }: AppDependencies): Expr
   return app;
 }
 
-export async function startServer(): Promise<void> {
-  dotenv.config({ path: resolve(fileURLToPath(new URL('../../.env', import.meta.url))) });
-  const config = loadAppConfig();
+export async function startServer(config: AppConfig): Promise<RunningServer> {
   configureLogger(config.logDir, config.nodeEnv, process.env.LOG_LEVEL);
   const database = createDatabase(config.databasePath);
   if (!testConnection(database)) {
@@ -84,28 +90,50 @@ export async function startServer(): Promise<void> {
   }
   const messages = new MessageRepository(database);
   const worker = config.telegram ? new QueueWorker(messages, new TelegramClient(config.telegram)) : null;
-  const server = createApp({ config, database, messages }).listen(config.port, () => {
-    logger.info('Backend API server started', { port: config.port });
-    if (worker) worker.start();
-    else logger.warn('Telegram configuration is missing; worker is disabled');
-  });
-
-  let shutdownStarted = false;
-  const shutdown = async (signal: string) => {
-    if (shutdownStarted) return;
-    shutdownStarted = true;
-    logger.info('Shutdown requested', { signal });
-    const serverClosed = new Promise<void>((done) => server.close(() => done()));
-    await worker?.stop();
-    await serverClosed;
+  const server = createServer(createApp({ config, database, messages }));
+  try {
+    await new Promise<void>((done, reject) => {
+      const onError = (error: Error) => reject(error);
+      server.once('error', onError);
+      server.listen(config.port, () => {
+        server.off('error', onError);
+        done();
+      });
+    });
+  } catch (error) {
     closeDatabase(database);
+    throw error;
+  }
+  logger.info('Backend API server started', { port: config.port });
+  if (worker) worker.start();
+  else logger.warn('Telegram configuration is missing; worker is disabled');
+
+  let shutdownPromise: Promise<void> | null = null;
+  const shutdown = async (signal: string) => {
+    shutdownPromise ??= (async () => {
+      logger.info('Shutdown requested', { signal });
+      const serverClosed = new Promise<void>((done, reject) => server.close((error) => error ? reject(error) : done()));
+      await worker?.stop();
+      await serverClosed;
+      closeDatabase(database);
+    })();
+    return shutdownPromise;
   };
-  process.once('SIGTERM', () => void shutdown('SIGTERM').then(() => process.exit(0)));
-  process.once('SIGINT', () => void shutdown('SIGINT').then(() => process.exit(0)));
+  return { server, database, worker, shutdown };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  startServer().catch((error) => {
+  dotenv.config({ path: resolve(fileURLToPath(new URL('../../.env', import.meta.url))) });
+  startServer(loadAppConfig()).then((runtime) => {
+    const shutdown = (signal: string) => void runtime.shutdown(signal)
+      .then(() => process.exit(0))
+      .catch((error) => {
+        logger.error('Backend shutdown failed', { error: error instanceof Error ? error.message : String(error) });
+        process.exit(1);
+      });
+    process.once('SIGTERM', () => shutdown('SIGTERM'));
+    process.once('SIGINT', () => shutdown('SIGINT'));
+  }).catch((error) => {
     logger.error('Backend startup failed', { error: error instanceof Error ? error.message : String(error) });
     process.exitCode = 1;
   });

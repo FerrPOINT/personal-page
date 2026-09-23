@@ -51,6 +51,7 @@ let fileLoggingConfigured = false;
 export function configureLogger(logDir: string, nodeEnv: string, level?: string): void {
   logger.level = level || (nodeEnv === 'production' ? 'info' : 'debug');
   logger.defaultMeta = { service: 'personal-page-backend', environment: nodeEnv };
+  if (nodeEnv === 'test') return;
   if (fileLoggingConfigured) return;
   mkdirSync(logDir, { recursive: true });
   logger.add(new DailyRotateFile({

@@ -5,7 +5,6 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: resolve(currentDir, '../../.env') });
 
 function migrationsDirectory(): string {
   const candidates = [join(currentDir, 'migrations'), join(currentDir, '../../db/migrations')];
@@ -46,6 +45,7 @@ export function runMigrations(databasePath = process.env.DATABASE_PATH || resolv
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  dotenv.config({ path: resolve(currentDir, '../../.env') });
   try {
     const applied = runMigrations();
     console.log(applied.length ? `Applied migrations: ${applied.join(', ')}` : 'Database schema is up to date');
