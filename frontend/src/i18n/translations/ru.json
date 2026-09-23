@@ -171,7 +171,6 @@
     }
   },
   "footer": {
-    "copyright": "Все права защищены.",
-    "builtWith": "Создано с React, Tailwind & Three.js"
+    "copyright": "Все права защищены."
   }
 }
