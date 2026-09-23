@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, X, Terminal } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useRef, useState } from 'react';
+import { Menu, Terminal, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useLanguage } from '../i18n/hooks/useLanguage';
 import LanguageSwitcher from './LanguageSwitcher';
 import ColorThemeSwitcher from './ColorThemeSwitcher';
@@ -9,133 +9,184 @@ const Navbar: React.FC = () => {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobilePanelRef = useRef<HTMLDivElement>(null);
+
   const navItems = [
     { label: t('navbar.about'), href: '#hero' },
     { label: t('navbar.experience'), href: '#experience' },
     { label: t('navbar.projects'), href: '#projects' },
     { label: t('navbar.skills'), href: '#skills' },
     { label: t('navbar.insights'), href: '#insights' },
-    { label: t('navbar.contact'), href: '#contact' },
   ];
 
+  const closeMenu = (returnFocus = false) => {
+    setIsOpen(false);
+    if (returnFocus) requestAnimationFrame(() => menuButtonRef.current?.focus());
+  };
+
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 24);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleScrollTo = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    e.preventDefault();
-    const id = href.replace('#', '');
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setIsOpen(false);
-    }
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeMenu(true);
+    };
+
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleKeyDown);
+    mobilePanelRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  const handleScrollTo = (event: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    event.preventDefault();
+    const element = document.getElementById(href.slice(1));
+    element?.scrollIntoView({ behavior: 'smooth' });
+    closeMenu();
   };
 
   return (
-    <nav
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrolled ? 'bg-background/80 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.35)]' : 'bg-transparent'
+    <header
+      className={`fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color,box-shadow] duration-300 ${
+        scrolled || isOpen
+          ? 'border-white/10 bg-background/90 shadow-[0_12px_32px_rgba(0,0,0,0.28)] backdrop-blur-xl'
+          : 'border-transparent bg-background/35 backdrop-blur-sm'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <a href="#hero" className="flex-shrink-0 flex items-center gap-2 cursor-pointer group" onClick={(e) => handleScrollTo(e, '#hero')}>
-            <div className="accent-gradient-flow bg-gradient-to-br from-accent-primary to-accent-secondary p-2 rounded-lg group-hover:opacity-90 transition-opacity">
-              <Terminal className="w-6 h-6 text-white" />
-            </div>
-            <div className="hidden sm:block">
-              <span className="block text-lg font-bold tracking-wider text-white group-hover:text-accent-primary transition-colors">{t('navbar.logo.name')}</span>
-              <span className="block text-xs text-accent-primary font-mono tracking-widest">{t('navbar.logo.title')}</span>
-            </div>
-          </a>
+      <nav aria-label={t('navbar.primaryNavigation')} className="mx-auto flex h-[68px] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <a
+          href="#hero"
+          onClick={(event) => handleScrollTo(event, '#hero')}
+          className="group flex min-w-0 items-center gap-3 rounded-lg pr-2 focus-visible:outline-none"
+        >
+          <span className="accent-gradient-flow grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-accent-primary to-accent-secondary shadow-glow-primary transition-transform duration-200 group-hover:scale-105">
+            <Terminal className="h-5 w-5 text-white" aria-hidden="true" />
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-extrabold tracking-[0.14em] text-primary transition-colors group-hover:text-accent-primary sm:text-base">
+              {t('navbar.logo.name')}
+            </span>
+            <span className="block truncate font-mono text-[10px] font-semibold tracking-[0.18em] text-accent-primary">
+              {t('navbar.logo.title')}
+            </span>
+          </span>
+        </a>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-8">
-              {navItems.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={(e) => handleScrollTo(e, item.href)}
-                  className="text-sm font-medium text-secondary hover:text-accent-primary transition-colors duration-200 relative group"
-                >
-                  {item.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent-primary transition-all duration-300 group-hover:w-full"></span>
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <div className="hidden md:flex items-center gap-4">
-            <ColorThemeSwitcher />
-            <LanguageSwitcher />
-            <a 
-              href="#contact"
-              onClick={(e) => handleScrollTo(e, '#contact')}
-              className="px-6 py-2 rounded-full border border-accent-primary/30 text-accent-primary hover:bg-accent-primary/10 transition-all duration-300 font-medium text-sm"
+        <div className="ml-auto hidden min-w-0 items-center justify-center gap-1 lg:flex">
+          {navItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              onClick={(event) => handleScrollTo(event, item.href)}
+              className="rounded-lg px-3 py-2 text-sm font-medium text-primary/80 transition-colors hover:bg-white/5 hover:text-primary focus-visible:outline-none"
             >
-              {t('navbar.letsTalk')}
+              {item.label}
             </a>
-          </div>
+          ))}
+        </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center gap-3">
+        <div className="ml-auto hidden items-center gap-2 lg:flex">
+          <div className="flex items-center gap-2 [&>button]:min-h-10 [&>button]:min-w-10">
             <ColorThemeSwitcher />
             <LanguageSwitcher />
-            <button
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              aria-label={isOpen ? t('navbar.closeMenu') : t('navbar.openMenu')}
-              aria-expanded={isOpen}
-              className="text-gray-300 hover:text-white focus:outline-none"
-            >
-              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
           </div>
+          <a
+            href="#contact"
+            onClick={(event) => handleScrollTo(event, '#contact')}
+            className="inline-flex min-h-10 items-center rounded-lg border border-accent-primary/40 bg-accent-primary/10 px-4 text-sm font-semibold text-accent-primary transition-colors hover:border-accent-primary hover:bg-accent-primary hover:text-background focus-visible:outline-none"
+          >
+            {t('navbar.letsTalk')}
+          </a>
         </div>
-      </div>
 
-      {/* Mobile Nav */}
+        <div className="ml-auto flex items-center gap-1 lg:hidden">
+          <div className="flex items-center [&>button]:min-h-11 [&>button]:min-w-11 [&>button]:justify-center [&>button]:px-2">
+            <ColorThemeSwitcher />
+          </div>
+          <button
+            ref={menuButtonRef}
+            type="button"
+            onClick={() => setIsOpen((open) => !open)}
+            aria-label={isOpen ? t('navbar.closeMenu') : t('navbar.openMenu')}
+            aria-expanded={isOpen}
+            aria-controls="mobile-navigation"
+            className="grid h-11 w-11 place-items-center rounded-lg text-secondary transition-colors hover:bg-white/10 hover:text-primary focus-visible:outline-none"
+          >
+            {isOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
+          </button>
+        </div>
+      </nav>
+
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-surface border-b border-white/5 overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed left-0 top-[69px] z-50 h-[calc(100dvh-69px)] w-full lg:hidden"
           >
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              {navItems.map((item) => (
+            <button
+              type="button"
+              aria-label={t('navbar.closeMenu')}
+              className="absolute inset-0 cursor-default bg-black/65"
+              onClick={() => closeMenu(true)}
+            />
+            <motion.div
+              id="mobile-navigation"
+              ref={mobilePanelRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={t('navbar.primaryNavigation')}
+              tabIndex={-1}
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.18 }}
+              className="relative h-full overflow-y-auto border-t border-white/10 bg-background px-4 py-4 shadow-2xl sm:px-6"
+            >
+              <div className="mx-auto grid max-w-7xl gap-1">
+                <div className="flex items-center justify-between border-b border-white/10 px-4 pb-3">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
+                    {t('navbar.primaryNavigation')}
+                  </span>
+                  <LanguageSwitcher />
+                </div>
+                {navItems.map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    onClick={(event) => handleScrollTo(event, item.href)}
+                    className="rounded-lg px-4 py-3 text-base font-semibold text-primary/85 transition-colors hover:bg-white/5 hover:text-primary focus-visible:outline-none"
+                  >
+                    {item.label}
+                  </a>
+                ))}
                 <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={(e) => handleScrollTo(e, item.href)}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-white/5"
-                >
-                  {item.label}
-                </a>
-              ))}
-              <div className="px-3 py-2">
-                <a 
                   href="#contact"
-                  onClick={(e) => handleScrollTo(e, '#contact')}
-                  className="block w-full text-center px-4 py-2 rounded-full border border-accent-primary/30 text-accent-primary hover:bg-accent-primary/10 transition-all duration-300 font-medium text-sm"
+                  onClick={(event) => handleScrollTo(event, '#contact')}
+                  className="mt-2 inline-flex min-h-11 items-center justify-center rounded-lg bg-accent-primary px-4 text-sm font-bold text-background transition-colors hover:bg-accent-primary-light focus-visible:outline-none"
                 >
                   {t('navbar.letsTalk')}
                 </a>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </header>
   );
 };
 
 export default Navbar;
-

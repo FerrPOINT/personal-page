@@ -28,7 +28,8 @@
     "contact": "Contact",
     "letsTalk": "Let's Talk",
     "openMenu": "Open menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "primaryNavigation": "Primary navigation"
   },
   "hero": {
     "badge": "Open for New Opportunities",

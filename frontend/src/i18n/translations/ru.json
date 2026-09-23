@@ -53,7 +53,8 @@
     "contact": "Контакты",
     "letsTalk": "Связаться",
     "openMenu": "Открыть меню",
-    "closeMenu": "Закрыть меню"
+    "closeMenu": "Закрыть меню",
+    "primaryNavigation": "Основная навигация"
   },
   "projects": {
     "title": "Значимые проекты",
