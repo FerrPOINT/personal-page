@@ -19,7 +19,7 @@
   <a href="https://github.com/FerrPOINT/personal-page/actions/workflows/ci.yml"><img src="https://github.com/FerrPOINT/personal-page/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 </p>
 
-> Демонстрационный full-stack проект персональной страницы: React frontend и Node.js backend используют TypeScript, а контактные обращения проходят через Express API в durable SQLite queue. Репозиторий не является частью runtime-каталога Base и не публикует внутренние сервисы платформы.
+> Персональная full-stack страница: React frontend и Node.js backend реализованы на TypeScript, а контактные обращения проходят через Express API в durable SQLite queue. Репозиторий не является частью runtime-каталога Base и не публикует внутренние сервисы платформы.
 
 <a name="overview"></a>
 ## Обзор
