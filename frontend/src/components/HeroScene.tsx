@@ -39,6 +39,38 @@ interface PlanetVisualDefinition extends PlanetDefinition {
   satellite?: PlanetSatelliteDefinition;
 }
 
+const PLANET_HEAT_TEXTURE_SIZE = 64;
+
+const createPlanetHeatTexture = (): THREE.DataTexture => {
+  const pixels = new Uint8Array(PLANET_HEAT_TEXTURE_SIZE * PLANET_HEAT_TEXTURE_SIZE * 4);
+  for (let y = 0; y < PLANET_HEAT_TEXTURE_SIZE; y += 1) {
+    for (let x = 0; x < PLANET_HEAT_TEXTURE_SIZE; x += 1) {
+      const normalizedX = (x + 0.5) / PLANET_HEAT_TEXTURE_SIZE * 2 - 1;
+      const normalizedY = (y + 0.5) / PLANET_HEAT_TEXTURE_SIZE * 2 - 1;
+      const radius = Math.hypot(normalizedX, normalizedY);
+      const falloff = Math.max(0, 1 - radius);
+      const intensity = falloff * falloff * (3 - 2 * falloff);
+      const offset = (y * PLANET_HEAT_TEXTURE_SIZE + x) * 4;
+      pixels[offset] = 255;
+      pixels[offset + 1] = Math.round(72 + intensity * 110);
+      pixels[offset + 2] = 10;
+      pixels[offset + 3] = Math.round(intensity * 255);
+    }
+  }
+  const texture = new THREE.DataTexture(
+    pixels,
+    PLANET_HEAT_TEXTURE_SIZE,
+    PLANET_HEAT_TEXTURE_SIZE,
+    THREE.RGBAFormat,
+  );
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.needsUpdate = true;
+  return texture;
+};
+
+const PLANET_HEAT_TEXTURE = createPlanetHeatTexture();
+
 // Master multiplier for the sun surface, corona and emitted light.
 export const SUN_BRIGHTNESS = 1.3;
 
@@ -191,7 +223,10 @@ function Sun({ motion }: { motion: SunRotationState }) {
 
 function Planet({ data, motion }: { data: PlanetVisualDefinition; motion: PlanetMotionState }) {
   const planet = useRef<THREE.Mesh>(null);
-  const planetMaterial = useRef<THREE.MeshStandardMaterial>(null);
+  const heatSpot = useRef<THREE.Sprite>(null);
+  const heatSpotMaterial = useRef<THREE.SpriteMaterial>(null);
+  const heatWave = useRef<THREE.Mesh>(null);
+  const heatWaveMaterial = useRef<THREE.MeshBasicMaterial>(null);
   const labelRef = useRef<THREE.Group>(null);
   const satelliteOrbitRef = useRef<THREE.Group>(null);
   const satelliteRef = useRef<THREE.Mesh>(null);
@@ -199,20 +234,41 @@ function Planet({ data, motion }: { data: PlanetVisualDefinition; motion: Planet
   const satelliteAngle = useRef(data.satellite?.initialAngle ?? 0);
   const satelliteOrbitTilt = useMemo(() => new THREE.Euler(0.45, 0, 0.18), []);
   const satellitePosition = useMemo(() => new THREE.Vector3(), []);
-  const planetBaseColor = useMemo(() => new THREE.Color(data.color), [data.color]);
-  const planetHotColor = useMemo(() => new THREE.Color('#ff9a38'), []);
-  const planetHotEmissive = useMemo(() => new THREE.Color('#ff3200'), []);
+  const localImpactDirection = useMemo(() => new THREE.Vector3(), []);
+  const inversePlanetRotation = useMemo(() => new THREE.Quaternion(), []);
+  const heatWaveNormal = useMemo(() => new THREE.Vector3(0, 0, 1), []);
+  const lastImpactRevision = useRef(-1);
   const lastRenderedHeat = useRef(0);
   useFrame((_, delta) => {
     if (!planet.current) return;
     const effectiveSpeed = advancePlanetMotion(motion, data.orbitSpeed, delta);
     placePlanetAtAngle(data, motion.angle, planet.current.position);
     planet.current.rotation.y += delta * 0.6 * (effectiveSpeed / data.orbitSpeed);
-    if (planetMaterial.current && (motion.impactHeat > 0.001 || lastRenderedHeat.current > 0.001)) {
+    if (heatSpot.current && motion.impactRevision !== lastImpactRevision.current) {
+      inversePlanetRotation.copy(planet.current.quaternion).invert();
+      localImpactDirection.copy(motion.impactDirection).applyQuaternion(inversePlanetRotation);
+      heatSpot.current.position.copy(localImpactDirection).multiplyScalar(data.size * 1.03);
+      if (heatWave.current) {
+        heatWave.current.position.copy(localImpactDirection).multiplyScalar(data.size * 1.04);
+        heatWave.current.quaternion.setFromUnitVectors(heatWaveNormal, localImpactDirection);
+      }
+      lastImpactRevision.current = motion.impactRevision;
+    }
+    if (motion.impactHeat > 0.001 || lastRenderedHeat.current > 0.001) {
       const renderedHeat = motion.impactHeat > 0.001 ? motion.impactHeat : 0;
-      planetMaterial.current.color.lerpColors(planetBaseColor, planetHotColor, renderedHeat);
-      planetMaterial.current.emissive.lerpColors(planetBaseColor, planetHotEmissive, renderedHeat);
-      planetMaterial.current.emissiveIntensity = 0.1 + renderedHeat * 2.4;
+      if (heatSpot.current && heatSpotMaterial.current) {
+        heatSpot.current.visible = renderedHeat > 0;
+        heatSpot.current.scale.setScalar(data.size * (0.48 + (1 - renderedHeat) * 0.32));
+        heatSpotMaterial.current.opacity = renderedHeat * 0.62;
+      }
+      if (heatWave.current && heatWaveMaterial.current) {
+        const waveProgress = 1 - renderedHeat;
+        heatWave.current.visible = renderedHeat > 0;
+        heatWave.current.scale.setScalar(data.size * (0.18 + waveProgress * 1.9));
+        heatWaveMaterial.current.opacity = (
+          Math.sin(Math.PI * waveProgress) * 0.62 + renderedHeat * 0.18
+        );
+      }
       lastRenderedHeat.current = renderedHeat;
     }
     if (labelRef.current) {
@@ -243,13 +299,35 @@ function Planet({ data, motion }: { data: PlanetVisualDefinition; motion: Planet
     <mesh ref={planet}>
       <sphereGeometry args={[data.size, 32, 32]} />
       <meshStandardMaterial
-        ref={planetMaterial}
         color={data.color}
         roughness={0.7}
         metalness={0.6}
         emissive={data.color}
         emissiveIntensity={0.1}
       />
+      <sprite ref={heatSpot} visible={false}>
+        <spriteMaterial
+          ref={heatSpotMaterial}
+          map={PLANET_HEAT_TEXTURE}
+          color="#ff681c"
+          transparent
+          opacity={0}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </sprite>
+      <mesh ref={heatWave} visible={false}>
+        <ringGeometry args={[0.72, 1, 48]} />
+        <meshBasicMaterial
+          ref={heatWaveMaterial}
+          color="#ff5a16"
+          transparent
+          opacity={0}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
     </mesh>
     <group ref={labelRef}><Billboard><Text fontSize={data.size < 0.45 ? 0.46 : 0.6} color="white" outlineWidth={0.04} outlineColor="#000">{data.label}</Text></Billboard></group>
     {data.satellite && (
@@ -339,7 +417,13 @@ export default function HeroScene({
   const planetOffsets = useMemo(() => Array.from({ length: 6 }, () => Math.random() * Math.PI * 2), []);
   const shipPositions = useMemo(() => SHIP_ORBITS.map(() => new THREE.Vector3()), []);
   const planetMotions = useMemo<PlanetMotionState[]>(() => (
-    planetOffsets.map((angle) => ({ angle, speedOffset: 0, impactHeat: 0 }))
+    planetOffsets.map((angle) => ({
+      angle,
+      speedOffset: 0,
+      impactHeat: 0,
+      impactDirection: new THREE.Vector3(),
+      impactRevision: 0,
+    }))
   ), [planetOffsets]);
   const starfieldMotion = useRef<StarfieldMotionState>(createInitialStarfieldMotion());
   const sunRotation = useRef<SunRotationState>(createInitialSunRotation());

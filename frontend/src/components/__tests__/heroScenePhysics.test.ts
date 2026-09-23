@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import {
   advancePlanetMotion,
-  applyPlanetOrbitImpact,
+  applyPlanetImpact,
   applyStarfieldImpulse,
   applySunAngularImpulse,
   BLASTER_ATTACK_RANGE,
@@ -230,12 +230,34 @@ describe('hero scene trajectories', () => {
 
   it('applies signed planet impacts within the safe orbital-speed range', () => {
     const planet = new THREE.Vector3(10, 0, 0);
-    const motion = { angle: 0, speedOffset: 0, impactHeat: 0 };
+    const motion = {
+      angle: 0,
+      speedOffset: 0,
+      impactHeat: 0,
+      impactDirection: new THREE.Vector3(),
+      impactRevision: 0,
+    };
 
-    applyPlanetOrbitImpact(motion, planet, new THREE.Vector3(0, 0, -5), 0.2);
+    applyPlanetImpact(
+      motion,
+      planet,
+      new THREE.Vector3(10, 1, 0),
+      new THREE.Vector3(0, 0, -5),
+      0.2,
+    );
     expect(motion.speedOffset).toBeCloseTo(-0.195, 6);
+    expect(motion.impactDirection.x).toBeCloseTo(0, 6);
+    expect(motion.impactDirection.y).toBeCloseTo(1, 6);
+    expect(motion.impactDirection.z).toBeCloseTo(0, 6);
+    expect(motion.impactRevision).toBe(1);
 
-    applyPlanetOrbitImpact(motion, planet, new THREE.Vector3(0, 0, -5), 0.2);
+    applyPlanetImpact(
+      motion,
+      planet,
+      new THREE.Vector3(10, 1, 0),
+      new THREE.Vector3(0, 0, -5),
+      0.2,
+    );
     expect(motion.speedOffset).toBeCloseTo(-0.195, 6);
     expect(advancePlanetMotion(motion, 0.2, 1)).toBeCloseTo(0.005, 6);
     expect(motion.speedOffset).toBeGreaterThan(-0.195);
@@ -243,9 +265,21 @@ describe('hero scene trajectories', () => {
 
   it('heats a planet on impact and lets it cool without changing its base motion', () => {
     const planet = new THREE.Vector3(10, 0, 0);
-    const motion = { angle: 0, speedOffset: 0, impactHeat: 0 };
+    const motion = {
+      angle: 0,
+      speedOffset: 0,
+      impactHeat: 0,
+      impactDirection: new THREE.Vector3(),
+      impactRevision: 0,
+    };
 
-    applyPlanetOrbitImpact(motion, planet, new THREE.Vector3(-5, 0, 0), 0.2);
+    applyPlanetImpact(
+      motion,
+      planet,
+      new THREE.Vector3(11, 0, 0),
+      new THREE.Vector3(-5, 0, 0),
+      0.2,
+    );
     expect(motion.impactHeat).toBe(1);
     expect(motion.speedOffset).toBeCloseTo(0, 6);
 

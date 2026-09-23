@@ -34,6 +34,8 @@ export interface PlanetMotionState {
   angle: number;
   speedOffset: number;
   impactHeat: number;
+  impactDirection: THREE.Vector3;
+  impactRevision: number;
 }
 
 export interface StarfieldMotionState {
@@ -92,13 +94,21 @@ export const calculatePlanetOrbitImpulse = (
   return baseOrbitSpeed * PLANET_IMPACT_MAX_RATIO * THREE.MathUtils.clamp(alignment, -1, 1);
 };
 
-export const applyPlanetOrbitImpact = (
+export const applyPlanetImpact = (
   motion: PlanetMotionState,
   planetPosition: THREE.Vector3,
+  impactPoint: THREE.Vector3,
   impactVelocity: THREE.Vector3,
   baseOrbitSpeed: number,
 ): void => {
   motion.impactHeat = 1;
+  motion.impactDirection.subVectors(impactPoint, planetPosition);
+  if (motion.impactDirection.lengthSq() <= 1e-8 && impactVelocity.lengthSq() > 1e-8) {
+    motion.impactDirection.copy(impactVelocity).normalize().negate();
+  } else {
+    motion.impactDirection.normalize();
+  }
+  motion.impactRevision += 1;
   const impulse = calculatePlanetOrbitImpulse(planetPosition, impactVelocity, baseOrbitSpeed);
   const maxOffset = baseOrbitSpeed * PLANET_IMPACT_MAX_RATIO;
   motion.speedOffset = THREE.MathUtils.clamp(motion.speedOffset + impulse, -maxOffset, maxOffset);

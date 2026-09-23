@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import {
-  applyPlanetOrbitImpact,
+  applyPlanetImpact,
   BLASTER_ATTACK_RANGE,
   BLASTER_BEAM_DURATION,
   calculateBlasterSegment,
@@ -362,7 +362,7 @@ export default function HeroSceneMeteorField({
     if (collisionTarget !== 'planet' || collisionPlanetIndex < 0) return;
     const planet = planets[collisionPlanetIndex];
     const motion = planetMotions[collisionPlanetIndex];
-    applyPlanetOrbitImpact(motion, planetPosition, impactVelocity, planet.orbitSpeed);
+    applyPlanetImpact(motion, planetPosition, collisionPoint, impactVelocity, planet.orbitSpeed);
   };
 
   const deactivateMeteor = (meteor: MeteorState, group: THREE.Group | null) => {
