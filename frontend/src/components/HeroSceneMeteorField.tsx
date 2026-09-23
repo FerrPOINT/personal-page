@@ -5,7 +5,6 @@ import * as THREE from 'three';
 import {
   applyPlanetImpact,
   BLASTER_ATTACK_RANGE,
-  BLASTER_BEAM_DURATION,
   calculateBlasterSegment,
   calculateFirstContact,
   getCollisionMotionScale,
@@ -22,47 +21,21 @@ import {
   createMeteorTailGeometry,
   createRadialGlowTexture,
 } from './heroSceneVisuals';
+import {
+  BLASTER_COUNT,
+  BURST_COUNT,
+  BURST_FRAGMENT_COUNT,
+  createBlasterPool,
+  createBurstPool,
+  createMeteorPool,
+  METEOR_COUNT,
+  type BurstKind,
+  type CollisionTarget,
+  type MeteorState,
+} from './heroSceneMeteorPools';
+import { mathRandomSource, type RandomSource } from './heroSceneRandom';
+import { configureMeteorSpawn } from './heroSceneMeteorRuntime';
 
-type BurstKind = 'collision' | 'blaster';
-type CollisionTarget = 'none' | 'sun' | 'planet';
-
-interface MeteorState {
-  active: boolean;
-  position: THREE.Vector3;
-  collisionPosition: THREE.Vector3;
-  velocity: THREE.Vector3;
-  age: number;
-  maxAge: number;
-  heat: number;
-  impactHeat: number;
-}
-
-interface BlasterState {
-  active: boolean;
-  age: number;
-  duration: number;
-  start: THREE.Vector3;
-  end: THREE.Vector3;
-}
-
-interface BurstState {
-  active: boolean;
-  kind: BurstKind;
-  age: number;
-  duration: number;
-  position: THREE.Vector3;
-  fragmentPositions: THREE.Vector3[];
-  fragmentRotations: THREE.Vector3[];
-  velocities: THREE.Vector3[];
-  angularVelocities: THREE.Vector3[];
-  scales: number[];
-  visualScale: number;
-}
-
-const METEOR_COUNT = 5;
-const BLASTER_COUNT = 4;
-const BURST_COUNT = 6;
-const BURST_FRAGMENT_COUNT = 26;
 const COLLISION_STEP = 1 / 30;
 const BURST_STYLE_COUNT = 3;
 const BURST_STYLE_COUNTS = [9, 8, 9] as const;
@@ -105,11 +78,13 @@ export default function HeroSceneMeteorField({
   planetMotions,
   ships,
   onSunImpact,
+  randomSource = mathRandomSource,
 }: {
   planets: readonly PlanetDefinition[];
   planetMotions: readonly PlanetMotionState[];
   ships: readonly THREE.Vector3[];
   onSunImpact: (impactPosition: THREE.Vector3, impactVelocity: THREE.Vector3) => void;
+  randomSource?: RandomSource;
 }) {
   const renderer = useThree((state) => state.gl);
   const camera = useThree((state) => state.camera);
@@ -129,37 +104,10 @@ export default function HeroSceneMeteorField({
   const collisionAccumulator = useRef(0);
   const effectsReady = useRef(false);
   const spawnSequence = useRef(0);
-  const nextSpawnAt = useRef(1.5 + Math.random() * 1.5);
-  const meteors = useRef<MeteorState[]>(Array.from({ length: METEOR_COUNT }, () => ({
-    active: false,
-    position: new THREE.Vector3(),
-    collisionPosition: new THREE.Vector3(),
-    velocity: new THREE.Vector3(),
-    age: 0,
-    maxAge: 0,
-    heat: 0,
-    impactHeat: 0,
-  })));
-  const blasters = useRef<BlasterState[]>(Array.from({ length: BLASTER_COUNT }, () => ({
-    active: false,
-    age: 0,
-    duration: BLASTER_BEAM_DURATION,
-    start: new THREE.Vector3(),
-    end: new THREE.Vector3(),
-  })));
-  const bursts = useRef<BurstState[]>(Array.from({ length: BURST_COUNT }, (_, index) => ({
-    active: false,
-    kind: index % 2 === 0 ? 'collision' : 'blaster',
-    age: 0,
-    duration: 2.2,
-    position: new THREE.Vector3(),
-    fragmentPositions: Array.from({ length: BURST_FRAGMENT_COUNT }, () => new THREE.Vector3()),
-    fragmentRotations: Array.from({ length: BURST_FRAGMENT_COUNT }, () => new THREE.Vector3()),
-    velocities: Array.from({ length: BURST_FRAGMENT_COUNT }, () => new THREE.Vector3()),
-    angularVelocities: Array.from({ length: BURST_FRAGMENT_COUNT }, () => new THREE.Vector3()),
-    scales: Array.from({ length: BURST_FRAGMENT_COUNT }, () => 1),
-    visualScale: 1,
-  })));
+  const nextSpawnAt = useRef(1.5 + randomSource.next() * 1.5);
+  const meteors = useRef(createMeteorPool());
+  const blasters = useRef(createBlasterPool());
+  const bursts = useRef(createBurstPool());
   const target = useMemo(() => new THREE.Vector3(), []);
   const previousMeteorPosition = useMemo(() => new THREE.Vector3(), []);
   const impactPosition = useMemo(() => new THREE.Vector3(), []);
@@ -291,6 +239,8 @@ export default function HeroSceneMeteorField({
     const prewarmEffects = async () => {
       try {
         await renderer.compileAsync(prewarmScene, camera);
+      } catch {
+        // Shader prewarming is opportunistic; runtime rendering remains the fallback.
       } finally {
         prewarmScene.clear();
         if (!cancelled) effectsReady.current = true;
@@ -324,23 +274,23 @@ export default function HeroSceneMeteorField({
     for (let fragmentIndex = 0; fragmentIndex < BURST_FRAGMENT_COUNT; fragmentIndex += 1) {
       const velocity = burst.velocities[fragmentIndex];
       velocity.set(
-        Math.random() * 2 - 1,
-        Math.random() * 2 - 1,
-        Math.random() * 2 - 1,
+        randomSource.next() * 2 - 1,
+        randomSource.next() * 2 - 1,
+        randomSource.next() * 2 - 1,
       ).normalize()
-        .multiplyScalar(collisionMotionScale * (0.7 + Math.random() * 0.9))
+        .multiplyScalar(collisionMotionScale * (0.7 + randomSource.next() * 0.9))
         .addScaledVector(impactDirection, collisionMotionScale * 0.22);
       burst.angularVelocities[fragmentIndex].set(
-        Math.random() * 2 - 1,
-        Math.random() * 2 - 1,
-        Math.random() * 2 - 1,
-      ).normalize().multiplyScalar(collisionMotionScale * (0.8 + Math.random() * 1.4));
-      burst.scales[fragmentIndex] = 0.65 + Math.random() * 0.85;
+        randomSource.next() * 2 - 1,
+        randomSource.next() * 2 - 1,
+        randomSource.next() * 2 - 1,
+      ).normalize().multiplyScalar(collisionMotionScale * (0.8 + randomSource.next() * 1.4));
+      burst.scales[fragmentIndex] = 0.65 + randomSource.next() * 0.85;
       burst.fragmentPositions[fragmentIndex].set(0, 0, 0);
       burst.fragmentRotations[fragmentIndex].set(
-        Math.random() * Math.PI,
-        Math.random() * Math.PI,
-        Math.random() * Math.PI,
+        randomSource.next() * Math.PI,
+        randomSource.next() * Math.PI,
+        randomSource.next() * Math.PI,
       );
     }
   };
@@ -417,72 +367,9 @@ export default function HeroSceneMeteorField({
     const meteor = meteors.current[index];
     const sequence = spawnSequence.current;
     spawnSequence.current += 1;
-    const threatenedShipIndex = sequence % 2 === 0
-      ? (Math.floor(sequence / 2) + 4) % ships.length
-      : -1;
-    const threatenedShip = threatenedShipIndex >= 0 ? ships[threatenedShipIndex] : null;
-    const angle = threatenedShip
-      ? Math.atan2(threatenedShip.z, threatenedShip.x) + (Math.random() - 0.5) * 0.35
-      : Math.random() * Math.PI * 2;
-    const radius = threatenedShip ? 25 + Math.random() * 3 : 23 + Math.random() * 6;
-    const speed = 3.5 + Math.random() * 2;
-    meteor.position.set(
-      Math.cos(angle) * radius,
-      threatenedShip ? threatenedShip.y + (Math.random() - 0.5) * 1.5 : (Math.random() - 0.5) * 7,
-      Math.sin(angle) * radius,
+    configureMeteorSpawn(
+      meteor, sequence, elapsed, ships, planets, planetMotions, target, randomSource,
     );
-
-    const aim = Math.random();
-    if (threatenedShip) {
-      const orbit = SHIP_ORBITS[threatenedShipIndex];
-      placeShipAtTime(orbit, elapsed, target);
-      let travelEstimate = meteor.position.distanceTo(target) / speed;
-      placeShipAtTime(orbit, elapsed + travelEstimate, target);
-      travelEstimate = meteor.position.distanceTo(target) / speed;
-      placeShipAtTime(orbit, elapsed + travelEstimate, target);
-      target.x += (Math.random() - 0.5) * 0.3;
-      target.y += (Math.random() - 0.5) * 0.2;
-      target.z += (Math.random() - 0.5) * 0.3;
-    } else if (aim < 0.18) {
-      target.set(
-        (Math.random() - 0.5) * 2.4,
-        (Math.random() - 0.5) * 2,
-        (Math.random() - 0.5) * 2.4,
-      );
-      if (target.lengthSq() > 1.4 ** 2) target.normalize().multiplyScalar(1.4);
-    } else if (aim < 0.48) {
-      const planetIndex = Math.floor(Math.random() * planets.length);
-      const planet = planets[planetIndex];
-      const motion = planetMotions[planetIndex];
-      const effectiveSpeed = planet.orbitSpeed + motion.speedOffset;
-      placePlanetAtAngle(planet, motion.angle, target);
-      let travelEstimate = meteor.position.distanceTo(target) / speed;
-      placePlanetAtAngle(planet, motion.angle + effectiveSpeed * travelEstimate, target);
-      travelEstimate = meteor.position.distanceTo(target) / speed;
-      placePlanetAtAngle(planet, motion.angle + effectiveSpeed * travelEstimate, target);
-    } else if (aim < 0.78) {
-      const ship = ships[Math.floor(Math.random() * ships.length)];
-      target.copy(ship);
-      target.x += (Math.random() - 0.5) * 2;
-      target.y += (Math.random() - 0.5) * 1.2;
-      target.z += (Math.random() - 0.5) * 2;
-    } else {
-      const targetRadius = Math.sqrt(Math.random()) * 15;
-      const targetAngle = Math.random() * Math.PI * 2;
-      target.set(
-        Math.cos(targetAngle) * targetRadius,
-        (Math.random() - 0.5) * 5,
-        Math.sin(targetAngle) * targetRadius,
-      );
-    }
-
-    meteor.velocity.copy(target).sub(meteor.position).normalize().multiplyScalar(speed);
-    meteor.collisionPosition.copy(meteor.position);
-    meteor.age = 0;
-    meteor.maxAge = 14;
-    meteor.heat = 0;
-    meteor.impactHeat = 0;
-    meteor.active = true;
     const group = meteorGroups.current[index];
     if (group) {
       group.visible = true;
@@ -503,7 +390,7 @@ export default function HeroSceneMeteorField({
     if (collisionDelta > 0) collisionAccumulator.current = 0;
     if (effectsReady.current && elapsed >= nextSpawnAt.current) {
       spawnMeteor(elapsed);
-      nextSpawnAt.current = elapsed + 1.8 + Math.random() * 3.2;
+      nextSpawnAt.current = elapsed + 1.8 + randomSource.next() * 3.2;
     }
 
     if (collisionDelta > 0) {
@@ -645,7 +532,7 @@ export default function HeroSceneMeteorField({
           impactPosition,
           meteor.velocity,
         )) {
-          shipCooldowns.current[defendingShip] = elapsed + 1.2 + Math.random() * 0.8;
+          shipCooldowns.current[defendingShip] = elapsed + 1.2 + randomSource.next() * 0.8;
           deactivateMeteor(meteor, group);
           continue;
         }

@@ -21,23 +21,15 @@ import {
 } from './heroScenePhysics';
 import HeroSceneMeteorField from './HeroSceneMeteorField';
 import { createRadialGlowTexture } from './heroSceneVisuals';
-
-const SCENE_PRIMARY = '#00d9ff';
-const SCENE_SECONDARY = '#ff00ff';
-const MAX_SCENE_FPS = 60;
-
-interface PlanetSatelliteDefinition {
-  orbitRadius: number;
-  orbitSpeed: number;
-  size: number;
-  color: string;
-  label: string;
-  initialAngle: number;
-}
-
-interface PlanetVisualDefinition extends PlanetDefinition {
-  satellite?: PlanetSatelliteDefinition;
-}
+import {
+  createPlanetDefinitions,
+  MAX_SCENE_FPS,
+  SCENE_PRIMARY,
+  SCENE_SECONDARY,
+  SUN_BRIGHTNESS,
+  type PlanetVisualDefinition,
+} from './heroSceneConfig';
+export { SUN_BRIGHTNESS } from './heroSceneConfig';
 
 const IMPACT_SURFACE_VERTEX_SHADER = `
   varying vec3 vSurfaceDirection;
@@ -83,9 +75,6 @@ const createImpactSurfaceUniforms = (waveStrength: number) => ({
   uWaveProgress: { value: 0 },
   uWaveStrength: { value: waveStrength },
 });
-
-// Master multiplier for the sun surface, corona and emitted light.
-export const SUN_BRIGHTNESS = 1.3;
 
 function SceneFrameLoop({ active }: { active: boolean }) {
   const invalidate = useThree((state) => state.invalidate);
@@ -456,28 +445,7 @@ export default function HeroScene({
     }
     applyStarfieldImpulse(starfieldMotion.current, worldImpactDirection);
   }, [systemWorldQuaternion, worldImpactDirection]);
-  const planets = useMemo<readonly PlanetVisualDefinition[]>(() => [
-    {
-      orbitRadius: 4.1,
-      orbitSpeed: 0.38,
-      size: 0.34,
-      color: '#a58b72',
-      label: labels[0],
-      satellite: {
-        orbitRadius: 1.25,
-        orbitSpeed: 1.35,
-        size: 0.13,
-        color: '#22d3ee',
-        label: labels[1],
-        initialAngle: 2.2,
-      },
-    },
-    { orbitRadius: 6, orbitSpeed: 0.30, size: 0.5, color: SCENE_PRIMARY, label: labels[2] },
-    { orbitRadius: 9, orbitSpeed: 0.25, size: 0.7, color: SCENE_SECONDARY, label: labels[3] },
-    { orbitRadius: 12, orbitSpeed: 0.20, size: 0.65, color: '#10b981', label: labels[4] },
-    { orbitRadius: 15, orbitSpeed: 0.15, size: 0.8, color: '#3b82f6', label: labels[5] },
-    { orbitRadius: 19, orbitSpeed: 0.10, size: 0.9, color: '#f97316', label: labels[6] },
-  ], [labels]);
+  const planets = useMemo(() => createPlanetDefinitions(labels), [labels]);
   return <div className="absolute inset-0 w-full h-[55vh] md:h-full">
     <Canvas className="w-full h-full" frameloop="demand" dpr={[1, 1.5]}>
       <SceneFrameLoop active={active} />
