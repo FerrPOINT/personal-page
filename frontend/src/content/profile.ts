@@ -1,4 +1,5 @@
 import type { Locale } from './types';
+import { getExperience, getProjects, getSkills } from './selectors';
 
 export const CAREER_START_DATE = '2015-08-01' as const;
 
@@ -70,4 +71,27 @@ export function getResumeHighlights(locale: Locale) {
     ...highlight,
     ...locales[locale],
   }));
+}
+
+const RESUME_PROJECT_SLUGS = new Set([
+  'pdlc-platform', 'analytics-agent', 'adtech-bidder', 'fintech-crypto',
+]);
+const REDUNDANT_RESUME_SKILLS = new Set([
+  'Java', 'Spring Boot', 'Rust', 'Python', 'React',
+  'Frameworks', 'Enterprise Systems', 'Game Dev', 'Mobile Optimization',
+]);
+
+export function getResumeData(locale: Locale) {
+  const experience = getExperience(locale);
+  const skills = getSkills(locale);
+  const highlights = getResumeHighlights(locale);
+  const projects = getProjects(locale).filter((project) => RESUME_PROJECT_SLUGS.has(project.slug));
+  const focusAreas = Array.from(new Set(experience.flatMap((item) => item.focusAreas))).slice(0, 12);
+  const technicalSkills = Array.from(new Set([
+    ...skills.map((skill) => skill.name),
+    ...highlights.flatMap((project) => project.stack),
+    ...projects.flatMap((project) => project.stack),
+    ...experience.flatMap((item) => item.tech),
+  ])).filter((skill) => !REDUNDANT_RESUME_SKILLS.has(skill));
+  return { experience, highlights, projects, focusAreas, technicalSkills };
 }

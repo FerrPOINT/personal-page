@@ -75,5 +75,3 @@ export function assertPortfolioContent(): void {
     if (skill.level < 0 || skill.level > 100) throw new Error(`Skill ${skill.id} has an invalid level`);
   }
 }
-
-assertPortfolioContent();

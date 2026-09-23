@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CAREER_START_DATE, formatYearsOfExperience, getResumeHighlights, getYearsOfExperience } from './profile';
+import { CAREER_START_DATE, formatYearsOfExperience, getResumeData, getResumeHighlights, getYearsOfExperience } from './profile';
 
 describe('profile content', () => {
   it('calculates experience from the canonical career start date', () => {
@@ -20,5 +20,15 @@ describe('profile content', () => {
       href: 'https://github.com/FerrPOINT/java-agent',
     });
     expect(getResumeHighlights('en')[0].summary).toContain('OpenAI-compatible');
+  });
+
+  it('builds stable localized resume selections outside the UI', () => {
+    expect(getResumeData('ru').projects.map(({ slug }) => slug)).toEqual([
+      'analytics-agent', 'adtech-bidder', 'fintech-crypto', 'pdlc-platform',
+    ]);
+    expect(getResumeData('en').focusAreas.slice(0, 5)).toEqual([
+      'Enterprise Platforms', 'PDLC / SDLC', 'AI Agents', 'Developer Infrastructure', 'Full-Cycle Delivery',
+    ]);
+    expect(getResumeData('ru').technicalSkills).toContain('Java / Spring');
   });
 });
