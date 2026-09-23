@@ -78,21 +78,31 @@ function isValidEmail(email: string): boolean {
  * Sanitize string input (basic XSS protection)
  * Removes HTML tags and dangerous characters
  */
-export function sanitizeString(input: string): string {
+export function normalizeSingleLine(input: unknown): string {
   if (typeof input !== 'string') {
     return '';
   }
-  
-  // Trim whitespace
-  let sanitized = input.trim();
-  
-  // Remove HTML tags (basic protection)
-  sanitized = sanitized.replace(/<[^>]*>/g, '');
-  
-  // Remove potentially dangerous characters for SQL/script injection
-  // But keep normal punctuation for messages
-  sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, ''); // Remove control characters
-  
-  return sanitized;
+
+  return input.replace(/[\u0000-\u001F\u007F]/g, '').trim();
+}
+
+export function normalizeMessage(input: unknown): string {
+  if (typeof input !== 'string') return '';
+
+  return input
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .trim();
+}
+
+export function normalizeContactForm(data: unknown): ContactFormData {
+  const value = typeof data === 'object' && data !== null
+    ? data as Partial<Record<keyof ContactFormData, unknown>>
+    : {};
+  return {
+    name: normalizeSingleLine(value.name),
+    email: normalizeSingleLine(value.email),
+    message: normalizeMessage(value.message),
+  };
 }
 

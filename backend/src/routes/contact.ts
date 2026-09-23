@@ -1,7 +1,7 @@
 import { Router, type NextFunction, type Request, type Response, type Router as ExpressRouter } from 'express';
 import rateLimit from 'express-rate-limit';
 import { createMessage } from '../models/Message.js';
-import { sanitizeString, validateContactForm } from '../services/validation.js';
+import { normalizeContactForm, validateContactForm } from '../services/validation.js';
 import { DuplicateError } from '../utils/errors.js';
 
 const router: ExpressRouter = Router();
@@ -19,11 +19,7 @@ const contactLimiter = rateLimit({
 });
 
 router.post('/', contactLimiter, async (req: Request, res: Response, next: NextFunction) => {
-  const formData = {
-    name: sanitizeString(req.body?.name),
-    email: sanitizeString(req.body?.email),
-    message: sanitizeString(req.body?.message),
-  };
+  const formData = normalizeContactForm(req.body);
   const validation = validateContactForm(formData);
   if (!validation.valid) {
     return res.status(400).json({

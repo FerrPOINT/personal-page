@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useLanguage } from '../i18n/hooks/useLanguage';
 
 interface ModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ const focusableSelector = [
 ].join(',');
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
+  const { t } = useLanguage();
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
@@ -56,7 +58,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
             className="relative w-full max-w-4xl bg-surface border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-background/50">
               <h3 id={titleId} className="text-xl font-bold text-white truncate pr-4">{title}</h3>
-              <button type="button" onClick={onClose} aria-label="Закрыть"
+              <button type="button" onClick={onClose} aria-label={t('common.close')}
                 className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>

@@ -9,7 +9,12 @@ interface ApiErrorBody {
 }
 
 export class ContactApiError extends Error {
-  constructor(public readonly status: number, message: string, public readonly fields?: Record<string, string>) {
+  constructor(
+    public readonly status: number,
+    public readonly code: string,
+    message: string,
+    public readonly fields?: Record<string, string>,
+  ) {
     super(message);
   }
 }
@@ -28,13 +33,20 @@ export async function submitContact(data: ContactFormData, timeoutMs = 8_000): P
     let body: ApiErrorBody & { success?: boolean; data?: { id: string; status: 'pending' } } = {};
     try { body = await response.json(); } catch { /* handled below */ }
     if (response.status !== 202 || !body.success || !body.data) {
-      throw new ContactApiError(response.status, body.error?.message || `HTTP ${response.status}`, body.error?.fields);
+      throw new ContactApiError(
+        response.status,
+        body.error?.code || 'UNKNOWN_ERROR',
+        body.error?.message || `HTTP ${response.status}`,
+        body.error?.fields,
+      );
     }
     return body.data;
   } catch (error) {
     if (error instanceof ContactApiError) throw error;
-    if (error instanceof DOMException && error.name === 'AbortError') throw new ContactApiError(0, 'REQUEST_TIMEOUT');
-    throw new ContactApiError(0, 'NETWORK_ERROR');
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new ContactApiError(0, 'REQUEST_TIMEOUT', 'REQUEST_TIMEOUT');
+    }
+    throw new ContactApiError(0, 'NETWORK_ERROR', 'NETWORK_ERROR');
   } finally {
     window.clearTimeout(timeout);
   }

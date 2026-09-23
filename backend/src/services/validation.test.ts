@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sanitizeString, validateContactForm } from './validation.js';
+import { normalizeContactForm, normalizeMessage, normalizeSingleLine, validateContactForm } from './validation.js';
 
 describe('contact validation', () => {
   it('accepts valid values', () => {
@@ -20,7 +20,24 @@ describe('contact validation', () => {
       .toContain('5000');
   });
 
-  it('sanitizes tags, control characters and surrounding whitespace', () => {
-    expect(sanitizeString('  <b>Hello</b>\u0000  ')).toBe('Hello');
+  it('normalizes single-line values without interpreting HTML-like text', () => {
+    expect(normalizeSingleLine('  User<T>\u0000  ')).toBe('User<T>');
+    expect(normalizeSingleLine('User\nName')).toBe('UserName');
+  });
+
+  it('preserves message lines, tabs, unicode and HTML-like text', () => {
+    expect(normalizeMessage('  first\r\n\t<T> Привет\u0000\rthird  ')).toBe('first\n\t<T> Привет\nthird');
+  });
+
+  it('normalizes all fields through one form boundary', () => {
+    expect(normalizeContactForm({
+      name: '  Alice  ',
+      email: '  alice@example.com ',
+      message: ' line 1\r\nline 2 ',
+    })).toEqual({
+      name: 'Alice',
+      email: 'alice@example.com',
+      message: 'line 1\nline 2',
+    });
   });
 });

@@ -17,6 +17,16 @@ describe('POST /api/contact', () => {
       .toEqual({ status: 'pending' });
   });
 
+  it('stores multiline and HTML-like message text without data loss', async () => {
+    const response = await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.11').send({
+      name: ' Generic<T> ', email: 'generic@example.com', message: 'Line 1\r\n\tList<T>\nПривет',
+    });
+
+    expect(response.status).toBe(202);
+    expect(db.prepare('SELECT name, message FROM messages WHERE id = ?').get(response.body.data.id))
+      .toEqual({ name: 'Generic<T>', message: 'Line 1\n\tList<T>\nПривет' });
+  });
+
   it('returns structured 400 and field errors', async () => {
     const response = await request(app).post('/api/contact').set('X-Forwarded-For', '10.0.0.2').send({ name: '', email: 'bad', message: '' });
     expect(response.status).toBe(400);

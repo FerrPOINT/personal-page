@@ -147,6 +147,7 @@
       "errorTooLarge": "The message is too long. The maximum length is 5000 characters.",
       "error413": "The message is too long. Please shorten it to 5000 characters.",
       "error400": "Invalid request data. Please check your input.",
+      "error409": "This message has already been accepted. Please try again in five minutes.",
       "error500": "Server error. Please try again later.",
       "error503": "Service temporarily unavailable. Please try again later.",
       "error429": "Too many requests. Please try again later.",

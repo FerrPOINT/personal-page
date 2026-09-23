@@ -70,11 +70,12 @@ const Contact: React.FC = () => {
     } catch (error) {
       setSubmitStatus('error');
       if (!(error instanceof ContactApiError)) return setSubmitMessage(t('contact.form.errorUnknown'));
-      if (error.status === 400 || error.status === 409) setSubmitMessage(error.message);
+      if (error.code === 'VALIDATION_ERROR') setSubmitMessage(t('contact.form.error400'));
+      else if (error.code === 'DUPLICATE_MESSAGE') setSubmitMessage(t('contact.form.error409'));
       else if (error.status === 413) setSubmitMessage(t('contact.form.error413'));
       else if (error.status === 429) setSubmitMessage(t('contact.form.error429'));
       else if (error.status === 500) setSubmitMessage(t('contact.form.error500'));
-      else if (error.message === 'REQUEST_TIMEOUT') setSubmitMessage(t('contact.form.errorTimeout'));
+      else if (error.code === 'REQUEST_TIMEOUT') setSubmitMessage(t('contact.form.errorTimeout'));
       else setSubmitMessage(t('contact.form.errorNetwork'));
     }
   };
