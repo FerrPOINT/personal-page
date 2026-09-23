@@ -191,6 +191,7 @@ function Sun({ motion }: { motion: SunRotationState }) {
 
 function Planet({ data, motion }: { data: PlanetVisualDefinition; motion: PlanetMotionState }) {
   const planet = useRef<THREE.Mesh>(null);
+  const planetMaterial = useRef<THREE.MeshStandardMaterial>(null);
   const labelRef = useRef<THREE.Group>(null);
   const satelliteOrbitRef = useRef<THREE.Group>(null);
   const satelliteRef = useRef<THREE.Mesh>(null);
@@ -198,11 +199,22 @@ function Planet({ data, motion }: { data: PlanetVisualDefinition; motion: Planet
   const satelliteAngle = useRef(data.satellite?.initialAngle ?? 0);
   const satelliteOrbitTilt = useMemo(() => new THREE.Euler(0.45, 0, 0.18), []);
   const satellitePosition = useMemo(() => new THREE.Vector3(), []);
+  const planetBaseColor = useMemo(() => new THREE.Color(data.color), [data.color]);
+  const planetHotColor = useMemo(() => new THREE.Color('#ff9a38'), []);
+  const planetHotEmissive = useMemo(() => new THREE.Color('#ff3200'), []);
+  const lastRenderedHeat = useRef(0);
   useFrame((_, delta) => {
     if (!planet.current) return;
     const effectiveSpeed = advancePlanetMotion(motion, data.orbitSpeed, delta);
     placePlanetAtAngle(data, motion.angle, planet.current.position);
     planet.current.rotation.y += delta * 0.6 * (effectiveSpeed / data.orbitSpeed);
+    if (planetMaterial.current && (motion.impactHeat > 0.001 || lastRenderedHeat.current > 0.001)) {
+      const renderedHeat = motion.impactHeat > 0.001 ? motion.impactHeat : 0;
+      planetMaterial.current.color.lerpColors(planetBaseColor, planetHotColor, renderedHeat);
+      planetMaterial.current.emissive.lerpColors(planetBaseColor, planetHotEmissive, renderedHeat);
+      planetMaterial.current.emissiveIntensity = 0.1 + renderedHeat * 2.4;
+      lastRenderedHeat.current = renderedHeat;
+    }
     if (labelRef.current) {
       labelRef.current.position.set(planet.current.position.x, data.size + 0.8, planet.current.position.z);
     }
@@ -230,7 +242,14 @@ function Planet({ data, motion }: { data: PlanetVisualDefinition; motion: Planet
     </mesh>
     <mesh ref={planet}>
       <sphereGeometry args={[data.size, 32, 32]} />
-      <meshStandardMaterial color={data.color} roughness={0.7} metalness={0.6} emissive={data.color} emissiveIntensity={0.1} />
+      <meshStandardMaterial
+        ref={planetMaterial}
+        color={data.color}
+        roughness={0.7}
+        metalness={0.6}
+        emissive={data.color}
+        emissiveIntensity={0.1}
+      />
     </mesh>
     <group ref={labelRef}><Billboard><Text fontSize={data.size < 0.45 ? 0.46 : 0.6} color="white" outlineWidth={0.04} outlineColor="#000">{data.label}</Text></Billboard></group>
     {data.satellite && (
@@ -320,7 +339,7 @@ export default function HeroScene({
   const planetOffsets = useMemo(() => Array.from({ length: 6 }, () => Math.random() * Math.PI * 2), []);
   const shipPositions = useMemo(() => SHIP_ORBITS.map(() => new THREE.Vector3()), []);
   const planetMotions = useMemo<PlanetMotionState[]>(() => (
-    planetOffsets.map((angle) => ({ angle, speedOffset: 0 }))
+    planetOffsets.map((angle) => ({ angle, speedOffset: 0, impactHeat: 0 }))
   ), [planetOffsets]);
   const starfieldMotion = useRef<StarfieldMotionState>(createInitialStarfieldMotion());
   const sunRotation = useRef<SunRotationState>(createInitialSunRotation());

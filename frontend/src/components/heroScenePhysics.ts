@@ -8,6 +8,7 @@ export const SCENE_UP = new THREE.Vector3(0, 1, 0);
 const BLASTER_DIRECTION = new THREE.Vector3();
 
 export const PLANET_IMPACT_MAX_RATIO = 0.975;
+export const PLANET_IMPACT_HEAT_RECOVERY_RATE = 0.85;
 export const STARFIELD_DRIFT_SPEED = 0.024;
 export const STARFIELD_IMPACT_SPEED = 0.06;
 export const STARFIELD_RECOVERY_RATE = 0.45;
@@ -32,6 +33,7 @@ export interface PlanetDefinition {
 export interface PlanetMotionState {
   angle: number;
   speedOffset: number;
+  impactHeat: number;
 }
 
 export interface StarfieldMotionState {
@@ -96,6 +98,7 @@ export const applyPlanetOrbitImpact = (
   impactVelocity: THREE.Vector3,
   baseOrbitSpeed: number,
 ): void => {
+  motion.impactHeat = 1;
   const impulse = calculatePlanetOrbitImpulse(planetPosition, impactVelocity, baseOrbitSpeed);
   const maxOffset = baseOrbitSpeed * PLANET_IMPACT_MAX_RATIO;
   motion.speedOffset = THREE.MathUtils.clamp(motion.speedOffset + impulse, -maxOffset, maxOffset);
@@ -109,6 +112,12 @@ export const advancePlanetMotion = (
   const effectiveSpeed = baseOrbitSpeed + motion.speedOffset;
   motion.angle = (motion.angle + effectiveSpeed * delta) % (Math.PI * 2);
   motion.speedOffset = THREE.MathUtils.damp(motion.speedOffset, 0, 0.7, delta);
+  motion.impactHeat = THREE.MathUtils.damp(
+    motion.impactHeat,
+    0,
+    PLANET_IMPACT_HEAT_RECOVERY_RATE,
+    delta,
+  );
   return effectiveSpeed;
 };
 

@@ -230,7 +230,7 @@ describe('hero scene trajectories', () => {
 
   it('applies signed planet impacts within the safe orbital-speed range', () => {
     const planet = new THREE.Vector3(10, 0, 0);
-    const motion = { angle: 0, speedOffset: 0 };
+    const motion = { angle: 0, speedOffset: 0, impactHeat: 0 };
 
     applyPlanetOrbitImpact(motion, planet, new THREE.Vector3(0, 0, -5), 0.2);
     expect(motion.speedOffset).toBeCloseTo(-0.195, 6);
@@ -239,6 +239,22 @@ describe('hero scene trajectories', () => {
     expect(motion.speedOffset).toBeCloseTo(-0.195, 6);
     expect(advancePlanetMotion(motion, 0.2, 1)).toBeCloseTo(0.005, 6);
     expect(motion.speedOffset).toBeGreaterThan(-0.195);
+  });
+
+  it('heats a planet on impact and lets it cool without changing its base motion', () => {
+    const planet = new THREE.Vector3(10, 0, 0);
+    const motion = { angle: 0, speedOffset: 0, impactHeat: 0 };
+
+    applyPlanetOrbitImpact(motion, planet, new THREE.Vector3(-5, 0, 0), 0.2);
+    expect(motion.impactHeat).toBe(1);
+    expect(motion.speedOffset).toBeCloseTo(0, 6);
+
+    advancePlanetMotion(motion, 0.2, 1);
+    expect(motion.impactHeat).toBeGreaterThan(0);
+    expect(motion.impactHeat).toBeLessThan(1);
+
+    advancePlanetMotion(motion, 0.2, 8);
+    expect(motion.impactHeat).toBeLessThan(0.001);
   });
 
   it('maps a star impact to a faster background drift in the same direction', () => {
