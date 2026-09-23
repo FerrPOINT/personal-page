@@ -16,11 +16,10 @@ test.describe('Contact Form - Telegram delivery queue', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    await page.evaluate(() => {
-      document.getElementById('contact')?.scrollIntoView({ behavior: 'instant', block: 'center' });
-    });
-
-    await expect(page.locator('#contact')).toBeInViewport({ timeout: 10000 });
+    const contact = page.locator('#contact');
+    await contact.waitFor({ state: 'attached' });
+    await contact.scrollIntoViewIfNeeded();
+    await expect(contact).toBeInViewport({ timeout: 10000 });
   });
 
   test('TC-001: durably accepts contact form for Telegram delivery', async ({ page }) => {
