@@ -349,13 +349,22 @@ describe('hero scene trajectories', () => {
 
   it('does not invent torque for a direct central sun impact and recovers after a glancing hit', () => {
     const motion = createInitialSunRotation();
-    const initial = { ...motion };
+    const initialVelocity = {
+      x: motion.xVelocity,
+      y: motion.yVelocity,
+      z: motion.zVelocity,
+    };
     applySunAngularImpulse(
       motion,
       new THREE.Vector3(2, 0, 0),
       new THREE.Vector3(-4, 0, 0),
     );
-    expect(motion).toEqual(initial);
+    expect(motion.xVelocity).toBe(initialVelocity.x);
+    expect(motion.yVelocity).toBe(initialVelocity.y);
+    expect(motion.zVelocity).toBe(initialVelocity.z);
+    expect(motion.impactHeat).toBe(1);
+    expect(motion.impactDirection).toEqual(new THREE.Vector3(1, 0, 0));
+    expect(motion.impactRevision).toBe(1);
 
     applySunAngularImpulse(
       motion,
@@ -365,9 +374,10 @@ describe('hero scene trajectories', () => {
     expect(Math.hypot(motion.xVelocity, motion.yVelocity, motion.zVelocity))
       .toBeCloseTo(SUN_MAX_ANGULAR_SPEED, 8);
     for (let frame = 0; frame < 1800; frame += 1) recoverSunRotation(motion, 1 / 60);
-    expect(motion.xVelocity).toBeCloseTo(initial.xVelocity, 3);
-    expect(motion.yVelocity).toBeCloseTo(initial.yVelocity, 3);
-    expect(motion.zVelocity).toBeCloseTo(initial.zVelocity, 3);
+    expect(motion.xVelocity).toBeCloseTo(initialVelocity.x, 3);
+    expect(motion.yVelocity).toBeCloseTo(initialVelocity.y, 3);
+    expect(motion.zVelocity).toBeCloseTo(initialVelocity.z, 3);
+    expect(motion.impactHeat).toBeLessThan(0.001);
   });
 
   it('uses the same orbital equations for rendering and collision prediction', () => {

@@ -15,6 +15,7 @@ export const STARFIELD_RECOVERY_RATE = 0.45;
 export const SUN_IMPACT_ANGULAR_SCALE = 0.09;
 export const SUN_MAX_ANGULAR_SPEED = 1.2;
 export const SUN_ROTATION_RECOVERY_RATE = 0.3;
+export const SUN_IMPACT_HEAT_RECOVERY_RATE = 0.7;
 
 const SUN_BASE_ANGULAR_VELOCITY = {
   x: 0.025,
@@ -48,6 +49,9 @@ export interface SunRotationState {
   xVelocity: number;
   yVelocity: number;
   zVelocity: number;
+  impactHeat: number;
+  impactDirection: THREE.Vector3;
+  impactRevision: number;
 }
 
 export interface ShipOrbit {
@@ -184,6 +188,9 @@ export const createInitialSunRotation = (): SunRotationState => ({
   xVelocity: SUN_BASE_ANGULAR_VELOCITY.x,
   yVelocity: SUN_BASE_ANGULAR_VELOCITY.y,
   zVelocity: SUN_BASE_ANGULAR_VELOCITY.z,
+  impactHeat: 0,
+  impactDirection: new THREE.Vector3(),
+  impactRevision: 0,
 });
 
 export const calculateSunAngularImpulse = (
@@ -203,6 +210,11 @@ export const applySunAngularImpulse = (
   impactPosition: THREE.Vector3,
   impactVelocity: THREE.Vector3,
 ): void => {
+  motion.impactHeat = 1;
+  if (impactPosition.lengthSq() > 1e-8) {
+    motion.impactDirection.copy(impactPosition).normalize();
+  }
+  motion.impactRevision += 1;
   const impulse = calculateSunAngularImpulse(impactPosition, impactVelocity);
   const nextX = motion.xVelocity + impulse.x;
   const nextY = motion.yVelocity + impulse.y;
@@ -233,6 +245,12 @@ export const recoverSunRotation = (motion: SunRotationState, delta: number): voi
     motion.zVelocity,
     SUN_BASE_ANGULAR_VELOCITY.z,
     SUN_ROTATION_RECOVERY_RATE,
+    delta,
+  );
+  motion.impactHeat = THREE.MathUtils.damp(
+    motion.impactHeat,
+    0,
+    SUN_IMPACT_HEAT_RECOVERY_RATE,
     delta,
   );
 };
