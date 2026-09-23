@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/personal-page-readme-banner.svg" alt="Персональная страница — React frontend и Node.js backend на TypeScript" />
+  <img src="docs/assets/personal-page-readme-banner.svg" alt="Персональная full-stack страница на TypeScript: React frontend и Node.js backend" />
 </p>
 
 <p align="center">
