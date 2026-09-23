@@ -38,6 +38,7 @@ Firebat1 не собирает образы и не обращается к regi
 SHA=$(git rev-parse HEAD)
 docker save personal-page-frontend:$SHA personal-page-backend:$SHA | gzip > personal-page-$SHA.tar.gz
 scp personal-page-$SHA.tar.gz firebat1:/opt/personal-page/releases/
+scp docker-compose.yml firebat1:/opt/personal-page/docker-compose.yml
 
 ssh firebat1
 cd /opt/personal-page
