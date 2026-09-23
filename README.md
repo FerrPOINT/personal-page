@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/personal-page-readme-banner.svg" alt="Александр Жуков — Software Architect" />
+  <img src="docs/assets/personal-page-readme-banner.svg" alt="Персональная страница — React frontend и Node.js backend на TypeScript" />
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@
   <a href="https://github.com/FerrPOINT/personal-page/actions/workflows/ci.yml"><img src="https://github.com/FerrPOINT/personal-page/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 </p>
 
-> Публичное портфолио Александра Жукова: проверяемая витрина опыта, проектов и архитектурных материалов. Репозиторий не является частью runtime-каталога Base и не публикует внутренние сервисы платформы.
+> Демонстрационный full-stack проект персональной страницы: React frontend и Node.js backend используют TypeScript, а контактные обращения проходят через Express API в durable SQLite queue. Репозиторий не является частью runtime-каталога Base и не публикует внутренние сервисы платформы.
 
 <a name="overview"></a>
 ## Обзор

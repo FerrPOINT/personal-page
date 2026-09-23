@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="360" viewBox="0 0 1600 360" role="img" aria-labelledby="title desc">
-  <title id="title">Александр Жуков — Software Architect</title>
-  <desc id="desc">Personal architecture portfolio banner</desc>
+  <title id="title">Персональная страница — демонстрационный full-stack проект</title>
+  <desc id="desc">React frontend и Node.js backend на TypeScript</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#07111d"/>
@@ -30,9 +30,9 @@
   <g transform="translate(92 82)">
     <rect width="70" height="70" rx="16" fill="url(#accent)"/>
     <path d="M21 23L33 35L21 47M43 47H51" fill="none" stroke="#07111d" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="0" y="124" fill="#eaf9f8" font-family="Arial, sans-serif" font-size="50" font-weight="700" letter-spacing="3">АЛЕКСАНДР ЖУКОВ</text>
-    <text x="2" y="163" fill="#5eead4" font-family="monospace" font-size="20" font-weight="700" letter-spacing="4">SOFTWARE ARCHITECT / SYSTEMS ENGINEER</text>
-    <rect x="2" y="202" width="430" height="4" rx="2" fill="url(#accent)"/>
-    <text x="2" y="245" fill="#b8d1d8" font-family="Arial, sans-serif" font-size="20">Architecture · High-load systems · AI integration · Full-cycle delivery</text>
+    <text x="0" y="124" fill="#eaf9f8" font-family="Arial, sans-serif" font-size="46" font-weight="700" letter-spacing="2">ПЕРСОНАЛЬНАЯ СТРАНИЦА</text>
+    <text x="2" y="163" fill="#5eead4" font-family="monospace" font-size="18" font-weight="700" letter-spacing="2">DEMO PROJECT · FRONTEND + BACKEND ON TYPESCRIPT</text>
+    <rect x="2" y="202" width="560" height="4" rx="2" fill="url(#accent)"/>
+    <text x="2" y="245" fill="#b8d1d8" font-family="Arial, sans-serif" font-size="20">React 19 / Vite / Tailwind → Node.js 24 / Express / SQLite</text>
   </g>
 </svg>
