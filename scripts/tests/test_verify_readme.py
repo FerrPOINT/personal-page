@@ -38,9 +38,11 @@ class VerifyReadmeTests(unittest.TestCase):
         root = self.make_repo(
             '<a href="#overview"><img src="badge.svg" alt="Overview" /></a>\n'
             '<a name="overview"></a>\n'
+            '<img src="docs/assets/personal-page-readme-banner.svg" alt="Banner" />\n'
             '![Main page](docs/screenshots/main-page.png)\n',
             {
                 "badge.svg": "<svg/>",
+                "docs/assets/personal-page-readme-banner.svg": "<svg/>",
                 "docs/screenshots/main-page.png": png_header(1920, 1080),
             },
         )
@@ -73,11 +75,21 @@ class VerifyReadmeTests(unittest.TestCase):
 
         self.assertIn("RMD007", "\n".join(validator.validate(root)))
 
+    def test_reports_missing_readme_banner(self) -> None:
+        validator = load_validator()
+        root = self.make_repo(
+            "![Main page](docs/screenshots/main-page.png)\n",
+            {"docs/screenshots/main-page.png": png_header(1920, 1080)},
+        )
+
+        self.assertIn("RMD010", "\n".join(validator.validate(root)))
+
     def test_current_readme_references_committed_desktop_main_page(self) -> None:
         validator = load_validator()
         root = SCRIPT.parents[1]
         readme = (root / "README.md").read_text(encoding="utf-8")
 
+        self.assertIn('<img src="docs/assets/personal-page-readme-banner.svg"', readme)
         self.assertIn('<a name="visual-proof"></a>', readme)
         self.assertIn("docs/screenshots/main-page.png", readme)
         self.assertEqual([], validator.validate(root))

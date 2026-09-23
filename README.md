@@ -1,4 +1,6 @@
-# Personal Page — Александр Жуков
+<p align="center">
+  <img src="docs/assets/personal-page-readme-banner.svg" alt="Александр Жуков — Software Architect" />
+</p>
 
 <p align="center">
   <a href="#overview"><img src="https://img.shields.io/badge/Overview-1F2937?style=for-the-badge" alt="Обзор" /></a>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="360" viewBox="0 0 1600 360" role="img" aria-labelledby="title desc">
+  <title id="title">Александр Жуков — Software Architect</title>
+  <desc id="desc">Personal architecture portfolio banner</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07111d"/>
+      <stop offset="0.56" stop-color="#0d2030"/>
+      <stop offset="1" stop-color="#123238"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-40%" width="160%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#9ce6de" stroke-opacity=".10"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="360" fill="url(#bg)"/>
+  <rect width="1600" height="360" fill="url(#grid)"/>
+  <path d="M1070 55L1545 55M1160 145L1515 145M1090 235L1570 235M1190 315L1490 315" stroke="#67e8f9" stroke-opacity=".18"/>
+  <path d="M1110 55L1160 145L1090 235L1190 315" fill="none" stroke="url(#accent)" stroke-width="2"/>
+  <circle cx="1110" cy="55" r="8" fill="#2dd4bf" filter="url(#glow)"/>
+  <circle cx="1160" cy="145" r="8" fill="#38bdf8" filter="url(#glow)"/>
+  <circle cx="1090" cy="235" r="8" fill="#2dd4bf" filter="url(#glow)"/>
+  <circle cx="1190" cy="315" r="8" fill="#38bdf8" filter="url(#glow)"/>
+  <g transform="translate(92 82)">
+    <rect width="70" height="70" rx="16" fill="url(#accent)"/>
+    <path d="M21 23L33 35L21 47M43 47H51" fill="none" stroke="#07111d" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="0" y="124" fill="#eaf9f8" font-family="Arial, sans-serif" font-size="50" font-weight="700" letter-spacing="3">АЛЕКСАНДР ЖУКОВ</text>
+    <text x="2" y="163" fill="#5eead4" font-family="monospace" font-size="20" font-weight="700" letter-spacing="4">SOFTWARE ARCHITECT / SYSTEMS ENGINEER</text>
+    <rect x="2" y="202" width="430" height="4" rx="2" fill="url(#accent)"/>
+    <text x="2" y="245" fill="#b8d1d8" font-family="Arial, sans-serif" font-size="20">Architecture · High-load systems · AI integration · Full-cycle delivery</text>
+  </g>
+</svg>

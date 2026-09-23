@@ -23,6 +23,7 @@ LOCAL_PATH_RE = re.compile(r"(?:file://|(?<![A-Za-z0-9_])/(?:opt|root)/)")
 EXTERNAL_PREFIXES = ("https://", "http://", "mailto:", "data:", "#")
 REQUIRED_ANCHORS = {"overview", "capabilities", "quick-start", "visual-proof", "architecture", "quality"}
 MAIN_PAGE_SCREENSHOT = Path("docs/screenshots/main-page.png")
+README_BANNER = Path("docs/assets/personal-page-readme-banner.svg")
 
 
 def resolve_local(root: Path, target: str) -> Path | None:
@@ -80,6 +81,11 @@ def validate(root: Path = ROOT) -> list[str]:
         findings.append("RMD005: README.md: unresolved placeholder")
     if LOCAL_PATH_RE.search(text):
         findings.append("RMD006: README.md: local filesystem path leaked")
+
+    if README_BANNER.as_posix() not in image_targets:
+        findings.append(f"RMD010: README.md: does not reference required banner {README_BANNER}")
+    elif not (root / README_BANNER).is_file():
+        findings.append(f"RMD010: README.md: missing required banner {README_BANNER}")
 
     screenshot = root / MAIN_PAGE_SCREENSHOT
     if not screenshot.is_file():
