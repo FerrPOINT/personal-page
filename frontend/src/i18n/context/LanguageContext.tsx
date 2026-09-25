@@ -14,6 +14,32 @@ interface LanguageProviderProps {
   children: ReactNode;
 }
 
+const updateMetaContent = (selector: string, content: string) => {
+  document.querySelector<HTMLMetaElement>(selector)?.setAttribute('content', content);
+};
+
+export const applyLocalizedDocumentMetadata = (language: Language) => {
+  const { seo } = translations[language];
+  document.documentElement.lang = language;
+  document.title = seo.title;
+  updateMetaContent('meta[name="description"]', seo.description);
+  updateMetaContent('meta[property="og:title"]', seo.title);
+  updateMetaContent('meta[property="og:description"]', seo.description);
+  updateMetaContent('meta[property="og:locale"]', language === 'ru' ? 'ru_RU' : 'en_US');
+
+  const structuredData = document.getElementById('person-structured-data');
+  if (structuredData) {
+    structuredData.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: seo.name,
+      url: 'https://azhukov-dev.ru/',
+      jobTitle: seo.jobTitle,
+      sameAs: ['https://github.com/FerrPOINT', 'https://t.me/azhukov7'],
+    });
+  }
+};
+
 // Cache for compiled regex patterns for interpolation
 const interpolationCache = new Map<string, RegExp>();
 
@@ -67,7 +93,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   // Save language to localStorage when changed
   useEffect(() => {
     saveLanguage(language);
-    document.documentElement.lang = language;
+    applyLocalizedDocumentMetadata(language);
     // Clear translation cache when language changes
     translationCache.clear();
   }, [language]);

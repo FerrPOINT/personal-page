@@ -52,6 +52,7 @@ export interface ProjectDefinition {
 export interface Project extends Omit<ProjectDefinition, 'locales'>, ProjectLocaleContent {}
 
 export interface ExperienceLocaleContent {
+  company: string;
   role: string;
   period: string;
   description: string;
@@ -62,7 +63,6 @@ export interface ExperienceLocaleContent {
 export interface ExperienceDefinition {
   id: string;
   order: number;
-  company: string;
   tech: string[];
   locales: Record<Locale, ExperienceLocaleContent>;
 }

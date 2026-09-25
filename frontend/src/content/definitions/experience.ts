@@ -4,7 +4,6 @@ export const EXPERIENCE_DEFINITIONS = [
   {
     "id": "independent-products",
     "order": 1,
-    "company": "Independent / Freelance",
     "tech": [
       "Java 25",
       "Spring Boot 4.1",
@@ -17,24 +16,26 @@ export const EXPERIENCE_DEFINITIONS = [
     ],
     "locales": {
       "ru": {
-        "role": "Software Architect / FullStack Engineer",
+        "company": "Независимые проекты / Фриланс",
+        "role": "Архитектор ПО / FullStack-инженер",
         "period": "2025 - Настоящее время",
-        "description": "Параллельно развиваю собственные open-source и self-hosted продукты и выполняю фриланс-проекты полного цикла: от анализа задачи и архитектуры до реализации, CI/CD и эксплуатации.",
+        "description": "Параллельно развиваю собственные продукты с открытым кодом и самостоятельным развёртыванием и выполняю фриланс-проекты полного цикла: от анализа задачи и архитектуры до реализации, CI/CD и эксплуатации.",
         "focusAreas": [
           "Enterprise-платформы",
           "PDLC / SDLC",
           "AI-агенты",
-          "Developer Infrastructure",
-          "Full-Cycle Delivery"
+          "Инфраструктура разработки",
+          "Полный цикл поставки"
         ],
         "achievements": [
           "Создаю экосистему Base Platform: Task Tracker, Project Workflow, Fleet Control, Wiki / Evidence, Forge CI/CD и Admin Panel — единый PDLC / SDLC-контур от задачи и работы AI-агентов до проверяемого релиза.",
-          "Разрабатываю Java Agent на Java 25 и Spring Boot 4.1: долгоживущие агентные сессии, REST / SSE и OpenAI-compatible API, CLI, инструменты с политиками безопасности, MCP и Telegram gateway.",
-          "Проектирую self-hosted enterprise-инструменты с типизированными API-контрактами, аудитом, изоляцией секретов, Docker-развёртыванием и воспроизводимым выпуском.",
-          "Выполняю фриланс-задачи по архитектуре, full-stack разработке, AI-интеграциям, CI/CD и развитию существующих систем."
+          "Разрабатываю Java Agent на Java 25 и Spring Boot 4.1: долгоживущие агентные сессии, REST / SSE и совместимый с OpenAI API, CLI, инструменты с политиками безопасности, MCP и Telegram-шлюз.",
+          "Проектирую самостоятельно развёртываемые корпоративные инструменты с типизированными API-контрактами, аудитом, изоляцией секретов, Docker-развёртыванием и воспроизводимым выпуском.",
+          "Выполняю фриланс-задачи по архитектуре, FullStack-разработке, AI-интеграциям, CI/CD и развитию существующих систем."
         ]
       },
       "en": {
+        "company": "Independent / Freelance",
         "role": "Software Architect / FullStack Engineer",
         "period": "2025 - Present",
         "description": "In parallel, I build my own open-source and self-hosted products and deliver full-cycle freelance projects, from discovery and architecture through implementation, CI/CD, and operations.",
@@ -57,7 +58,6 @@ export const EXPERIENCE_DEFINITIONS = [
   {
     "id": "1",
     "order": 2,
-    "company": "WMT Group",
     "tech": [
       "Java 21",
       "Spring Boot 3",
@@ -69,25 +69,27 @@ export const EXPERIENCE_DEFINITIONS = [
     ],
     "locales": {
       "ru": {
-        "role": "Java Developer / Architect",
+        "company": "WMT Group",
+        "role": "Java-разработчик / архитектор",
         "period": "Апр 2022 - Март 2026",
-        "description": "Разработка и архитектура портфеля сложных enterprise-систем WMT Group: PDLC-платформы полного цикла, агентные AI-системы, банковские и FinTech-сервисы, HR-продукты. Зоны ответственности — системный дизайн, безопасность, производительность, надёжность и поставка.",
+        "description": "Разработка и архитектура портфеля сложных корпоративных систем WMT Group: PDLC-платформы полного цикла, агентные AI-системы, банковские и FinTech-сервисы, HR-продукты. Зоны ответственности — системный дизайн, безопасность, производительность, надёжность и поставка.",
         "focusAreas": [
           "Enterprise-платформы",
           "PDLC / SDLC",
-          "Agentic AI",
+          "Агентные AI-системы",
           "Банки и FinTech",
-          "Security & Performance"
+          "Безопасность и производительность"
         ],
         "achievements": [
-          "Спроектировал PDLC-контур полного цикла: управление задачами, фазовые workflow, парк агентов, knowledge/evidence, Git/CI/CD и релизные проверки.",
-          "Разрабатывал агентные AI-системы с оркестрацией 10+ автономных агентов, RAG, управлением контекстом и изолированными runtime.",
+          "Спроектировал PDLC-контур полного цикла: управление задачами, фазовые процессы, парк агентов, знания и подтверждения, Git/CI/CD и релизные проверки.",
+          "Разрабатывал агентные AI-системы с оркестрацией 10+ автономных агентов, RAG, управлением контекстом и изолированными средами исполнения.",
           "Проектировал защищённые интеграции и криптографические сервисы для банковских проектов, включая цифровые подписи, аудит и работу с чувствительными данными.",
           "Проводил профилирование и оптимизацию Java/Spring-сервисов, SQL и межсервисного взаимодействия, устраняя узкие места под высокой нагрузкой.",
           "Разработал комплексную HR-платформу для рекрутинга с четырьмя независимыми модулями."
         ]
       },
       "en": {
+        "company": "WMT Group",
         "role": "Java Developer / Architect",
         "period": "Apr 2022 - Mar 2026",
         "description": "Engineering and architecture across a portfolio of complex WMT Group enterprise systems: full-cycle PDLC platforms, agentic AI systems, banking and FinTech services, and HR products. Responsibilities span system design, security, performance, reliability, and delivery.",
@@ -111,7 +113,6 @@ export const EXPERIENCE_DEFINITIONS = [
   {
     "id": "2",
     "order": 3,
-    "company": "Jar Soft",
     "tech": [
       "Java",
       "Spring Boot",
@@ -124,7 +125,8 @@ export const EXPERIENCE_DEFINITIONS = [
     ],
     "locales": {
       "ru": {
-        "role": "FullStack Java Software Engineer",
+        "company": "Jar Soft",
+        "role": "FullStack Java-разработчик",
         "period": "Янв 2017 - Фев 2022",
         "description": "Разработал высоконагруженные распределенные серверные системы и AdTech решения, обрабатывающие ~1 миллион RPS.",
         "focusAreas": [
@@ -135,13 +137,14 @@ export const EXPERIENCE_DEFINITIONS = [
           "AWS"
         ],
         "achievements": [
-          "Построил систему OpenRTB bidder, обрабатывающую ~1 миллион запросов в секунду.",
+          "Построил OpenRTB-сервис аукциона, обрабатывающий ~1 миллион запросов в секунду.",
           "Спроектировал архитектуру для сервисов предиктивного моделирования на AWS.",
-          "Разработал CRM UI и backend сервисы для управления кампаниями.",
+          "Разработал CRM-интерфейс и серверные сервисы для управления кампаниями.",
           "Настроил Aerospike и JVM для субмиллисекундного времени отклика."
         ]
       },
       "en": {
+        "company": "Jar Soft",
         "role": "FullStack Java Software Engineer",
         "period": "Jan 2017 - Feb 2022",
         "description": "Developed high-load distributed server systems and AdTech solutions processing ~1 million RPS.",
@@ -164,7 +167,6 @@ export const EXPERIENCE_DEFINITIONS = [
   {
     "id": "3",
     "order": 4,
-    "company": "Improve Group",
     "tech": [
       "Java",
       "Frameworks",
@@ -172,7 +174,8 @@ export const EXPERIENCE_DEFINITIONS = [
     ],
     "locales": {
       "ru": {
-        "role": "Software Developer",
+        "company": "Improve Group",
+        "role": "Разработчик ПО",
         "period": "Авг 2016 - Дек 2016",
         "description": "Развитие и поддержка корпоративных приложений, подбор и внедрение технологий для клиентских проектов.",
         "focusAreas": [
@@ -187,6 +190,7 @@ export const EXPERIENCE_DEFINITIONS = [
         ]
       },
       "en": {
+        "company": "Improve Group",
         "role": "Software Developer",
         "period": "Aug 2016 - Dec 2016",
         "description": "Developed and maintained enterprise applications, evaluating and introducing technologies for client projects.",
@@ -206,7 +210,6 @@ export const EXPERIENCE_DEFINITIONS = [
   {
     "id": "4",
     "order": 5,
-    "company": "Academ-Media",
     "tech": [
       "Java",
       "C#",
@@ -215,7 +218,8 @@ export const EXPERIENCE_DEFINITIONS = [
     ],
     "locales": {
       "ru": {
-        "role": "Software Developer",
+        "company": "Academ-Media",
+        "role": "Разработчик ПО",
         "period": "Авг 2015 - Авг 2016",
         "description": "Разработка игр и оптимизация движка для мобильных платформ.",
         "focusAreas": [
@@ -230,6 +234,7 @@ export const EXPERIENCE_DEFINITIONS = [
         ]
       },
       "en": {
+        "company": "Academ-Media",
         "role": "Software Developer",
         "period": "Aug 2015 - Aug 2016",
         "description": "Game development and engine optimization for mobile platforms.",

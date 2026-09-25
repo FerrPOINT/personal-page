@@ -15,6 +15,12 @@
       "ember": "оранжево-фиолетовую тему"
     }
   },
+  "seo": {
+    "title": "Александр Жуков | Старший архитектор ПО",
+    "description": "Архитектор ПО с опытом с 2015 года. Enterprise-платформы, Java/Spring, высоконагруженные системы, PDLC/SDLC, агентные AI-системы и DevOps.",
+    "name": "Александр Жуков",
+    "jobTitle": "Старший архитектор ПО"
+  },
   "hero": {
     "badge": "Открыт для новых возможностей",
     "name": "Александр",
@@ -28,6 +34,7 @@
     "stats": {
       "yearsExp": "Лет опыта",
       "rpsScaled": "RPS обработано",
+      "fullStackValue": "Полный",
       "fullStackCycle": "Полный цикл"
     },
     "planets": {
@@ -58,7 +65,7 @@
   },
   "projects": {
     "title": "Значимые проекты",
-    "description": "Архитектура и разработка сложных систем: AI-агенты, PDLC-платформы, high-load, FinTech, Full-Stack и DevOps.",
+    "description": "Архитектура и разработка сложных систем: AI-агенты, PDLC-платформы, высокие нагрузки, FinTech, FullStack и DevOps.",
     "viewCaseStudy": "Подробнее о проекте",
     "categories": {
       "all": "Все",
@@ -91,11 +98,11 @@
     "description": "Архитектура, backend, инфраструктура и AI-интеграции для enterprise-систем. Фокус на безопасности, производительности, надёжности и полном цикле поставки.",
     "architecture": {
       "title": "Архитектура",
-      "description": "PDLC / SDLC, распределённые системы, Event-Driven, микросервисы"
+      "description": "PDLC / SDLC, распределённые системы, событийная архитектура, микросервисы"
     },
     "aiMl": {
       "title": "ИИ/ML",
-      "description": "Agentic AI, LangGraph, RAG, MCP, LLM tools"
+      "description": "Агентные AI-системы, LangGraph, RAG, MCP, LLM-инструменты"
     }
   },
   "insights": {
@@ -166,14 +173,16 @@
       "downloadResume": "Скачать резюме",
       "printResume": "Печать / Сохранить PDF",
       "professionalSummary": "Профессиональное резюме",
-      "summaryText": "Инженер-программист и архитектор с опытом работы {years} в создании сложных enterprise-систем. Проектировал платформы полного цикла разработки (PDLC/SDLC), агентные AI-системы, банковские и FinTech-сервисы с повышенными требованиями к безопасности, производительности и надёжности. Развивает self-hosted продукты на Java 25, Spring Boot 4.1, Rust, Python и React.",
+      "summaryText": "Инженер-программист и архитектор с опытом работы {years} в создании сложных корпоративных систем. Проектировал платформы полного цикла разработки (PDLC/SDLC), агентные AI-системы, банковские и FinTech-сервисы с повышенными требованиями к безопасности, производительности и надёжности. Развивает самостоятельно развёртываемые продукты на Java 25, Spring Boot 4.1, Rust, Python и React.",
       "keyExpertise": "Ключевая экспертиза",
       "selectedProjects": "Значимые проекты",
       "experience": "Опыт работы",
-      "technicalSkills": "Технические навыки"
+      "technicalSkills": "Технические навыки",
+      "openSource": "Открытый код"
     }
   },
   "footer": {
+    "ownerName": "Александр Жуков",
     "copyright": "Все права защищены."
   }
 }

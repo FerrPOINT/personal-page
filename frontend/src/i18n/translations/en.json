@@ -15,6 +15,12 @@
       "ember": "orange-purple theme"
     }
   },
+  "seo": {
+    "title": "Aleksandr Zhukov | Senior Software Architect",
+    "description": "Software Architect since 2015. Enterprise platforms, Java/Spring, high-load systems, PDLC/SDLC, agentic AI, and DevOps.",
+    "name": "Aleksandr Zhukov",
+    "jobTitle": "Senior Software Architect"
+  },
   "navbar": {
     "logo": {
       "name": "A. ZHUKOV",
@@ -44,6 +50,7 @@
     "stats": {
       "yearsExp": "Years Exp",
       "rpsScaled": "RPS Scaled",
+      "fullStackValue": "Full",
       "fullStackCycle": "Full Cycle"
     },
     "planets": {
@@ -170,10 +177,12 @@
       "keyExpertise": "Key Expertise",
       "selectedProjects": "Notable Projects",
       "experience": "Experience",
-      "technicalSkills": "Technical Skills"
+      "technicalSkills": "Technical Skills",
+      "openSource": "Open Source"
     }
   },
   "footer": {
+    "ownerName": "Aleksandr Zhukov",
     "copyright": "All rights reserved."
   }
 }

@@ -92,7 +92,7 @@ const Hero: React.FC = () => {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 0.8 }} className="hero-soft-backdrop mt-12 grid grid-cols-3 gap-8 border-t border-white/10 pt-8">
               <div><p className="text-3xl font-bold text-white">{yearsOfExperience}+</p><p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.yearsExp')}</p></div>
               <div><p className="text-3xl font-bold text-white">1M+</p><p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.rpsScaled')}</p></div>
-              <div><p className="text-3xl font-bold text-white">Full</p><p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.fullStackCycle')}</p></div>
+              <div><p className="text-3xl font-bold text-white">{t('hero.stats.fullStackValue')}</p><p className="text-xs text-secondary uppercase tracking-wider mt-1">{t('hero.stats.fullStackCycle')}</p></div>
             </motion.div>
           </motion.div>
         </div>

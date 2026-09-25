@@ -7,10 +7,10 @@ export const ARTICLE_DEFINITIONS = [
     "category": "ai-architecture",
     "locales": {
       "ru": {
-        "title": "Production-Ready Multi-Agent AI: Уроки оркестрации 10+ LangGraph агентов",
+        "title": "Мультиагентный AI в промышленной эксплуатации: уроки оркестрации 10+ агентов LangGraph",
         "date": "Дек 2025",
         "readTime": "~5 мин",
-        "excerpt": "Практические инсайты из создания production multi-agent системы с LangGraph, интеграцией RAG и управлением состоянием в масштабе."
+        "excerpt": "Практический опыт создания промышленной мультиагентной системы с LangGraph, интеграцией RAG и масштабируемым управлением состоянием."
       },
       "en": {
         "title": "Production-Ready Multi-Agent AI: Lessons from Orchestrating 10+ LangGraph Agents",
@@ -26,10 +26,10 @@ export const ARTICLE_DEFINITIONS = [
     "category": "high-load",
     "locales": {
       "ru": {
-        "title": "Достижение 1M+ RPS: Архитектурные паттерны для экстремально масштабируемых AdTech систем",
+        "title": "Достижение 1M+ RPS: архитектурные подходы для высоконагруженных AdTech-систем",
         "date": "Дек 2025",
         "readTime": "~5 мин",
-        "excerpt": "Глубокое погружение в создание real-time OpenRTB bidder, обрабатывающего 1 миллион запросов в секунду: оптимизация Aerospike, производительность gRPC и настройка JVM."
+        "excerpt": "Разбор OpenRTB-сервиса реального времени, обрабатывающего 1 миллион запросов в секунду: оптимизация Aerospike, производительность gRPC и настройка JVM."
       },
       "en": {
         "title": "Achieving 1M+ RPS: Architecture Patterns for Extreme-Scale AdTech Systems",
@@ -45,10 +45,10 @@ export const ARTICLE_DEFINITIONS = [
     "category": "security",
     "locales": {
       "ru": {
-        "title": "GOST криптография в современном FinTech: Event-Driven архитектура для высоконагруженных цифровых подписей",
+        "title": "ГОСТ-криптография в современном FinTech: событийная архитектура для высоконагруженных цифровых подписей",
         "date": "Дек 2025",
         "readTime": "~5 мин",
-        "excerpt": "Реализация алгоритмов GOST в cloud-native микросервисах: развертывание Kubernetes, стриминг событий Kafka и обработка отчётных пиков нагрузки."
+        "excerpt": "Реализация алгоритмов ГОСТ в облачных микросервисах: развёртывание в Kubernetes, потоковая обработка событий Kafka и работа с отчётными пиками нагрузки."
       },
       "en": {
         "title": "GOST Cryptography in Modern FinTech: Event-Driven Architecture for High-Load Digital Signatures",

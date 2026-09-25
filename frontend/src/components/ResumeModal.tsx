@@ -80,7 +80,7 @@ export default function ResumeModal({ isOpen, onClose }: { isOpen: boolean; onCl
               <div key={project.slug} className="project">
                 <div className="project-header flex justify-between items-baseline gap-4">
                   <a className="project-title font-bold" href={project.href} target="_blank" rel="noopener noreferrer">{project.title}</a>
-                  <span className="project-meta text-sm text-gray-600">Open Source</span>
+                  <span className="project-meta text-sm text-gray-600">{t('contact.resume.openSource')}</span>
                 </div>
                 <p className="project-summary text-sm text-gray-800">{project.summary}</p>
                 <p className="tech-line text-xs text-gray-600">{project.stack.join(' · ')}</p>

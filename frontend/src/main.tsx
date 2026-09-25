@@ -4,6 +4,7 @@ import './index.css';
 import App from './App';
 import { ColorThemeProvider } from './theme/ColorThemeContext';
 import { applyColorTheme, getInitialColorTheme } from './theme/palettes';
+import { detectLanguage } from './i18n/utils/languageDetector';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -24,7 +25,11 @@ try {
   );
 } catch (error) {
   console.error('Failed to render app:', error);
-  // Fallback: try to render error message
-  rootElement.innerHTML = '<div style="padding: 20px; color: red;">Application failed to load. Please refresh the page.</div>';
+  const fallback = document.createElement('div');
+  fallback.style.cssText = 'padding: 20px; color: red;';
+  fallback.textContent = detectLanguage() === 'ru'
+    ? 'Не удалось загрузить приложение. Обновите страницу.'
+    : 'Application failed to load. Please refresh the page.';
+  rootElement.replaceChildren(fallback);
 }
 

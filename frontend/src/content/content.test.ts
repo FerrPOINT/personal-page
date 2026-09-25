@@ -55,8 +55,8 @@ describe('portfolio content', () => {
       'Enterprise-платформы',
       'PDLC / SDLC',
       'AI-агенты',
-      'Developer Infrastructure',
-      'Full-Cycle Delivery',
+      'Инфраструктура разработки',
+      'Полный цикл поставки',
     ]);
     expect(getExperience('en')[0].focusAreas).toEqual([
       'Enterprise Platforms',

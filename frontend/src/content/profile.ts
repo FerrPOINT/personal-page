@@ -31,7 +31,7 @@ const RESUME_HIGHLIGHT_DEFINITIONS = [
     locales: {
       ru: {
         title: 'Java Agent',
-        summary: 'Self-hosted runtime для долгоживущих LLM-сессий с OpenAI-compatible API, CLI, управляемыми инструментами, MCP и Telegram gateway.',
+        summary: 'Самостоятельно развёртываемая среда для долгоживущих LLM-сессий с OpenAI-совместимым API, CLI, управляемыми инструментами, MCP и Telegram-шлюзом.',
       },
       en: {
         title: 'Java Agent',
