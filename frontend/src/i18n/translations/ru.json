@@ -78,6 +78,8 @@
     "previousImage": "Предыдущее изображение",
     "nextImage": "Следующее изображение",
     "imageCounter": "Изображение {current} из {total}",
+    "copyLink": "Скопировать ссылку на проект",
+    "linkCopied": "Ссылка скопирована",
     "loading": "Загрузка проекта…"
   },
   "experience": {

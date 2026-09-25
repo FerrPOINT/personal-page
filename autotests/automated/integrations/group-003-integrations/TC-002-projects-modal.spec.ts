@@ -71,5 +71,17 @@ test.describe('Projects - Модальное окно с деталями про
     // Проверка, что модальное окно закрылось
     await expect(modal).not.toBeVisible();
   });
+
+  test('TC-002: Ссылка открывает конкретный проект и очищается при закрытии', async ({ page }) => {
+    await page.goto('/?project=analytics-agent#projects');
+
+    const modal = page.getByRole('dialog', { name: /Analytics AI Agent|Аналитический AI-агент/ });
+    await expect(modal).toBeVisible();
+    await expect(page).toHaveURL(/\?project=analytics-agent#projects$/);
+
+    await page.keyboard.press('Escape');
+    await expect(modal).not.toBeVisible();
+    await expect(page).toHaveURL(/\/#projects$/);
+  });
 });
 

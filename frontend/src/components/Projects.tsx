@@ -8,6 +8,7 @@ import {
   ExternalLink,
   Globe,
   Layers,
+  Link2,
   Server,
   UserCheck,
 } from 'lucide-react';
@@ -18,6 +19,30 @@ import Modal from './Modal';
 import ProjectImage from './ProjectImage';
 
 type ProjectFilter = 'all' | ProjectCategory;
+const PROJECT_QUERY_PARAM = 'project';
+
+const getProjectSlugFromUrl = (): string | null => (
+  new URLSearchParams(window.location.search).get(PROJECT_QUERY_PARAM)
+);
+
+const createProjectUrl = (slug: string | null): URL => {
+  const url = new URL(window.location.href);
+  if (slug) {
+    url.searchParams.set(PROJECT_QUERY_PARAM, slug);
+    url.hash = 'projects';
+  } else {
+    url.searchParams.delete(PROJECT_QUERY_PARAM);
+  }
+  return url;
+};
+
+const createShareProjectUrl = (slug: string): URL => {
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.searchParams.set(PROJECT_QUERY_PARAM, slug);
+  url.hash = 'projects';
+  return url;
+};
 
 const usesPrimaryAccent = (project: Project): boolean => (
   project.categories.includes('ai') || project.categories.includes('devops')
@@ -26,9 +51,11 @@ const usesPrimaryAccent = (project: Project): boolean => (
 const Projects: React.FC = () => {
   const { t, language } = useLanguage();
   const [filter, setFilter] = useState<ProjectFilter>('all');
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(getProjectSlugFromUrl);
   const [mediaIndex, setMediaIndex] = useState(0);
+  const [linkCopied, setLinkCopied] = useState(false);
   const projects = useMemo(() => getProjects(language), [language]);
+  const selectedProject = projects.find((project) => project.slug === selectedSlug) ?? null;
 
   const categories: Array<{ key: ProjectFilter; label: string }> = [
     { key: 'all', label: t('projects.categories.all') },
@@ -46,6 +73,16 @@ const Projects: React.FC = () => {
     : projects.filter((project) => project.categories.includes(filter));
 
   useEffect(() => {
+    const syncProjectFromUrl = () => {
+      setMediaIndex(0);
+      setLinkCopied(false);
+      setSelectedSlug(getProjectSlugFromUrl());
+    };
+    window.addEventListener('popstate', syncProjectFromUrl);
+    return () => window.removeEventListener('popstate', syncProjectFromUrl);
+  }, []);
+
+  useEffect(() => {
     if (!selectedProject || selectedProject.media.length < 2) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'ArrowLeft') {
@@ -61,9 +98,24 @@ const Projects: React.FC = () => {
 
   const openProject = (project: Project) => {
     setMediaIndex(0);
-    setSelectedProject(project);
+    setLinkCopied(false);
+    window.history.pushState(window.history.state, '', createProjectUrl(project.slug));
+    setSelectedSlug(project.slug);
   };
-  const closeProject = () => setSelectedProject(null);
+  const closeProject = () => {
+    window.history.replaceState(window.history.state, '', createProjectUrl(null));
+    setLinkCopied(false);
+    setSelectedSlug(null);
+  };
+  const copyProjectLink = async () => {
+    if (!selectedProject) return;
+    try {
+      await navigator.clipboard.writeText(createShareProjectUrl(selectedProject.slug).toString());
+      setLinkCopied(true);
+    } catch {
+      setLinkCopied(false);
+    }
+  };
   const selectedMedia = selectedProject?.media[mediaIndex];
 
   return (
@@ -119,6 +171,17 @@ const Projects: React.FC = () => {
       <Modal isOpen={!!selectedProject} onClose={closeProject} title={selectedProject?.title}>
         {selectedProject && selectedMedia && (
           <div className="space-y-8">
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={copyProjectLink}
+                aria-label={linkCopied ? t('projects.linkCopied') : t('projects.copyLink')}
+                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-secondary transition-colors hover:border-accent-primary/40 hover:bg-accent-primary/10 hover:text-accent-primary"
+              >
+                <Link2 className="h-4 w-4" />
+                {linkCopied ? t('projects.linkCopied') : t('projects.copyLink')}
+              </button>
+            </div>
             <figure className="space-y-3">
               <div className="w-full aspect-video rounded-lg overflow-hidden relative group bg-black">
                 <ProjectImage

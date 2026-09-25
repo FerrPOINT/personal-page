@@ -48,12 +48,18 @@ vi.mock('../../i18n/hooks/useLanguage', () => ({
       'projects.results': 'Результаты',
       'projects.stack': 'Стек',
       'projects.imageCounter': `Изображение ${params?.current} из ${params?.total}`,
+      'projects.copyLink': 'Скопировать ссылку на проект',
+      'projects.linkCopied': 'Ссылка скопирована',
+      'common.close': 'Закрыть',
     } as Record<string, string>)[key] ?? key,
   }),
 }));
 
 describe('Projects', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.history.replaceState({}, '', '/');
+  });
 
   it('filters by canonical category keys', () => {
     render(<Projects />);
@@ -73,5 +79,39 @@ describe('Projects', () => {
     expect(within(dialog).getByRole('img', { name: 'Схема two' })).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'ArrowLeft' });
     expect(within(dialog).getByRole('img', { name: 'Схема one' })).toBeInTheDocument();
+  });
+
+  it('opens a project from a direct URL', () => {
+    window.history.replaceState({}, '', '/?project=project#projects');
+
+    render(<Projects />);
+
+    expect(screen.getByRole('dialog', { name: 'Проект' })).toBeInTheDocument();
+  });
+
+  it('keeps a shareable project URL in sync with the modal', () => {
+    window.history.replaceState({}, '', '/?release=current#projects');
+    render(<Projects />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Подробнее' }));
+    expect(window.location.search).toBe('?release=current&project=project');
+    expect(window.location.hash).toBe('#projects');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+    expect(window.location.search).toBe('?release=current');
+    expect(window.location.hash).toBe('#projects');
+  });
+
+  it('copies the full direct project URL', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    window.history.replaceState({}, '', '/?release=current');
+    render(<Projects />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Подробнее' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Скопировать ссылку на проект' }));
+
+    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/?project=project#projects`);
+    expect(await screen.findByRole('button', { name: 'Ссылка скопирована' })).toBeInTheDocument();
   });
 });

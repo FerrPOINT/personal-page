@@ -78,6 +78,8 @@
     "previousImage": "Previous image",
     "nextImage": "Next image",
     "imageCounter": "Image {current} of {total}",
+    "copyLink": "Copy project link",
+    "linkCopied": "Link copied",
     "loading": "Loading project…"
   },
   "experience": {
