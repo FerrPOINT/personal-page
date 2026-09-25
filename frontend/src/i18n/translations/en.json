@@ -13,6 +13,10 @@
     "colorThemes": {
       "neon": "turquoise-purple theme",
       "ember": "orange-purple theme"
+    },
+    "colorThemeNames": {
+      "neon": "Turquoise",
+      "ember": "Orange"
     }
   },
   "seo": {

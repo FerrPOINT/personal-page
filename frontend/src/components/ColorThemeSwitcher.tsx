@@ -9,6 +9,7 @@ const ColorThemeSwitcher: React.FC = () => {
   const nextTheme = theme === 'ember' ? 'neon' : 'ember';
   const nextThemeLabel = t(`common.colorThemes.${nextTheme}`);
   const switchLabel = t('common.switchColorTheme', { theme: nextThemeLabel });
+  const currentThemeName = t(`common.colorThemeNames.${theme}`);
 
   return (
     <button
@@ -19,7 +20,7 @@ const ColorThemeSwitcher: React.FC = () => {
       title={switchLabel}
     >
       <Palette className="h-4 w-4" aria-hidden="true" />
-      <span className="hidden text-xs font-semibold uppercase tracking-[0.12em] xl:inline">{theme === 'neon' ? 'Neon' : 'Ember'}</span>
+      <span className="hidden text-xs font-semibold uppercase tracking-[0.12em] xl:inline">{currentThemeName}</span>
     </button>
   );
 };

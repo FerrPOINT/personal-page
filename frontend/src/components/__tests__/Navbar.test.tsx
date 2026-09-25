@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { expect, it } from 'vitest';
+import { afterEach, expect, it } from 'vitest';
 import Navbar from '../Navbar';
 import { LanguageProvider } from '../../i18n/context/LanguageContext';
 import { ColorThemeProvider } from '../../theme/ColorThemeContext';
@@ -13,6 +13,8 @@ function renderNavbar() {
     </ColorThemeProvider>,
   );
 }
+
+afterEach(() => window.localStorage.removeItem('language'));
 
 it('closes the mobile navigation with Escape and returns focus to its trigger', async () => {
   renderNavbar();
@@ -39,4 +41,16 @@ it('keeps contact as one clear primary action instead of duplicating it in navig
 
   expect(screen.queryByRole('link', { name: 'Contact' })).not.toBeInTheDocument();
   expect(screen.getAllByRole('link', { name: "Let's Talk" })).toHaveLength(1);
+});
+
+it('localizes the visible color theme name and updates it after switching', () => {
+  window.localStorage.setItem('language', 'ru');
+  renderNavbar();
+
+  expect(screen.getAllByText('Бирюзовая')).toHaveLength(2);
+  fireEvent.click(screen.getAllByRole('button', { name: 'Переключить на оранжево-фиолетовую тему' })[0]);
+  expect(screen.getAllByText('Оранжевая')).toHaveLength(2);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Переключить на Английский' }));
+  expect(screen.getAllByText('Orange')).toHaveLength(2);
 });
